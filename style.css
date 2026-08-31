@@ -217,8 +217,14 @@ select {
 /* Lives at the foot of the question card, where the keys it names are in use. */
 .hint { margin: 18px 0 0; font-size: 12px; color: var(--muted); }
 
-.source-link { font-size: 12px; color: var(--muted); text-decoration: none; }
-.source-link:hover { color: var(--oro); text-decoration: underline; }
+.source-link {
+  font-size: 12px;
+  color: var(--oro);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.source-link:hover { color: #f5c95e; text-decoration-thickness: 2px; }
 kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; font-size: 11px; }
 
 /* Clearing progress is irreversible and there is no backup, so it asks first
