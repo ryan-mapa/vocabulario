@@ -28,7 +28,11 @@ const ui = {
   summaryStreak: el('summary-streak'),
   summaryMastered: el('summary-mastered'),
   again: el('again'),
-  reset: el('reset')
+  reset: el('reset'),
+  confirmDialog: el('confirm-reset'),
+  confirmBody: el('confirm-body'),
+  confirmCancel: el('confirm-cancel'),
+  confirmClear: el('confirm-clear')
 };
 
 let store = load();
@@ -233,6 +237,7 @@ function showSummary() {
 }
 
 document.addEventListener('keydown', (event) => {
+  if (ui.confirmDialog.open) return; // the dialog owns the keyboard while it is up
   if (event.key >= '1' && event.key <= '4' && !ui.play.hidden) {
     const button = ui.choices.children[Number(event.key) - 1];
     if (button && !button.disabled) button.click();
@@ -247,7 +252,22 @@ ui.deck.addEventListener('change', startGame);
 ui.direction.addEventListener('change', startGame);
 ui.again.addEventListener('click', startGame);
 ui.reset.addEventListener('click', () => {
+  const tracked = Object.keys(store.cards).length;
+  ui.confirmBody.textContent = tracked
+    ? `This erases progress on ${tracked} word${tracked === 1 ? '' : 's'} and a best score of ` +
+      `${store.best.score}, and relocks every stage. It is saved only in this browser, ` +
+      `so there is no copy to restore from.`
+    : 'Nothing is saved on this device yet, so there is nothing to clear.';
+  ui.confirmDialog.showModal();
+});
+
+ui.confirmCancel.addEventListener('click', () => ui.confirmDialog.close());
+
+ui.confirmClear.addEventListener('click', () => {
+  ui.confirmDialog.close();
   store = reset();
+  stage = 0;
+  populateDecks();
   startGame();
 });
 

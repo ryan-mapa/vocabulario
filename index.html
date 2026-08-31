@@ -65,6 +65,14 @@
       <a class="source-link" href="https://github.com/ryan-mapa/vocabulario" target="_blank" rel="noopener noreferrer">Source on GitHub</a>
       <button class="ghost" id="reset" type="button">Clear progress</button>
     </footer>
+    <dialog class="confirm" id="confirm-reset" aria-labelledby="confirm-title">
+      <h2 id="confirm-title">Clear all progress?</h2>
+      <p class="confirm-body" id="confirm-body"></p>
+      <div class="confirm-actions">
+        <button class="ghost" id="confirm-cancel" type="button" autofocus>Keep it</button>
+        <button class="danger" id="confirm-clear" type="button">Clear progress</button>
+      </div>
+    </dialog>
   </main>
 
   <script type="module" src="main.js"></script>
