@@ -1,0 +1,15 @@
+{
+  "name": "vocabulario",
+  "version": "1.0.0",
+  "description": "A Spanish vocabulary game with Leitner-box spaced repetition",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "watch": "vitest",
+    "serve": "python3 -m http.server 8000"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.9"
+  }
+}

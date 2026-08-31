@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vocabulario — Spanish vocab game</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🇪🇸</text></svg>" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <h1 class="wordmark">Vocabulario</h1>
+      <div class="settings">
+        <label class="field">
+          <span>Baraja</span>
+          <select id="deck"></select>
+        </label>
+        <label class="field">
+          <span>Dirección</span>
+          <select id="direction">
+            <option value="es-en">Español → English</option>
+            <option value="en-es">English → Español</option>
+          </select>
+        </label>
+      </div>
+    </header>
+
+    <section class="scoreboard" aria-label="Puntuación">
+      <div class="stat"><span class="stat-value" id="score">0</span><span class="stat-label">puntos</span></div>
+      <div class="stat"><span class="stat-value" id="streak">0</span><span class="stat-label">racha</span></div>
+      <div class="stat"><span class="stat-value" id="mastery">0%</span><span class="stat-label">dominio</span></div>
+      <div class="stat"><span class="stat-value" id="best">0</span><span class="stat-label">récord</span></div>
+    </section>
+
+    <div class="progress" aria-hidden="true"><div class="progress-fill" id="round-progress"></div></div>
+
+    <section class="card" id="play">
+      <p class="direction-hint" id="direction-hint">¿Qué significa…?</p>
+      <p class="prompt" id="prompt">—</p>
+      <div class="choices" id="choices"></div>
+      <p class="feedback" id="feedback" role="status" aria-live="polite">&nbsp;</p>
+    </section>
+
+    <section class="card summary" id="summary" hidden>
+      <h2>¡Ronda terminada!</h2>
+      <p class="summary-score"><span id="summary-score">0</span> puntos</p>
+      <ul class="summary-list">
+        <li><span id="summary-accuracy">0%</span> de aciertos</li>
+        <li>Mejor racha: <span id="summary-streak">0</span></li>
+        <li><span id="summary-mastered">0</span> palabras dominadas</li>
+      </ul>
+      <button class="primary" id="again" type="button">Otra ronda</button>
+    </section>
+
+    <footer class="footer">
+      <p class="hint">Responde con <kbd>1</kbd>–<kbd>4</kbd> · <kbd>Enter</kbd> para seguir</p>
+      <button class="ghost" id="reset" type="button">Borrar progreso</button>
+    </footer>
+  </main>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
