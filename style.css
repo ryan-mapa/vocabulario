@@ -213,14 +213,15 @@ select {
 }
 
 .footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }
-.footer-actions { display: flex; align-items: center; gap: 8px; }
-.hint { margin: 0; font-size: 12px; color: var(--muted); }
+
+/* Lives at the foot of the question card, where the keys it names are in use. */
+.hint { margin: 18px 0 0; font-size: 12px; color: var(--muted); }
+
+.source-link { font-size: 12px; color: var(--muted); text-decoration: none; }
+.source-link:hover { color: var(--oro); text-decoration: underline; }
 kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; font-size: 11px; }
 
 .ghost {
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
   font: inherit;
   font-size: 12px;
   color: var(--muted);
@@ -232,8 +233,60 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
 }
 .ghost:hover { color: var(--rojo); border-color: var(--rojo); }
 
+/* Phones: the vertical budget is the whole problem. Everything above the
+   question is touched once a session; the answers are touched ten times a
+   round. So the chrome gives up space first, and the stage row deliberately
+   stays three across — stacking it costs 240px to save nothing. */
 @media (max-width: 460px) {
-  .topbar { flex-direction: column; align-items: stretch; }
-  .settings { flex-direction: column; }
-  .stage-row { grid-template-columns: 1fr; }
+  body { padding: 14px 12px 24px; }
+
+  .topbar { flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 14px; }
+  .wordmark { font-size: 22px; }
+
+  /* Side by side rather than stacked. min-width:0 lets the grid track shrink
+     below the select's intrinsic width instead of overflowing the screen. */
+  .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .field { min-width: 0; }
+  select { width: 100%; font-size: 13px; padding: 6px 8px; }
+
+  .scoreboard { gap: 6px; margin-bottom: 10px; }
+  .stat { padding: 7px 4px; }
+  .stat-value { font-size: 19px; }
+
+  .progress { margin-bottom: 12px; }
+  .stages { margin-bottom: 12px; }
+  .stage-row { gap: 6px; }
+  .stage { padding: 7px 7px 8px; }
+  .stage-name { font-size: 12px; }
+  .stage-meta { font-size: 10px; }
+  .unlock-note { margin-top: 6px; font-size: 11px; }
+
+  .card { padding: 20px 14px 16px; }
+  .prompt { margin: 8px 0 16px; }
+  .choices { gap: 8px; }
+  .choice { padding: 12px 14px; font-size: 16px; }
+
+  .footer { margin-top: 12px; }
+}
+
+/* Short viewports — an old iPhone SE, or any phone in landscape. Height is the
+   binding constraint here, not width, so this keys off height and trims the
+   persistent guidance the player has already read. */
+@media (max-height: 600px) {
+  .unlock-note { display: none; }
+  .scoreboard { margin-bottom: 6px; }
+  .stat { padding: 4px 4px; }
+  .stat-value { font-size: 17px; }
+  .stages { margin-bottom: 8px; }
+  .card { padding: 14px 14px 8px; }
+  .prompt { margin: 6px 0 10px; font-size: clamp(26px, 7vw, 34px); }
+  .choices { gap: 6px; }
+  .choice { padding: 10px 14px; }
+  .footer { margin-top: 10px; }
+}
+
+/* The hint names keyboard keys a touch device does not have — and on touch the
+   round advances on its own, so there is nothing left to say. */
+@media (pointer: coarse) {
+  .hint { display: none; }
 }
