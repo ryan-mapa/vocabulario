@@ -21,6 +21,7 @@ const ui = {
   prompt: el('prompt'),
   choices: el('choices'),
   feedback: el('feedback'),
+  variantNote: el('variant-note'),
   summary: el('summary'),
   summaryScore: el('summary-score'),
   summaryAccuracy: el('summary-accuracy'),
@@ -147,6 +148,30 @@ function render() {
   });
   ui.feedback.textContent = ' ';
   ui.feedback.className = 'feedback';
+  ui.variantNote.hidden = true;
+  ui.variantNote.textContent = '';
+}
+
+/**
+ * Show where else in the Spanish-speaking world this word goes by another name.
+ * Only ever called after an answer — in the English -> Spanish direction these
+ * variants would otherwise hand over the answer.
+ */
+function showVariants(word) {
+  if (!word.alt?.length) return;
+
+  ui.variantNote.textContent = 'Also ';
+  word.alt.forEach((variant, index) => {
+    if (index > 0) ui.variantNote.append(', ');
+    const name = document.createElement('span');
+    name.className = 'variant-word';
+    name.textContent = variant.es;
+    const region = document.createElement('span');
+    region.className = 'variant-region';
+    region.textContent = ` ${variant.region}`;
+    ui.variantNote.append(name, region);
+  });
+  ui.variantNote.hidden = false;
 }
 
 function submit(choice) {
@@ -170,6 +195,8 @@ function submit(choice) {
   ui.feedback.textContent = result.correct
     ? `Correct! +${result.points}`
     : `${result.question.prompt} = ${result.question.answer}`;
+
+  showVariants(result.question.word);
 
   ui.score.textContent = game.state.score;
   ui.streak.textContent = game.state.streak;

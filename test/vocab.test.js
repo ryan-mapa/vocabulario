@@ -66,6 +66,22 @@ describe('decks', () => {
     expect(clashes).toEqual([]);
   });
 
+  it('gives every regional variant a word and a region, and never repeats itself', () => {
+    for (const word of everyWord) {
+      if (!word.alt) continue;
+      expect(word.alt.length, word.es).toBeGreaterThan(0);
+      for (const variant of word.alt) {
+        expect(variant.es?.trim(), `${word.es} variant`).toBeTruthy();
+        expect(variant.region?.trim(), `${word.es} region`).toBeTruthy();
+        // listing the headword as its own variant would read as nonsense
+        expect(variant.es, `${word.es} lists itself`).not.toBe(word.es);
+      }
+      // no duplicate variants within one word
+      const forms = word.alt.map((v) => v.es);
+      expect(new Set(forms).size, `${word.es} repeats a variant`).toBe(forms.length);
+    }
+  });
+
   it('has both sides filled in and trimmed', () => {
     for (const word of everyWord) {
       expect(word.es.trim(), word.es).toBe(word.es);

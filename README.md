@@ -33,6 +33,11 @@ ahead. Rounds are 10 questions.
   — a locked deck never leaks its harder words into a combined round.
 - **Direction** — Español → English (recognition) or English → Español (recall,
   the harder one).
+- **Regional variants** — words are Latin American Spanish with US English
+  glosses. Where a word changes across the Spanish-speaking world, the answer
+  is followed by a note: *la fresa — also la frutilla (Southern Cone)*. It
+  appears only after you answer, because in the English → Spanish direction it
+  would otherwise give the answer away.
 - **Scoring** — 10 points a word, plus 2 per consecutive correct answer up to a
   +10 cap. A miss zeroes the streak.
 - **Spaced repetition** — every word sits in one of 5 boxes. Get it right and it
