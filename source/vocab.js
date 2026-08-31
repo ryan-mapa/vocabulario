@@ -3,7 +3,7 @@
 export const DECKS = [
   {
     id: 'comida',
-    name: 'La comida',
+    name: 'Food',
     emoji: '🍎',
     words: [
       { es: 'la manzana', en: 'apple' },
@@ -25,7 +25,7 @@ export const DECKS = [
   },
   {
     id: 'animales',
-    name: 'Los animales',
+    name: 'Animals',
     emoji: '🦊',
     words: [
       { es: 'el perro', en: 'dog' },
@@ -47,7 +47,7 @@ export const DECKS = [
   },
   {
     id: 'casa',
-    name: 'La casa',
+    name: 'The Home',
     emoji: '🏠',
     words: [
       { es: 'la casa', en: 'house' },
@@ -69,7 +69,7 @@ export const DECKS = [
   },
   {
     id: 'verbos',
-    name: 'Los verbos',
+    name: 'Verbs',
     emoji: '🏃',
     words: [
       { es: 'hablar', en: 'to speak' },
@@ -91,7 +91,7 @@ export const DECKS = [
   },
   {
     id: 'viajes',
-    name: 'Los viajes',
+    name: 'Travel',
     emoji: '✈️',
     words: [
       { es: 'el aeropuerto', en: 'airport' },
@@ -113,7 +113,7 @@ export const DECKS = [
   },
   {
     id: 'cuerpo',
-    name: 'El cuerpo',
+    name: 'The Body',
     emoji: '🖐️',
     words: [
       { es: 'la cabeza', en: 'head' },
@@ -135,7 +135,7 @@ export const DECKS = [
   },
   {
     id: 'tiempo',
-    name: 'El tiempo',
+    name: 'Days & Weather',
     emoji: '🗓️',
     words: [
       { es: 'el lunes', en: 'Monday' },
@@ -157,7 +157,7 @@ export const DECKS = [
   },
   {
     id: 'adjetivos',
-    name: 'Los adjetivos',
+    name: 'Adjectives',
     emoji: '🎨',
     words: [
       { es: 'grande', en: 'big' },

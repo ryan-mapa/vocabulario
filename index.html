@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -13,49 +13,49 @@
       <h1 class="wordmark">Vocabulario</h1>
       <div class="settings">
         <label class="field">
-          <span>Baraja</span>
-          <select id="deck"></select>
+          <span>Deck</span>
+          <select id="deck" translate="no"></select>
         </label>
         <label class="field">
-          <span>Dirección</span>
-          <select id="direction">
-            <option value="es-en">Español → English</option>
-            <option value="en-es">English → Español</option>
+          <span>Direction</span>
+          <select id="direction" translate="no">
+            <option value="es-en">Spanish → English</option>
+            <option value="en-es">English → Spanish</option>
           </select>
         </label>
       </div>
     </header>
 
-    <section class="scoreboard" aria-label="Puntuación">
-      <div class="stat"><span class="stat-value" id="score">0</span><span class="stat-label">puntos</span></div>
-      <div class="stat"><span class="stat-value" id="streak">0</span><span class="stat-label">racha</span></div>
-      <div class="stat"><span class="stat-value" id="mastery">0%</span><span class="stat-label">dominio</span></div>
-      <div class="stat"><span class="stat-value" id="best">0</span><span class="stat-label">récord</span></div>
+    <section class="scoreboard" aria-label="Score">
+      <div class="stat"><span class="stat-value" id="score">0</span><span class="stat-label">points</span></div>
+      <div class="stat"><span class="stat-value" id="streak">0</span><span class="stat-label">streak</span></div>
+      <div class="stat"><span class="stat-value" id="mastery">0%</span><span class="stat-label">mastery</span></div>
+      <div class="stat"><span class="stat-value" id="best">0</span><span class="stat-label">best</span></div>
     </section>
 
     <div class="progress" aria-hidden="true"><div class="progress-fill" id="round-progress"></div></div>
 
     <section class="card" id="play">
-      <p class="direction-hint" id="direction-hint">¿Qué significa…?</p>
-      <p class="prompt" id="prompt">—</p>
-      <div class="choices" id="choices"></div>
-      <p class="feedback" id="feedback" role="status" aria-live="polite">&nbsp;</p>
+      <p class="direction-hint" id="direction-hint">What does it mean…?</p>
+      <p class="prompt" id="prompt" translate="no">—</p>
+      <div class="choices" id="choices" translate="no"></div>
+      <p class="feedback" id="feedback" role="status" aria-live="polite" translate="no">&nbsp;</p>
     </section>
 
     <section class="card summary" id="summary" hidden>
-      <h2>¡Ronda terminada!</h2>
-      <p class="summary-score"><span id="summary-score">0</span> puntos</p>
+      <h2>Round complete!</h2>
+      <p class="summary-score"><span id="summary-score">0</span> points</p>
       <ul class="summary-list">
-        <li><span id="summary-accuracy">0%</span> de aciertos</li>
-        <li>Mejor racha: <span id="summary-streak">0</span></li>
-        <li><span id="summary-mastered">0</span> palabras dominadas</li>
+        <li><span id="summary-accuracy">0%</span> correct</li>
+        <li>Best streak: <span id="summary-streak">0</span></li>
+        <li><span id="summary-mastered">0</span> words mastered</li>
       </ul>
-      <button class="primary" id="again" type="button">Otra ronda</button>
+      <button class="primary" id="again" type="button">Play again</button>
     </section>
 
     <footer class="footer">
-      <p class="hint">Responde con <kbd>1</kbd>–<kbd>4</kbd> · <kbd>Enter</kbd> para seguir</p>
-      <button class="ghost" id="reset" type="button">Borrar progreso</button>
+      <p class="hint">Answer with <kbd>1</kbd>–<kbd>4</kbd> · <kbd>Enter</kbd> to continue</p>
+      <button class="ghost" id="reset" type="button">Clear progress</button>
     </footer>
   </main>
 

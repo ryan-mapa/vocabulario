@@ -30,7 +30,7 @@ let store = load();
 let game = null;
 
 function populateDecks() {
-  const options = [{ id: 'todos', emoji: '🌎', name: 'Todas las palabras' }, ...DECKS];
+  const options = [{ id: 'todos', emoji: '🌎', name: 'All words' }, ...DECKS];
   ui.deck.innerHTML = '';
   for (const deck of options) {
     const option = document.createElement('option');
@@ -61,7 +61,7 @@ function render() {
   ui.roundProgress.style.width = `${(state.asked / state.roundLength) * 100}%`;
 
   ui.directionHint.textContent =
-    state.direction === 'es-en' ? '¿Qué significa…?' : '¿Cómo se dice…?';
+    state.direction === 'es-en' ? 'What does it mean…?' : 'How do you say…?';
 
   const question = state.question;
   if (!question) return;
@@ -102,7 +102,7 @@ function submit(choice) {
 
   ui.feedback.className = `feedback ${result.correct ? 'good' : 'bad'}`;
   ui.feedback.textContent = result.correct
-    ? `¡Correcto! +${result.points}`
+    ? `Correct! +${result.points}`
     : `${result.question.prompt} = ${result.question.answer}`;
 
   ui.score.textContent = game.state.score;

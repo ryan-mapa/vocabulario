@@ -18,8 +18,8 @@ ahead. Rounds are 10 questions.
 
 ## How it plays
 
-- **Decks** — comida, animales, casa, verbos, viajes, cuerpo, tiempo,
-  adjetivos, or all 120 at once. Nouns carry their article so you learn the
+- **Decks** — Food, Animals, The Home, Verbs, Travel, The Body, Days &
+  Weather, Adjectives, or all 120 at once. Nouns carry their article so you learn the
   gender with the word.
 - **Direction** — Español → English (recognition) or English → Español (recall,
   the harder one).
@@ -28,7 +28,7 @@ ahead. Rounds are 10 questions.
 - **Spaced repetition** — every word sits in one of 5 boxes. Get it right and it
   climbs a box and won't be asked again for a while (1 → 3 → 7 → 14 → 30
   questions). Get it wrong and it drops straight back to box 0. Box 5 is
-  "mastered", and the dominio stat is how far the whole deck has climbed.
+  "mastered", and the mastery stat is how far the whole deck has climbed.
 - **Progress** persists in `localStorage`, keyed by the Spanish word — so
   learning *la manzana* in Comida also counts in Todas las palabras.
 
