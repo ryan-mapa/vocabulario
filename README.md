@@ -4,7 +4,9 @@ A Spanish vocabulary game. 120 words across 8 decks, multiple choice, with
 Leitner-box spaced repetition so the words you miss come back sooner than the
 ones you know.
 
-## Play
+**▶ Play it: https://ryan-mapa.github.io/vocabulario/**
+
+## Run it locally
 
 No build step — it's ES modules straight from the filesystem:
 
