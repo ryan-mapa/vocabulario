@@ -35,6 +35,11 @@
 
     <div class="progress" aria-hidden="true"><div class="progress-fill" id="round-progress"></div></div>
 
+    <section class="stages" aria-label="Stage">
+      <div class="stage-row" id="stage-row" role="group" aria-label="Choose a stage"></div>
+      <p class="unlock-note" id="unlock-note"></p>
+    </section>
+
     <section class="card" id="play">
       <p class="direction-hint" id="direction-hint">What does it mean…?</p>
       <p class="prompt" id="prompt" translate="no">—</p>
@@ -43,6 +48,7 @@
     </section>
 
     <section class="card summary" id="summary" hidden>
+      <p class="unlock-banner" id="unlock-banner" hidden></p>
       <h2>Round complete!</h2>
       <p class="summary-score"><span id="summary-score">0</span> points</p>
       <ul class="summary-list">

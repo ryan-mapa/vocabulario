@@ -1,6 +1,7 @@
-import { wordsFor } from './vocab.js';
+import { ALL_DECK_ID } from './vocab.js';
 import { newCard, review, masteryOf, isMastered, selectNext } from './srs.js';
 import { buildQuestion, isCorrect } from './quiz.js';
+import { stagePool, isStageUnlocked } from './stages.js';
 
 export const ROUND_LENGTH = 10;
 
@@ -12,17 +13,22 @@ const MAX_STREAK_BONUS = 5;
  * with per-word progress that survives across rounds.
  */
 export function createGame({
-  deckId = 'todos',
+  deckId = ALL_DECK_ID,
+  stage = 0,
   direction = 'es-en',
   cards = {},
   roundLength = ROUND_LENGTH,
   random = Math.random
 } = {}) {
-  const words = wordsFor(deckId);
-  if (words.length === 0) throw new Error(`no words for deck "${deckId}"`);
+  if (!isStageUnlocked(deckId, stage, cards)) {
+    throw new Error(`stage ${stage} of deck "${deckId}" is locked`);
+  }
+  const words = stagePool(deckId, stage, cards);
+  if (words.length === 0) throw new Error(`no words for deck "${deckId}" stage ${stage}`);
 
   const state = {
     deckId,
+    stage,
     direction,
     words,
     cards: { ...cards },

@@ -16,6 +16,7 @@ const MODULES = [
   'source/random.js',
   'source/vocab.js',
   'source/srs.js',
+  'source/stages.js',
   'source/quiz.js',
   'source/storage.js',
   'source/game.js',

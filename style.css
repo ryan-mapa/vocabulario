@@ -81,6 +81,59 @@ select {
 .progress { height: 5px; background: var(--panel); border-radius: 99px; overflow: hidden; margin-bottom: 18px; }
 .progress-fill { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--rojo), var(--oro)); transition: width 0.3s ease; }
 
+/* Stage picker: three steps left to right, so the row itself reads as depth.
+   A locked step stays visible — seeing what is next is the point. */
+.stages { margin-bottom: 18px; }
+
+.stage-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+.stage {
+  position: relative;
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px 10px;
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.stage:hover:not(:disabled) { border-color: var(--oro); }
+.stage[aria-pressed="true"] { background: var(--panel-hi); border-color: var(--oro); }
+.stage:disabled { cursor: not-allowed; color: var(--muted); }
+
+.stage-name { font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
+.stage-meta { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stage:disabled .stage-name { font-weight: 500; }
+
+/* Mastery of the stage, drawn along the bottom edge of its own button. */
+.stage-fill {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--rojo), var(--oro));
+  transition: width 0.3s ease;
+}
+
+.unlock-note { margin: 8px 2px 0; font-size: 12px; color: var(--muted); }
+.unlock-note strong { color: var(--ink); font-weight: 600; }
+
+.unlock-banner {
+  margin: 0 0 10px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1207;
+  background: linear-gradient(90deg, var(--oro), #f5c95e);
+  border-radius: 99px;
+}
+
 .card {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -167,4 +220,5 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
 @media (max-width: 460px) {
   .topbar { flex-direction: column; align-items: stretch; }
   .settings { flex-direction: column; }
+  .stage-row { grid-template-columns: 1fr; }
 }

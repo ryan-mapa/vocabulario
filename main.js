@@ -1,7 +1,8 @@
-import { DECKS } from './source/vocab.js';
+import { DECKS, STAGE_NAMES, ALL_DECK_ID } from './source/vocab.js';
 import { DIRECTIONS } from './source/quiz.js';
 import { createGame } from './source/game.js';
 import { load, save, withCards, withBests, reset } from './source/storage.js';
+import { deckProgress, unlockedDepth, nextUnlock } from './source/stages.js';
 
 const el = (id) => document.getElementById(id);
 const ui = {
@@ -12,6 +13,9 @@ const ui = {
   mastery: el('mastery'),
   best: el('best'),
   roundProgress: el('round-progress'),
+  stageRow: el('stage-row'),
+  unlockNote: el('unlock-note'),
+  unlockBanner: el('unlock-banner'),
   play: el('play'),
   directionHint: el('direction-hint'),
   prompt: el('prompt'),
@@ -28,27 +32,89 @@ const ui = {
 
 let store = load();
 let game = null;
+let stage = 0;
+let depthAtRoundStart = 0;
 
 function populateDecks() {
-  const options = [{ id: 'todos', emoji: '🌎', name: 'All words' }, ...DECKS];
+  const options = [{ id: ALL_DECK_ID, emoji: '🌎', name: 'All words' }, ...DECKS];
+  const selected = ui.deck.value;
   ui.deck.innerHTML = '';
   for (const deck of options) {
     const option = document.createElement('option');
     option.value = deck.id;
-    option.textContent = `${deck.emoji} ${deck.name}`;
+    // Filled dots show how deep the deck is open, at a glance in the list.
+    const depth = unlockedDepth(deck.id, store.cards);
+    const dots = STAGE_NAMES.map((_, i) => (i <= depth ? '●' : '○')).join('');
+    option.textContent = `${deck.emoji} ${deck.name}  ${dots}`;
     ui.deck.append(option);
+  }
+  if (selected) ui.deck.value = selected;
+}
+
+function renderStages() {
+  const deckId = ui.deck.value;
+  const report = deckProgress(deckId, store.cards);
+  ui.stageRow.innerHTML = '';
+
+  report.forEach((info, index) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'stage';
+    button.disabled = !info.unlocked;
+    button.setAttribute('aria-pressed', String(index === stage));
+
+    const name = document.createElement('span');
+    name.className = 'stage-name';
+    name.textContent = info.unlocked ? STAGE_NAMES[index] : `🔒 ${STAGE_NAMES[index]}`;
+
+    const meta = document.createElement('span');
+    meta.className = 'stage-meta';
+    meta.textContent = info.unlocked
+      ? `${info.mastered}/${info.total} mastered`
+      : 'locked';
+
+    const fill = document.createElement('span');
+    fill.className = 'stage-fill';
+    fill.style.width = `${Math.round(info.mastery * 100)}%`;
+
+    button.append(name, meta, fill);
+    button.addEventListener('click', () => {
+      if (index === stage) return;
+      stage = index;
+      startGame();
+    });
+    ui.stageRow.append(button);
+  });
+
+  const next = nextUnlock(deckId, store.cards);
+  if (!next) {
+    ui.unlockNote.textContent = 'Every stage in this deck is open.';
+  } else {
+    const now = Math.round(next.mastery * 100);
+    const goal = Math.round(next.threshold * 100);
+    ui.unlockNote.innerHTML =
+      `<strong>${STAGE_NAMES[next.stage]}</strong> unlocks at ${goal}% mastery of ` +
+      `${STAGE_NAMES[next.from]} — you're at ${now}%.`;
   }
 }
 
 function startGame() {
+  const deckId = ui.deck.value;
+  // Switching decks can land on a stage this deck has not opened yet.
+  stage = Math.min(stage, unlockedDepth(deckId, store.cards));
+
+  depthAtRoundStart = unlockedDepth(deckId, store.cards);
   game = createGame({
-    deckId: ui.deck.value,
+    deckId,
+    stage,
     direction: ui.direction.value,
     cards: store.cards
   });
   ui.summary.hidden = true;
   ui.play.hidden = false;
+  ui.unlockBanner.hidden = true;
   game.startRound();
+  renderStages();
   render();
 }
 
@@ -124,6 +190,15 @@ function advance() {
 function showSummary() {
   ui.play.hidden = true;
   ui.summary.hidden = false;
+  populateDecks();
+  renderStages();
+
+  // Crossing the threshold mid-round is the reward; call it out before the score.
+  const depth = unlockedDepth(ui.deck.value, store.cards);
+  const unlocked = depth > depthAtRoundStart;
+  ui.unlockBanner.hidden = !unlocked;
+  if (unlocked) ui.unlockBanner.textContent = `🔓 ${STAGE_NAMES[depth]} unlocked!`;
+  depthAtRoundStart = depth;
   ui.summaryScore.textContent = game.state.score;
   ui.summaryAccuracy.textContent = `${Math.round(game.accuracy() * 100)}%`;
   ui.summaryStreak.textContent = game.state.bestStreak;

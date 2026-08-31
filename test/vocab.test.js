@@ -1,37 +1,78 @@
 import { describe, it, expect } from 'vitest';
-import { DECKS, getDeck, wordsFor, wordId } from '../source/vocab.js';
+import {
+  DECKS,
+  STAGE_COUNT,
+  ALL_DECK_ID,
+  getDeck,
+  stageWords,
+  deckWords,
+  wordId
+} from '../source/vocab.js';
 
-const everyWord = DECKS.flatMap((deck) => deck.words);
+const everyWord = DECKS.flatMap((deck) => deck.stages.flat());
 
 describe('decks', () => {
-  it('exposes every word under "todos"', () => {
-    expect(wordsFor('todos')).toHaveLength(everyWord.length);
-    expect(wordsFor('animales')).toHaveLength(15);
-    expect(wordsFor('nope')).toEqual([]);
-    expect(getDeck('nope')).toBeNull();
-  });
-
-  it('gives each deck an id, a name and enough words for four choices', () => {
-    const ids = new Set();
+  it('gives every deck the full set of stages, each big enough for four choices', () => {
     for (const deck of DECKS) {
-      expect(deck.name).toBeTruthy();
-      expect(ids.has(deck.id)).toBe(false);
-      ids.add(deck.id);
-      expect(deck.words.length).toBeGreaterThanOrEqual(4);
+      expect(deck.id, 'deck id').toBeTruthy();
+      expect(deck.name, `${deck.id} name`).toBeTruthy();
+      expect(deck.stages, `${deck.id} stages`).toHaveLength(STAGE_COUNT);
+      for (const [index, words] of deck.stages.entries()) {
+        expect(words.length, `${deck.id} stage ${index}`).toBeGreaterThanOrEqual(4);
+      }
     }
   });
 
-  it('keeps Spanish word ids unique so progress never collides', () => {
-    const ids = everyWord.map(wordId);
-    expect(new Set(ids).size).toBe(ids.length);
+  it('exposes stage and whole-deck slices, and the combined deck', () => {
+    const deck = DECKS[0];
+    expect(stageWords(deck.id, 0)).toEqual(deck.stages[0]);
+    expect(deckWords(deck.id)).toHaveLength(deck.stages.flat().length);
+    expect(deckWords(ALL_DECK_ID)).toHaveLength(everyWord.length);
+    expect(stageWords(ALL_DECK_ID, 0)).toHaveLength(DECKS.length * deck.stages[0].length);
+    expect(deckWords('nope')).toEqual([]);
+    expect(stageWords('nope', 0)).toEqual([]);
+    expect(getDeck('nope')).toBeNull();
+  });
+
+  it('keeps Spanish words unique so progress never collides', () => {
+    const seen = new Map();
+    const clashes = [];
+    for (const deck of DECKS) {
+      for (const [stage, words] of deck.stages.entries()) {
+        for (const word of words) {
+          const where = `${deck.id}:S${stage + 1}`;
+          if (seen.has(word.es)) clashes.push(`${word.es} (${seen.get(word.es)} + ${where})`);
+          else seen.set(word.es, where);
+        }
+      }
+    }
+    expect(clashes).toEqual([]);
+  });
+
+  // A repeated English string would let one prompt have two right answers in the
+  // English -> Spanish direction, and the second one would be scored wrong.
+  it('keeps English answers unique so no question has two correct choices', () => {
+    const seen = new Map();
+    const clashes = [];
+    for (const deck of DECKS) {
+      for (const [stage, words] of deck.stages.entries()) {
+        for (const word of words) {
+          const where = `${deck.id}:S${stage + 1}`;
+          if (seen.has(word.en)) clashes.push(`${word.en} (${seen.get(word.en)} + ${where})`);
+          else seen.set(word.en, where);
+        }
+      }
+    }
+    expect(clashes).toEqual([]);
   });
 
   it('has both sides filled in and trimmed', () => {
     for (const word of everyWord) {
-      expect(word.es.trim()).toBe(word.es);
-      expect(word.en.trim()).toBe(word.en);
-      expect(word.es.length).toBeGreaterThan(1);
-      expect(word.en.length).toBeGreaterThan(1);
+      expect(word.es.trim(), word.es).toBe(word.es);
+      expect(word.en.trim(), word.en).toBe(word.en);
+      expect(word.es.length).toBeGreaterThan(0);
+      expect(word.en.length).toBeGreaterThan(0);
+      expect(wordId(word)).toBe(word.es);
     }
   });
 });

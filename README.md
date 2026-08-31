@@ -1,8 +1,8 @@
 # Vocabulario 🇪🇸
 
-A Spanish vocabulary game. 120 words across 8 decks, multiple choice, with
-Leitner-box spaced repetition so the words you miss come back sooner than the
-ones you know.
+A Spanish vocabulary game. 630 words across 14 categories and 3 stages of
+depth, multiple choice, with Leitner-box spaced repetition so the words you
+miss come back sooner than the ones you know. Deeper stages are earned.
 
 **▶ Play it: https://ryan-mapa.github.io/vocabulario/**
 
@@ -21,8 +21,16 @@ ahead. Rounds are 10 questions.
 ## How it plays
 
 - **Decks** — Food, Animals, The Home, Verbs, Travel, The Body, Days &
-  Weather, Adjectives, or all 120 at once. Nouns carry their article so you learn the
-  gender with the word.
+  Weather, Adjectives, Family & People, Numbers & Money, Work & School,
+  City & Places, Clothing, Feelings & Mind — or all 630 words at once. Nouns
+  carry their article so you learn the gender with the word.
+- **Stages** — each deck runs Basics → Everyday → Fluent, 15 words apiece.
+  Only Basics is open at first; a stage unlocks when the one before it reaches
+  60% mastery, so depth is earned rather than dumped on you. The dots beside a
+  deck name (`●●○`) show how far it is open, and the bar under each stage
+  button is that stage's mastery. Under **All words**, a stage counts as open
+  once any single deck has opened it, and draws only from the decks that have
+  — a locked deck never leaks its harder words into a combined round.
 - **Direction** — Español → English (recognition) or English → Español (recall,
   the harder one).
 - **Scoring** — 10 points a word, plus 2 per consecutive correct answer up to a
@@ -32,7 +40,10 @@ ahead. Rounds are 10 questions.
   questions). Get it wrong and it drops straight back to box 0. Box 5 is
   "mastered", and the mastery stat is how far the whole deck has climbed.
 - **Progress** persists in `localStorage`, keyed by the Spanish word — so
-  learning *la manzana* in Comida also counts in Todas las palabras.
+  learning *la manzana* in Food also counts under All words. Unlock state is
+  *derived* from that same card map rather than stored, so there is no second
+  source of truth to keep in sync, and someone who already knows a deck finds
+  its deeper stages open on arrival.
 
 ## Layout
 
@@ -41,8 +52,9 @@ index.html      markup
 style.css       styles
 main.js         DOM wiring — the only file that touches the document
 source/
-  vocab.js      the word decks
+  vocab.js      the word decks, three stages each
   srs.js        Leitner boxes, scheduling, mastery
+  stages.js     which stages are unlocked, and the pool each one draws from
   quiz.js       builds a multiple-choice question
   game.js       round state, scoring, streaks
   storage.js    localStorage persistence
