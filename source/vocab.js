@@ -4,6 +4,11 @@
 // deck is the 120-word set the app shipped with — the Spanish text is the
 // progress key, so those cards keep their history from before stages existed.
 // Never rewrite an `es` string that has shipped: it silently orphans progress.
+//
+// Vocabulary is Latin American Spanish with US English glosses. One shipped key
+// was rewritten to get there — 'el billete' -> 'el boleto' — which reset that
+// single word for anyone who had already played it. It was done while the app
+// had effectively no users; a rename after this point needs a real migration.
 
 export const STAGE_NAMES = ['Basics', 'Everyday', 'Fluent'];
 export const STAGE_COUNT = STAGE_NAMES.length;
@@ -40,13 +45,13 @@ export const DECKS = [
         { es: 'la mantequilla', en: 'butter' },
         { es: 'el aceite', en: 'oil' },
         { es: 'el jamón', en: 'ham' },
-        { es: 'la galleta', en: 'biscuit' },
+        { es: 'la galleta', en: 'cookie' },
         { es: 'el helado', en: 'ice cream' },
         { es: 'el limón', en: 'lemon' },
         { es: 'la uva', en: 'grape' },
         { es: 'la pera', en: 'pear' },
         { es: 'el tomate', en: 'tomato' },
-        { es: 'la patata', en: 'potato' },
+        { es: 'la papa', en: 'potato' },
         { es: 'el pastel', en: 'cake' }
       ],
       [
@@ -60,7 +65,7 @@ export const DECKS = [
         { es: 'el desayuno', en: 'breakfast' },
         { es: 'el almuerzo', en: 'lunch' },
         { es: 'la cena', en: 'dinner' },
-        { es: 'el sabor', en: 'flavour' },
+        { es: 'el sabor', en: 'flavor' },
         { es: 'la receta', en: 'recipe' },
         { es: 'la ternera', en: 'veal' },
         { es: 'el trigo', en: 'wheat' },
@@ -105,7 +110,7 @@ export const DECKS = [
         { es: 'el lobo', en: 'wolf' },
         { es: 'la cabra', en: 'goat' },
         { es: 'el gallo', en: 'rooster' },
-        { es: 'la mosca', en: 'housefly' }
+        { es: 'la mosca', en: 'fly' }
       ],
       [
         { es: 'el cocodrilo', en: 'crocodile' },
@@ -153,7 +158,7 @@ export const DECKS = [
         { es: 'la pared', en: 'wall' },
         { es: 'el sofá', en: 'sofa' },
         { es: 'la lámpara', en: 'lamp' },
-        { es: 'la nevera', en: 'fridge' },
+        { es: 'el refrigerador', en: 'fridge' },
         { es: 'el horno', en: 'oven' },
         { es: 'el plato', en: 'plate' },
         { es: 'el vaso', en: 'drinking glass' },
@@ -172,13 +177,13 @@ export const DECKS = [
         { es: 'la chimenea', en: 'fireplace' },
         { es: 'el enchufe', en: 'plug' },
         { es: 'la bombilla', en: 'light bulb' },
-        { es: 'el grifo', en: 'tap' },
+        { es: 'el grifo', en: 'faucet' },
         { es: 'el fregadero', en: 'sink' },
         { es: 'la cortina', en: 'curtain' },
         { es: 'la alfombra', en: 'rug' },
-        { es: 'el armario', en: 'wardrobe' },
+        { es: 'el armario', en: 'closet' },
         { es: 'el estante', en: 'shelf' },
-        { es: 'la basura', en: 'rubbish' },
+        { es: 'la basura', en: 'trash' },
         { es: 'la cerradura', en: 'lock' },
         { es: 'el timbre', en: 'doorbell' }
       ]
@@ -250,7 +255,7 @@ export const DECKS = [
       [
         { es: 'el aeropuerto', en: 'airport' },
         { es: 'el tren', en: 'train' },
-        { es: 'el billete', en: 'ticket' },
+        { es: 'el boleto', en: 'ticket' },
         { es: 'la maleta', en: 'suitcase' },
         { es: 'el mapa', en: 'map' },
         { es: 'la playa', en: 'beach' },
@@ -265,9 +270,9 @@ export const DECKS = [
         { es: 'la carretera', en: 'highway' }
       ],
       [
-        { es: 'el avión', en: 'aeroplane' },
+        { es: 'el avión', en: 'airplane' },
         { es: 'el barco', en: 'ship' },
-        { es: 'el coche', en: 'car' },
+        { es: 'el carro', en: 'car' },
         { es: 'el autobús', en: 'bus' },
         { es: 'la estación', en: 'station' },
         { es: 'el pasaporte', en: 'passport' },
@@ -392,7 +397,7 @@ export const DECKS = [
         { es: 'el calor', en: 'heat' },
         { es: 'la primavera', en: 'spring' },
         { es: 'el verano', en: 'summer' },
-        { es: 'el otoño', en: 'autumn' },
+        { es: 'el otoño', en: 'fall' },
         { es: 'el invierno', en: 'winter' },
         { es: 'la hora', en: 'hour' },
         { es: 'el minuto', en: 'minute' }
@@ -504,7 +509,7 @@ export const DECKS = [
         { es: 'la sobrina', en: 'niece' },
         { es: 'el esposo', en: 'husband' },
         { es: 'la esposa', en: 'wife' },
-        { es: 'el vecino', en: 'neighbour' },
+        { es: 'el vecino', en: 'neighbor' },
         { es: 'el novio', en: 'boyfriend' },
         { es: 'la novia', en: 'girlfriend' },
         { es: 'el nieto', en: 'grandson' },
@@ -639,7 +644,7 @@ export const DECKS = [
         { es: 'la habilidad', en: 'skill' },
         { es: 'el ascenso', en: 'promotion' },
         { es: 'la jubilación', en: 'retirement' },
-        { es: 'el sindicato', en: 'trade union' },
+        { es: 'el sindicato', en: 'labor union' },
         { es: 'la huelga', en: 'strike' },
         { es: 'el despido', en: 'dismissal' },
         { es: 'la plantilla', en: 'staff' },
@@ -666,25 +671,25 @@ export const DECKS = [
         { es: 'el restaurante', en: 'restaurant' },
         { es: 'el edificio', en: 'building' },
         { es: 'la farmacia', en: 'pharmacy' },
-        { es: 'el barrio', en: 'neighbourhood' },
+        { es: 'el barrio', en: 'neighborhood' },
         { es: 'la esquina', en: 'street corner' },
-        { es: 'el centro', en: 'centre' }
+        { es: 'el centro', en: 'center' }
       ],
       [
-        { es: 'el ayuntamiento', en: 'town hall' },
+        { es: 'la alcaldía', en: 'town hall' },
         { es: 'la comisaría', en: 'police station' },
         { es: 'el semáforo', en: 'traffic light' },
-        { es: 'la acera', en: 'pavement' },
+        { es: 'la acera', en: 'sidewalk' },
         { es: 'el cruce', en: 'crossroads' },
-        { es: 'el aparcamiento', en: 'car park' },
+        { es: 'el estacionamiento', en: 'parking lot' },
         { es: 'la fuente', en: 'fountain' },
         { es: 'el quiosco', en: 'kiosk' },
         { es: 'la panadería', en: 'bakery' },
         { es: 'la carnicería', en: 'butcher shop' },
         { es: 'la peluquería', en: 'hair salon' },
         { es: 'el supermercado', en: 'supermarket' },
-        { es: 'la gasolinera', en: 'petrol station' },
-        { es: 'el teatro', en: 'theatre' },
+        { es: 'la gasolinera', en: 'gas station' },
+        { es: 'el teatro', en: 'theater' },
         { es: 'el estadio', en: 'stadium' }
       ],
       [
@@ -697,7 +702,7 @@ export const DECKS = [
         { es: 'el vertedero', en: 'landfill' },
         { es: 'la alcantarilla', en: 'sewer' },
         { es: 'el andamio', en: 'scaffolding' },
-        { es: 'la obra', en: 'building site' },
+        { es: 'la obra', en: 'construction site' },
         { es: 'el suburbio', en: 'suburb' },
         { es: 'las afueras', en: 'outskirts' },
         { es: 'el peatón', en: 'pedestrian' },
@@ -713,7 +718,7 @@ export const DECKS = [
     stages: [
       [
         { es: 'la camisa', en: 'shirt' },
-        { es: 'el pantalón', en: 'trousers' },
+        { es: 'el pantalón', en: 'pants' },
         { es: 'el vestido', en: 'dress' },
         { es: 'la falda', en: 'skirt' },
         { es: 'el zapato', en: 'shoe' },
@@ -731,17 +736,17 @@ export const DECKS = [
       [
         { es: 'el bolsillo', en: 'pocket' },
         { es: 'el botón', en: 'button' },
-        { es: 'la cremallera', en: 'zip' },
+        { es: 'la cremallera', en: 'zipper' },
         { es: 'la manga', en: 'sleeve' },
         { es: 'el collar', en: 'necklace' },
         { es: 'el anillo', en: 'ring' },
         { es: 'el reloj', en: 'watch' },
-        { es: 'las gafas', en: 'spectacles' },
+        { es: 'los lentes', en: 'eyeglasses' },
         { es: 'el paraguas', en: 'umbrella' },
         { es: 'la cartera', en: 'wallet' },
         { es: 'el bolso', en: 'handbag' },
         { es: 'la corbata', en: 'necktie' },
-        { es: 'el pijama', en: 'pyjamas' },
+        { es: 'el pijama', en: 'pajamas' },
         { es: 'el traje', en: 'suit' },
         { es: 'la sandalia', en: 'sandal' }
       ],
@@ -753,14 +758,14 @@ export const DECKS = [
         { es: 'el encaje', en: 'lace' },
         { es: 'la costura', en: 'seam' },
         { es: 'el dobladillo', en: 'hem' },
-        { es: 'la percha', en: 'coat hanger' },
+        { es: 'la percha', en: 'hanger' },
         { es: 'la hebilla', en: 'buckle' },
         { es: 'el tejido', en: 'fabric' },
         { es: 'la prenda', en: 'garment' },
         { es: 'el disfraz', en: 'costume' },
         { es: 'el delantal', en: 'apron' },
         { es: 'la gorra', en: 'cap' },
-        { es: 'el chaleco', en: 'waistcoat' }
+        { es: 'el chaleco', en: 'vest' }
       ]
     ]
   },
