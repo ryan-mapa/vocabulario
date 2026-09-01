@@ -11,6 +11,7 @@ import {
   parseProgress
 } from './source/storage.js';
 import { deckProgress, unlockedDepth, nextUnlock } from './source/stages.js';
+import { fetchMe, signOut } from './source/api.js';
 
 const el = (id) => document.getElementById(id);
 const ui = {
@@ -48,7 +49,13 @@ const ui = {
   transferCopy: el('transfer-copy'),
   transferImport: el('transfer-import'),
   transferClose: el('transfer-close'),
-  transferStatus: el('transfer-status')
+  transferStatus: el('transfer-status'),
+  auth: el('auth'),
+  signIn: el('sign-in'),
+  authUser: el('auth-user'),
+  authName: el('auth-name'),
+  authNote: el('auth-note'),
+  signOut: el('sign-out')
 };
 
 let store = load();
@@ -337,5 +344,43 @@ ui.confirmClear.addEventListener('click', () => {
   startGame();
 });
 
+/**
+ * Show the account control, but only where there is an API to back it. Served
+ * from GitHub Pages or the single-file build there is none, and a sign-in
+ * button that cannot work is worse than no button at all.
+ */
+async function renderAccount() {
+  const me = await fetchMe();
+  if (!me) return; // no API behind this copy — leave the whole block hidden
+
+  ui.auth.hidden = false;
+  ui.signIn.hidden = me.signedIn;
+  ui.authUser.hidden = !me.signedIn;
+  if (me.signedIn) ui.authName.textContent = me.name;
+}
+
+/**
+ * The OAuth round trip comes back to `/?auth=ok` or `/?auth=failed`. Report
+ * only the failure — arriving signed in speaks for itself — then drop the
+ * parameter so a refresh does not replay a stale message.
+ */
+function readAuthResult() {
+  const result = new URL(location.href).searchParams.get('auth');
+  if (!result) return;
+
+  if (result === 'failed') {
+    ui.authNote.textContent = 'Sign-in did not complete. Please try again.';
+    ui.authNote.hidden = false;
+  }
+  history.replaceState(null, '', location.pathname);
+}
+
+ui.signOut.addEventListener('click', async () => {
+  await signOut();
+  location.assign('/');
+});
+
 populateDecks();
 startGame();
+readAuthResult();
+renderAccount();

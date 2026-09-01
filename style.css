@@ -37,7 +37,7 @@ body {
 
 /* The mark is sized off the wordmark rather than fixed, so the two stay in
    proportion when the header shrinks on a phone. */
-.brand { display: flex; align-items: center; gap: 10px; }
+.brand { display: flex; align-items: center; gap: 10px; flex: 1; }
 .brand-mark { width: 1.15em; height: 1.15em; font-size: 26px; flex: none; }
 
 .wordmark {
@@ -51,6 +51,34 @@ body {
 }
 
 .settings { display: flex; gap: 10px; }
+
+/* The account control. Google's own button artwork and wording, unaltered —
+   the whole value of the standard button is that people recognise it on sight,
+   so it deliberately does not match the rest of the page. This is their dark
+   theme, which is the sanctioned variant for a ground like ours.
+   https://developers.google.com/identity/branding-guidelines */
+/* `hidden` is a UA style, so any author rule that sets `display` beats it.
+   Several controls here are flex, and toggling `.hidden` on them silently did
+   nothing until this rule existed. */
+[hidden] { display: none !important; }
+
+.auth { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+.google-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  height: 36px; padding: 0 14px 0 12px;
+  font: 500 13px/1 Roboto, system-ui, sans-serif;
+  color: #e3e3e3; background: #131314;
+  border: 1px solid #8e918f; border-radius: 18px;
+  text-decoration: none; white-space: nowrap;
+}
+.google-btn:hover { background: #1d1d1e; }
+.google-btn:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
+.g-mark { width: 17px; height: 17px; flex: none; }
+
+.auth-user { display: flex; align-items: center; gap: 8px; }
+.auth-name { font-size: 13px; font-weight: 600; }
+.auth-note { margin: 0; font-size: 12px; color: var(--rojo); flex-basis: 100%; }
 
 .field { display: grid; gap: 4px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
 
@@ -312,7 +340,21 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
 @media (max-width: 460px) {
   body { padding: 14px 12px 24px; }
 
-  .topbar { flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 14px; }
+  .topbar { flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .auth { order: 1; }
+  .settings { order: 2; flex-basis: 100%; }
+
+  /* Icon only: the label is what makes this button too wide for a phone, and
+     the four-colour G is the part people actually recognise. */
+  .google-btn { padding: 0; width: 36px; justify-content: center; }
+  .google-btn-label { display: none; }
+}
+
+/* Narrower than an iPhone SE, the signed-in name is what pushes the account
+   control onto a row of its own — 50px of a 560px-tall screen, spent telling
+   you your own name. The G mark still says you are signed in. */
+@media (max-width: 400px) {
+  .auth-name { display: none; }
   .wordmark { font-size: 22px; }
   .brand { gap: 8px; }
   .brand-mark { font-size: 22px; }

@@ -20,6 +20,7 @@ const MODULES = [
   'source/quiz.js',
   'source/storage.js',
   'source/game.js',
+  'source/api.js',
   'main.js'
 ];
 
@@ -34,11 +35,11 @@ function stripModuleSyntax(src, file) {
 
   const leftover = withoutImports
     .split('\n')
-    .find((line) => /^\s*(import|export)\s/.test(line) && !/^export\s+(const|function|class|let)\b/.test(line));
+    .find((line) => /^\s*(import|export)\s/.test(line) && !/^export\s+(async\s+function|const|function|class|let)\b/.test(line));
   if (leftover) throw new Error(`${file}: unhandled module syntax -> ${leftover.trim()}`);
 
   return withoutImports
-    .replace(/^export\s+(?=(const|function|class|let)\b)/gm, '')
+    .replace(/^export\s+(?=(async\s+function|const|function|class|let)\b)/gm, '')
     .replace(/\n{3,}/g, '\n\n');
 }
 
