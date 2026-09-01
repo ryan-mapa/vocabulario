@@ -4,7 +4,7 @@ A Spanish vocabulary game. 630 words across 14 categories and 3 stages of
 depth, multiple choice, with Leitner-box spaced repetition so the words you
 miss come back sooner than the ones you know. Deeper stages are earned.
 
-**▶ Play it: https://ryan-mapa.github.io/vocabulario/**
+**▶ Play it: https://vocabulario.ryan-mapa.dev**
 
 ## Run it locally
 
