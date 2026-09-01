@@ -48,8 +48,10 @@ function populateDecks() {
     const option = document.createElement('option');
     option.value = deck.id;
     // Filled stars show how deep the deck is open, at a glance in the list.
+    // The filled one is the emoji star rather than U+2605 because option text
+    // cannot be styled per-character — an emoji carries its own gold.
     const depth = unlockedDepth(deck.id, store.cards);
-    const stars = STAGE_NAMES.map((_, i) => (i <= depth ? '★' : '☆')).join('');
+    const stars = STAGE_NAMES.map((_, i) => (i <= depth ? '⭐' : '☆')).join('');
     option.textContent = `${deck.emoji} ${deck.name}  ${stars}`;
     ui.deck.append(option);
   }
