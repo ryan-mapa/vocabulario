@@ -1,0 +1,18 @@
+# Everything the Worker uploads as a static asset comes from the repo root, so
+# anything here that is not part of the site has to be named. Getting this
+# wrong publishes source and history, not just clutter.
+.git
+.github
+.wrangler
+node_modules
+worker
+test
+dist
+build.mjs
+vitest.config.js
+wrangler.toml
+package.json
+package-lock.json
+.assetsignore
+.gitignore
+.DS_Store

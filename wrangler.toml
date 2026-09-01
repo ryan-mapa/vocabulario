@@ -1,0 +1,37 @@
+name = "vocabulario"
+main = "worker/src/index.js"
+compatibility_date = "2026-09-01"
+
+# Custom domain only. Declaring a route turns the workers.dev subdomain off
+# anyway, and nothing should depend on it: the page only ever calls its own
+# origin, so the address can change without a client edit.
+#
+# Top-level keys have to sit above every [section] header — TOML assigns any
+# key after a header to that table, so putting this lower down silently makes
+# it `assets.workers_dev`, which wrangler ignores with only a warning.
+workers_dev = false
+
+# This Worker serves the app itself as well as the API, so the whole thing is
+# one origin: no CORS, and the session can ride in an HttpOnly cookie that page
+# scripts — and therefore any XSS — cannot read.
+#
+# Static files come from the repository root, the same files GitHub Pages
+# serves, so there is still no build step. .assetsignore keeps the tooling,
+# tests and git directory out of what gets uploaded.
+[assets]
+directory = "."
+
+[[routes]]
+pattern = "vocabulario.ryan-mapa.dev"
+custom_domain = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "vocabulario"
+database_id = "0e582ee0-a5d5-4262-9d48-dabefe6ac00d"
+migrations_dir = "worker/migrations"
+
+# Secrets, set with `npx wrangler secret put <NAME>` (never in this file):
+#   JWT_SECRET            random 32+ byte string; signs session cookies and OAuth state
+#   GOOGLE_CLIENT_ID      from the Google OAuth client
+#   GOOGLE_CLIENT_SECRET  from the Google OAuth client
