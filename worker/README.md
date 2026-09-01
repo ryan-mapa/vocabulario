@@ -39,9 +39,34 @@ handle what is left.
 | `GET` | `/auth/google/start` | Begin Google OAuth. |
 | `GET` | `/auth/google/callback` | Finish it, set the session cookie, redirect home. |
 | `POST` | `/auth/logout` | Clear the session cookie. |
+| `POST` | `/sync` | Push this device's answers, pull every device's cards. Requires a session. |
 
-Progress sync (`POST /sync`) is not built yet — see the data model below for
-the shape it will take.
+## Sync
+
+One request does both directions, and the order is the point: the pushed
+reviews are folded *before* the pull reads, so the cards coming back already
+include what was just sent and can never be a step behind it.
+
+```
+POST /sync  { since, reviews[], imports[], best }
+         -> { serverTime, accepted[], cards{}, best }
+```
+
+`since` is the client's last `serverTime`; `0` asks for everything, which is
+what a browser signing in for the first time sends. The response carries every
+card whose `updated_at` is newer than `since` — including the words just
+pushed, since re-folding stamps them.
+
+**A first sync sends `imports` and no `reviews`, deliberately.** Progress
+earned while signed out exists in two overlapping forms in the browser: the
+card map, and the queued answers that produced it. Sending both would fold
+those answers on top of a snapshot that already contains them and promote every
+word a second time. The snapshot wins, because it also covers progress from
+before answers were ever recorded; granular history starts from the account.
+
+`imports` is `INSERT OR IGNORE`, so the first snapshot for a word is the one
+that counts. A second browser signing in later does not overwrite it — its real
+answers are folded on top instead.
 
 ## The data model
 

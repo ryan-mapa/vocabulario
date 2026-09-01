@@ -122,3 +122,37 @@ describe('rounds', () => {
     }
   });
 });
+
+// A round works from its own copy of the cards, taken when it started. Progress
+// arriving mid-round has to reach that copy, or the next answer writes the
+// stale one back over it — which silently destroys whatever just synced in.
+describe('progress arriving mid-round', () => {
+  it('takes in cards the round has never seen', () => {
+    const game = newGame();
+    game.startRound();
+    game.adoptCards({ 'una palabra de otro aparato': { box: 4, dueAt: 0, seen: 9, correct: 9, lastSeenAt: 1 } });
+    expect(game.state.cards['una palabra de otro aparato'].box).toBe(4);
+  });
+
+  it('lets the incoming card win over the copy the round started with', () => {
+    const word = 'el gato';
+    const game = createGame({
+      deckId: 'animales',
+      cards: { [word]: { box: 0, dueAt: 0, seen: 1, correct: 0, lastSeenAt: 0 } },
+      random: mulberry32(3)
+    });
+    game.adoptCards({ [word]: { box: 3, dueAt: 99, seen: 8, correct: 7, lastSeenAt: 99 } });
+    expect(game.state.cards[word]).toEqual({ box: 3, dueAt: 99, seen: 8, correct: 7, lastSeenAt: 99 });
+  });
+
+  it('keeps answers the round has already given for other words', () => {
+    const game = newGame();
+    game.startRound();
+    const answered = game.state.question.word.es;
+    game.answer(game.state.question.answer);
+    const afterAnswer = game.state.cards[answered];
+
+    game.adoptCards({ 'otra palabra': { box: 1, dueAt: 0, seen: 1, correct: 1, lastSeenAt: 0 } });
+    expect(game.state.cards[answered]).toEqual(afterAnswer);
+  });
+});

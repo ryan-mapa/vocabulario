@@ -8,10 +8,14 @@ import {
   withBests,
   reset,
   exportProgress,
-  parseProgress
+  parseProgress,
+  newReviewId,
+  queueReview,
+  readOutbox,
+  clearQueued
 } from './source/storage.js';
 import { deckProgress, unlockedDepth, nextUnlock } from './source/stages.js';
-import { fetchMe, signOut } from './source/api.js';
+import { fetchMe, signOut, sync } from './source/api.js';
 
 const el = (id) => document.getElementById(id);
 const ui = {
@@ -62,6 +66,10 @@ let store = load();
 let game = null;
 let stage = 0;
 let depthAtRoundStart = 0;
+let account = null;   // { signedIn, name } once /me has answered, else null
+
+/** Answers per sync request; the server refuses more than 500. */
+const SYNC_BATCH = 250;
 
 function populateDecks() {
   const options = [{ id: ALL_DECK_ID, emoji: '🌎', name: 'All words' }, ...DECKS];
@@ -207,6 +215,17 @@ function submit(choice) {
   if (!game.state.question || game.state.lastAnswer) return;
 
   const result = game.answer(choice);
+  // Recorded whether or not anyone is signed in: history kept from the start
+  // is history a later sign-in can actually carry with it.
+  queueReview({
+    id: newReviewId(),
+    wordEs: result.question.word.es,
+    deckId: game.state.deckId,
+    stage: game.state.stage,
+    direction: game.state.direction,
+    correct: result.correct,
+    reviewedAt: result.at
+  });
   store = withBests(withCards(store, game.state.cards), {
     score: game.state.score,
     streak: game.state.bestStreak
@@ -244,6 +263,7 @@ function advance() {
 }
 
 function showSummary() {
+  syncProgress();
   ui.play.hidden = true;
   ui.summary.hidden = false;
   populateDecks();
@@ -350,13 +370,81 @@ ui.confirmClear.addEventListener('click', () => {
  * button that cannot work is worse than no button at all.
  */
 async function renderAccount() {
-  const me = await fetchMe();
-  if (!me) return; // no API behind this copy — leave the whole block hidden
+  account = await fetchMe();
+  if (!account) return; // no API behind this copy — leave the whole block hidden
 
   ui.auth.hidden = false;
-  ui.signIn.hidden = me.signedIn;
-  ui.authUser.hidden = !me.signedIn;
-  if (me.signedIn) ui.authName.textContent = me.name;
+  ui.signIn.hidden = account.signedIn;
+  ui.authUser.hidden = !account.signedIn;
+  if (account.signedIn) ui.authName.textContent = account.name;
+}
+
+/**
+ * Push queued answers, take back whatever the account knows.
+ *
+ * The outbox is only cleared for ids the server confirms, so a dropped
+ * response costs a retry rather than the answers themselves — re-sending is
+ * free, because the server ignores ids it has already stored.
+ */
+async function syncProgress() {
+  if (!account?.signedIn) return;
+
+  // The first sync of a browser is a special case, and getting it wrong
+  // silently inflates every word. Progress earned while signed out exists in
+  // two overlapping forms here: the card map, and the queued answers that
+  // produced it. Sending both would fold those answers on top of a snapshot
+  // that already contains them, promoting every word a second time.
+  //
+  // So the snapshot wins for the handover — it is the complete picture,
+  // including progress from before answers were ever recorded — and the queue
+  // is dropped rather than sent. Granular history starts from the account.
+  if (store.syncedAt === 0) {
+    const imports = Object.entries(store.cards).map(([wordEs, card]) => ({ wordEs, ...card }));
+    const result = await sync({ since: 0, reviews: [], imports, best: store.best });
+    if (!result) return;
+
+    clearQueued(readOutbox().map((entry) => entry.id));
+    applySync(result);
+    return;
+  }
+
+  // Afterwards it is just answers. Drained in batches so a long offline run
+  // catches up in one go, bounded so a server that keeps refusing cannot spin.
+  for (let pass = 0; pass < 5; pass++) {
+    const queued = readOutbox();
+    if (queued.length === 0) return;
+
+    const result = await sync({
+      since: store.syncedAt,
+      reviews: queued.slice(0, SYNC_BATCH),
+      best: store.best
+    });
+    if (!result) return; // offline or refused — the outbox keeps everything
+
+    clearQueued(result.accepted);
+    applySync(result);
+  }
+}
+
+/**
+ * Take the server's answer as the truth. Its cards are the fold over every
+ * device's history including the answers just pushed, so they cannot be behind
+ * what this browser holds.
+ */
+function applySync(result) {
+  store = withBests(
+    { ...store, cards: { ...store.cards, ...result.cards }, syncedAt: result.serverTime },
+    result.best
+  );
+  save(store);
+
+  // The round in play holds its own copy of the cards; without this it would
+  // write that now-stale copy back over what just arrived.
+  game?.adoptCards(result.cards);
+
+  populateDecks();
+  renderStages();
+  ui.best.textContent = store.best.score;
 }
 
 /**
@@ -383,4 +471,4 @@ ui.signOut.addEventListener('click', async () => {
 populateDecks();
 startGame();
 readAuthResult();
-renderAccount();
+renderAccount().then(syncProgress);

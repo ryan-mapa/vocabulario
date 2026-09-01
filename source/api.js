@@ -31,6 +31,32 @@ export async function fetchMe() {
   return typeof data?.signedIn === 'boolean' ? data : null;
 }
 
+/**
+ * Push what this device has done and pull what every other device has, in one
+ * request — the order matters. Because the push is folded before the pull
+ * reads, the cards coming back already include the answers just sent, so the
+ * response can never be a step behind what it was given.
+ *
+ * Returns null when there is no API, or the request failed. The caller keeps
+ * the outbox in that case and tries again later.
+ */
+export async function sync(payload) {
+  let data;
+  try {
+    data = await readJson(
+      await fetch('/sync', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+    );
+  } catch {
+    return null;
+  }
+  return data && typeof data.serverTime === 'number' ? data : null;
+}
+
 export async function signOut() {
   try {
     await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' });

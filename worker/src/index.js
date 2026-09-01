@@ -8,6 +8,7 @@
 // progress that follows you between devices.
 
 import { signJwt, verifyJwt } from './auth.js';
+import { sync } from './sync.js';
 
 const SESSION_COOKIE = 'vocabulario_session';
 const COOKIE_TTL_SECONDS = 30 * 24 * 60 * 60;
@@ -149,6 +150,13 @@ export default {
     if (method === 'GET' && pathname === '/auth/google/start') return authStart(request, env);
     if (method === 'GET' && pathname === '/auth/google/callback') return authCallback(request, env);
     if (method === 'POST' && pathname === '/auth/logout') return signOut();
+
+    if (method === 'POST' && pathname === '/sync') {
+      const user = await currentUser(request, env);
+      if (!user) return fail('sign in to sync progress', 401);
+      const { status, data } = await sync(request, env, user);
+      return json(data, status);
+    }
 
     // Anything else is a static-asset request that matched no file.
     return fail('not found', 404);

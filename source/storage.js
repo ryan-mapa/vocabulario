@@ -12,11 +12,22 @@ export const VERSION = 2;
 
 const KEY = 'vocabulario:v2';
 const LEGACY_KEY = 'vocabulario:v1';
+const OUTBOX_KEY = 'vocabulario:outbox';
+
+/**
+ * How many unsent answers to keep. Reached only by playing offline for a very
+ * long time; past it the oldest go, because a bounded loss of history beats
+ * filling the origin's storage quota and losing the ability to save anything.
+ */
+const OUTBOX_LIMIT = 2000;
 
 /** Marks a payload as ours, so a stray clipboard paste fails with a real message. */
 export const TRANSFER_FORMAT = 'vocabulario/progress';
 
-const EMPTY = { cards: {}, best: { score: 0, streak: 0 } };
+// `syncedAt` is the server clock of the last successful sync. Persisting it is
+// what keeps a reload from re-pulling every card and re-offering the whole
+// import; 0 means this browser has never synced.
+const EMPTY = { cards: {}, best: { score: 0, streak: 0 }, syncedAt: 0 };
 
 function storage() {
   try {
@@ -57,7 +68,8 @@ function readPayload(parsed) {
     best: {
       score: number(parsed?.best?.score, 0),
       streak: number(parsed?.best?.streak, 0)
-    }
+    },
+    syncedAt: number(parsed?.syncedAt, 0)
   };
 }
 
@@ -112,10 +124,52 @@ export function reset() {
   try {
     store?.removeItem(KEY);
     store?.removeItem(LEGACY_KEY);
+    store?.removeItem(OUTBOX_KEY);
   } catch {
     /* nothing to clear */
   }
   return structuredClone(EMPTY);
+}
+
+/** A review id. Client-generated, so an upload retried after a dropped
+ *  response is ignored on the server rather than counted twice. */
+export function newReviewId() {
+  if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
+  // Older Safari, and any non-secure context. Only needs to be unique per
+  // person, and the server treats it as an opaque key.
+  return `r-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
+/**
+ * Answers waiting to reach the server. Written on every answer, signed in or
+ * not: recording history from the start means someone who signs in later
+ * brings real history with them instead of only a snapshot.
+ */
+export function readOutbox() {
+  const store = storage();
+  if (!store) return [];
+  const raw = readKey(store, OUTBOX_KEY);
+  return Array.isArray(raw) ? raw : [];
+}
+
+function writeOutbox(entries) {
+  const store = storage();
+  if (!store) return;
+  try {
+    store.setItem(OUTBOX_KEY, JSON.stringify(entries.slice(-OUTBOX_LIMIT)));
+  } catch {
+    // Quota or blocked storage. Play carries on; this answer just won't sync.
+  }
+}
+
+export function queueReview(entry) {
+  writeOutbox([...readOutbox(), entry]);
+}
+
+/** Drop the entries the server confirmed, keeping anything added meanwhile. */
+export function clearQueued(ids) {
+  const done = new Set(ids);
+  writeOutbox(readOutbox().filter((entry) => !done.has(entry.id)));
 }
 
 /**

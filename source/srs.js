@@ -64,6 +64,30 @@ export function masteryOf(cards) {
   return total / (cards.length * (BOX_COUNT - 1));
 }
 
+/**
+ * Rebuild a card from its whole history, starting from `seed`.
+ *
+ * This is the function that makes multi-device sync conflict-free, so two
+ * properties matter more than anything else here:
+ *
+ * - It is **deterministic regardless of arrival order**. Reviews are sorted
+ *   before folding, so a review that reaches one device late still lands in
+ *   the same place. The tiebreak on `id` is not decoration: two devices can
+ *   answer in the same millisecond, and without it they would fold the same
+ *   history into different cards.
+ * - It is **pure**. The server and the browser run this exact code, so neither
+ *   can drift from the other about what a history means.
+ *
+ * `seed` is the starting card — a fresh one normally, or a snapshot imported
+ * from a browser that was keeping progress before it had an account.
+ */
+export function foldReviews(reviews, seed = newCard()) {
+  const ordered = [...reviews].sort(
+    (a, b) => a.reviewedAt - b.reviewedAt || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+  );
+  return ordered.reduce((card, entry) => review(card, Boolean(entry.correct), entry.reviewedAt), seed);
+}
+
 export function isDue(card, now) {
   return card.dueAt <= now;
 }

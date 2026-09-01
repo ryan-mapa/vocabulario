@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   newCard,
+  foldReviews,
   review,
   isMastered,
   isDue,
@@ -108,5 +109,69 @@ describe('selectNext', () => {
 
   it('returns null for an empty word list', () => {
     expect(selectNext([], {}, NOW, { random: fixedRandom })).toBeNull();
+  });
+});
+
+// The fold is what makes two devices agree. Everything here is really one
+// property stated from different angles: the same set of reviews must produce
+// the same card, no matter how or when they arrived.
+describe('foldReviews', () => {
+  const at = (id, correct, reviewedAt) => ({ id, correct, reviewedAt });
+
+  it('replays a history into the card it implies', () => {
+    const card = foldReviews([
+      at('a', 1, NOW),
+      at('b', 1, NOW + 1000),
+      at('c', 0, NOW + 2000)
+    ]);
+    expect(card).toEqual({
+      box: 0, // the miss knocks it back regardless of the two before it
+      dueAt: NOW + 2000 + intervalFor(0),
+      seen: 3,
+      correct: 2,
+      lastSeenAt: NOW + 2000
+    });
+  });
+
+  it('gives the same card whatever order the reviews arrive in', () => {
+    const history = [at('a', 1, NOW), at('b', 0, NOW + 500), at('c', 1, NOW + 900)];
+    const orders = [
+      history,
+      [...history].reverse(),
+      [history[1], history[2], history[0]],
+      [history[2], history[0], history[1]]
+    ];
+    const folded = orders.map((order) => JSON.stringify(foldReviews(order)));
+    expect(new Set(folded).size).toBe(1);
+  });
+
+  // Two devices can answer inside the same millisecond. Without the id
+  // tiebreak they would sort those two differently and disagree forever.
+  it('breaks a tied timestamp the same way every time', () => {
+    const tied = [at('zzz', 0, NOW), at('aaa', 1, NOW)];
+    expect(foldReviews(tied)).toEqual(foldReviews([...tied].reverse()));
+    // 'aaa' sorts first, so the miss is what the card ends on
+    expect(foldReviews(tied).box).toBe(0);
+  });
+
+  it('starts from an imported snapshot when there is one', () => {
+    const seed = { ...newCard(), box: 3, seen: 12, correct: 9 };
+    const card = foldReviews([at('a', 1, NOW)], seed);
+    expect(card.box).toBe(4);
+    expect(card.seen).toBe(13);
+    expect(card.correct).toBe(10);
+  });
+
+  it('is just the seed when no reviews have happened yet', () => {
+    const seed = { ...newCard(), box: 2, seen: 5, correct: 4 };
+    expect(foldReviews([], seed)).toEqual(seed);
+    expect(foldReviews([])).toEqual(newCard());
+  });
+
+  it('does not mutate what it is given', () => {
+    const history = [at('b', 1, NOW + 1), at('a', 1, NOW)];
+    const copy = JSON.parse(JSON.stringify(history));
+    foldReviews(history);
+    expect(history).toEqual(copy);
   });
 });
