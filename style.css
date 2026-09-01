@@ -35,6 +35,11 @@ body {
   margin-bottom: 20px;
 }
 
+/* The mark is sized off the wordmark rather than fixed, so the two stay in
+   proportion when the header shrinks on a phone. */
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-mark { width: 1.15em; height: 1.15em; font-size: 26px; flex: none; }
+
 .wordmark {
   margin: 0;
   font-size: 26px;
@@ -309,6 +314,8 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
 
   .topbar { flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 14px; }
   .wordmark { font-size: 22px; }
+  .brand { gap: 8px; }
+  .brand-mark { font-size: 22px; }
 
   /* Side by side rather than stacked. min-width:0 lets the grid track shrink
      below the select's intrinsic width instead of overflowing the screen. */

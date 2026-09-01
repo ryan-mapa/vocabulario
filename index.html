@@ -5,12 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Vocabulario — Spanish vocab game</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🇪🇸</text></svg>" />
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
 </head>
 <body>
   <main class="app">
     <header class="topbar">
-      <h1 class="wordmark">Vocabulario</h1>
+      <div class="brand">
+        <!-- Inline rather than an <img>, so the mark takes the page's colors and
+             survives into the single-file build, which has no assets beside it. -->
+        <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+          <defs>
+            <linearGradient id="vmark" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#e4572e"/>
+              <stop offset="1" stop-color="#f2b134"/>
+            </linearGradient>
+          </defs>
+          <path d="M14 26 L32 54 L50 26" fill="none" stroke="url(#vmark)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M34.5 17 L41.5 6" stroke="#f2b134" stroke-width="7" stroke-linecap="round"/>
+        </svg>
+        <h1 class="wordmark">Vocabulario</h1>
+      </div>
       <div class="settings">
         <label class="field">
           <span>Deck</span>

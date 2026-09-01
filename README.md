@@ -70,8 +70,20 @@ source/
   game.js       round state, scoring, streaks
   storage.js    localStorage persistence
   random.js     seedable PRNG + shuffle
+assets/
+  logo.svg      the V monogram, bare — for the header and anywhere on dark
+  icon.svg      the same mark as a filled badge — favicon and app icon
+  icon-*.png    raster copies; Google's OAuth branding page rejects SVG
 test/           vitest suite over the logic modules
 ```
+
+The wordmark glyph is a V drawn as a chevron with the acute accent Spanish uses
+to mark stress. The accent runs parallel to the V's right arm — the same stroke
+in miniature — which is what stops it reading as something stuck on afterwards.
+The badge exists because strokes on a transparent ground turn to mush at 16px,
+so the favicon inverts: solid field, glyph knocked out. The header copy is
+inlined in `index.html` rather than linked, so it survives into the single-file
+build, which ships with no assets beside it.
 
 
 Everything under `source/` is DOM-free and pure, which is what makes it
