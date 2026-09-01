@@ -47,10 +47,10 @@ function populateDecks() {
   for (const deck of options) {
     const option = document.createElement('option');
     option.value = deck.id;
-    // Filled dots show how deep the deck is open, at a glance in the list.
+    // Filled stars show how deep the deck is open, at a glance in the list.
     const depth = unlockedDepth(deck.id, store.cards);
-    const dots = STAGE_NAMES.map((_, i) => (i <= depth ? '●' : '○')).join('');
-    option.textContent = `${deck.emoji} ${deck.name}  ${dots}`;
+    const stars = STAGE_NAMES.map((_, i) => (i <= depth ? '★' : '☆')).join('');
+    option.textContent = `${deck.emoji} ${deck.name}  ${stars}`;
     ui.deck.append(option);
   }
   if (selected) ui.deck.value = selected;

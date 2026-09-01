@@ -26,8 +26,8 @@ ahead. Rounds are 10 questions.
   carry their article so you learn the gender with the word.
 - **Stages** — each deck runs Basics → Everyday → Fluent, 15 words apiece.
   Only Basics is open at first; a stage unlocks when the one before it reaches
-  60% mastery, so depth is earned rather than dumped on you. The dots beside a
-  deck name (`●●○`) show how far it is open, and the bar under each stage
+  60% mastery, so depth is earned rather than dumped on you. The stars beside a
+  deck name (`★★☆`) show how far it is open, and the bar under each stage
   button is that stage's mastery. Under **All words**, a stage counts as open
   once any single deck has opened it, and draws only from the decks that have
   — a locked deck never leaks its harder words into a combined round.
