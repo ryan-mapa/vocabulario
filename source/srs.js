@@ -1,13 +1,34 @@
-// Leitner-style scheduling. Each word sits in a box; higher boxes come back
-// less often. A wrong answer knocks the word all the way back to box 0.
+// Leitner-style scheduling on a real clock. Each word sits in a box; higher
+// boxes come back less often. A wrong answer knocks the word all the way back
+// to box 0.
+//
+// Intervals are durations, not question counts. Counting questions looked
+// right but never worked across sittings: the counter restarted at zero every
+// round, so a word scheduled 30 questions out was never actually reached and
+// spacing only functioned inside a single round.
+//
+// The first two intervals are short enough that a new or missed word comes
+// back within the same sitting — the "learning steps" — and the rest are the
+// real spacing.
 
 export const BOX_COUNT = 5;
 
-/** How many questions to wait before a word in each box is due again. */
-const INTERVALS = [1, 3, 7, 14, 30];
+const MINUTE = 60 * 1000;
+const DAY = 24 * 60 * MINUTE;
+
+/** How long a word in each box waits before it is due again. */
+const INTERVALS = [MINUTE, 10 * MINUTE, DAY, 4 * DAY, 14 * DAY];
+
+/**
+ * How far past due a card may count as, in multiples of its own interval.
+ * Capped because a word untouched for a year is not a thousand times more
+ * urgent than one untouched for a day, and without a cap a single long
+ * absence would pin the same handful of words to the top of every round.
+ */
+const MAX_LATENESS = 4;
 
 export function newCard() {
-  return { box: 0, due: 0, seen: 0, correct: 0 };
+  return { box: 0, dueAt: 0, seen: 0, correct: 0, lastSeenAt: 0 };
 }
 
 export function intervalFor(box) {
@@ -18,15 +39,16 @@ export function intervalFor(box) {
  * Advance a card after an answer.
  * @param {object} card  current card state
  * @param {boolean} wasCorrect
- * @param {number} step  the question counter the answer happened on
+ * @param {number} now  epoch milliseconds the answer happened at
  */
-export function review(card, wasCorrect, step) {
+export function review(card, wasCorrect, now) {
   const box = wasCorrect ? Math.min(card.box + 1, BOX_COUNT - 1) : 0;
   return {
     box,
-    due: step + intervalFor(box),
+    dueAt: now + intervalFor(box),
     seen: card.seen + 1,
-    correct: card.correct + (wasCorrect ? 1 : 0)
+    correct: card.correct + (wasCorrect ? 1 : 0),
+    lastSeenAt: now
   };
 }
 
@@ -42,21 +64,42 @@ export function masteryOf(cards) {
   return total / (cards.length * (BOX_COUNT - 1));
 }
 
+export function isDue(card, now) {
+  return card.dueAt <= now;
+}
+
 /**
- * Pick the next word to ask: the most overdue one, breaking ties toward the
- * least-known word. `avoid` keeps the same word from appearing twice in a row.
+ * Lateness relative to the card's own interval, so a box-0 word an hour late
+ * and a box-4 word a month late compare on the same scale. Negative for a card
+ * that is not due yet, and never below -1, since a card is scheduled exactly
+ * one interval ahead.
  */
-export function selectNext(words, cards, step, { avoid = null, random = Math.random } = {}) {
+function lateness(card, now) {
+  return Math.min((now - card.dueAt) / intervalFor(card.box), MAX_LATENESS);
+}
+
+/**
+ * Pick the next word to ask. Only due words are in play; when nothing is due
+ * the whole list is, so someone keen to keep going is never turned away — they
+ * just get the words closest to coming up. `avoid` keeps the same word from
+ * appearing twice in a row.
+ */
+export function selectNext(words, cards, now, { avoid = null, random = Math.random } = {}) {
   const candidates = words.filter((word) => word.es !== avoid);
-  const pool = candidates.length > 0 ? candidates : words;
-  if (pool.length === 0) return null;
+  const eligible = candidates.length > 0 ? candidates : words;
+  if (eligible.length === 0) return null;
+
+  const cardFor = (word) => cards[word.es] ?? newCard();
+  const due = eligible.filter((word) => isDue(cardFor(word), now));
+  const pool = due.length > 0 ? due : eligible;
 
   let best = [];
   let bestScore = -Infinity;
   for (const word of pool) {
-    const card = cards[word.es] ?? newCard();
-    // Overdue first, then lower boxes; the jitter breaks up rigid cycling.
-    const score = (step - card.due) * 10 - card.box + random() * 0.5;
+    const card = cardFor(word);
+    // Most overdue first, then the lower boxes; the jitter breaks up rigid
+    // cycling through words that would otherwise always tie.
+    const score = lateness(card, now) * 2 - card.box + random() * 0.5;
     if (score > bestScore) {
       bestScore = score;
       best = [word];

@@ -23,15 +23,23 @@ const MODULES = [
   'main.js'
 ];
 
-/** Drop `import ... from '...'` lines and the leading `export ` keyword. */
+/**
+ * Drop `import ... from '...'` statements and the leading `export ` keyword.
+ * Imports are matched across lines, since a long named-import list is usually
+ * wrapped. Anything left that still looks like module syntax is a bug in this
+ * function rather than something to emit and hope about, so it throws.
+ */
 function stripModuleSyntax(src, file) {
-  const lines = src.split('\n');
-  const kept = lines.filter((line) => !/^import\s.+from\s+['"].+['"];?\s*$/.test(line));
+  const withoutImports = src.replace(/^import\s[\s\S]*?from\s+['"][^'"]+['"];?[ \t]*$/gm, '');
 
-  const leftover = kept.find((line) => /^\s*(import|export)\s/.test(line) && !/^export\s+(const|function|class|let)\b/.test(line));
+  const leftover = withoutImports
+    .split('\n')
+    .find((line) => /^\s*(import|export)\s/.test(line) && !/^export\s+(const|function|class|let)\b/.test(line));
   if (leftover) throw new Error(`${file}: unhandled module syntax -> ${leftover.trim()}`);
 
-  return kept.join('\n').replace(/^export\s+(?=(const|function|class|let)\b)/gm, '');
+  return withoutImports
+    .replace(/^export\s+(?=(const|function|class|let)\b)/gm, '')
+    .replace(/\n{3,}/g, '\n\n');
 }
 
 const bundle = MODULES

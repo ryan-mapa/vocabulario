@@ -18,7 +18,8 @@ export function createGame({
   direction = 'es-en',
   cards = {},
   roundLength = ROUND_LENGTH,
-  random = Math.random
+  random = Math.random,
+  now = Date.now
 } = {}) {
   if (!isStageUnlocked(deckId, stage, cards)) {
     throw new Error(`stage ${stage} of deck "${deckId}" is locked`);
@@ -33,7 +34,6 @@ export function createGame({
     words,
     cards: { ...cards },
     roundLength,
-    step: 0,
     asked: 0,
     correct: 0,
     score: 0,
@@ -52,7 +52,7 @@ export function createGame({
       state.question = null;
       return null;
     }
-    const word = selectNext(state.words, state.cards, state.step, {
+    const word = selectNext(state.words, state.cards, now(), {
       avoid: state.question?.word.es ?? null,
       random
     });
@@ -69,8 +69,7 @@ export function createGame({
     const correct = isCorrect(question, choice);
     const points = correct ? BASE_POINTS + 2 * Math.min(state.streak, MAX_STREAK_BONUS) : 0;
 
-    state.cards[question.word.es] = review(cardFor(question.word), correct, state.step);
-    state.step += 1;
+    state.cards[question.word.es] = review(cardFor(question.word), correct, now());
     state.asked += 1;
     state.score += points;
     state.correct += correct ? 1 : 0;

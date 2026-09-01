@@ -41,14 +41,20 @@ ahead. Rounds are 10 questions.
 - **Scoring** — 10 points a word, plus 2 per consecutive correct answer up to a
   +10 cap. A miss zeroes the streak.
 - **Spaced repetition** — every word sits in one of 5 boxes. Get it right and it
-  climbs a box and won't be asked again for a while (1 → 3 → 7 → 14 → 30
-  questions). Get it wrong and it drops straight back to box 0. Box 5 is
-  "mastered", and the mastery stat is how far the whole deck has climbed.
+  climbs a box and drops out of rotation for a while — 1 minute, 10 minutes,
+  then 1, 4 and 14 days. Get it wrong and it falls straight back to box 0. The
+  first two intervals are short enough to bring a shaky word back within the
+  same sitting; the rest are the real spacing. Box 5 is "mastered", and the
+  mastery stat is how far the whole deck has climbed. When nothing is due the
+  round draws from everything rather than turning you away.
 - **Progress** persists in `localStorage`, keyed by the Spanish word — so
   learning *la manzana* in Food also counts under All words. Unlock state is
   *derived* from that same card map rather than stored, so there is no second
   source of truth to keep in sync, and someone who already knows a deck finds
   its deeper stages open on arrival.
+- **Move progress** hands you a code holding your whole card map. `localStorage`
+  is per-origin, so without it progress would be stranded at whichever address
+  you happened to play on. Paste the code anywhere else this app runs.
 
 ## Layout
 
@@ -66,6 +72,7 @@ source/
   random.js     seedable PRNG + shuffle
 test/           vitest suite over the logic modules
 ```
+
 
 Everything under `source/` is DOM-free and pure, which is what makes it
 testable — `main.js` is the only thing that knows a browser exists.

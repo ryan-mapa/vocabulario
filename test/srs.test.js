@@ -1,32 +1,51 @@
 import { describe, it, expect } from 'vitest';
-import { newCard, review, isMastered, masteryOf, selectNext, BOX_COUNT, intervalFor } from '../source/srs.js';
+import {
+  newCard,
+  review,
+  isMastered,
+  isDue,
+  masteryOf,
+  selectNext,
+  BOX_COUNT,
+  intervalFor
+} from '../source/srs.js';
 
 const fixedRandom = () => 0;
+const NOW = 1_700_000_000_000; // a fixed instant, so nothing depends on the wall clock
 
 describe('review', () => {
   it('promotes one box on a correct answer and schedules it further out', () => {
-    const card = review(newCard(), true, 0);
+    const card = review(newCard(), true, NOW);
     expect(card.box).toBe(1);
-    expect(card.due).toBe(intervalFor(1));
+    expect(card.dueAt).toBe(NOW + intervalFor(1));
+    expect(card.lastSeenAt).toBe(NOW);
     expect(card.correct).toBe(1);
   });
 
   it('drops a well-known word back to box 0 when missed', () => {
     let card = newCard();
-    for (let step = 0; step < 4; step++) card = review(card, true, step);
+    for (let i = 0; i < 4; i++) card = review(card, true, NOW + i);
     expect(card.box).toBe(BOX_COUNT - 1);
 
-    const missed = review(card, false, 10);
+    const missed = review(card, false, NOW + 10);
     expect(missed.box).toBe(0);
+    expect(missed.dueAt).toBe(NOW + 10 + intervalFor(0));
     expect(missed.seen).toBe(5);
     expect(missed.correct).toBe(4);
   });
 
   it('caps at the top box', () => {
     let card = newCard();
-    for (let step = 0; step < 20; step++) card = review(card, true, step);
+    for (let i = 0; i < 20; i++) card = review(card, true, NOW + i);
     expect(card.box).toBe(BOX_COUNT - 1);
     expect(isMastered(card)).toBe(true);
+  });
+
+  // The whole point of the timestamps: each box waits longer than the last.
+  it('spaces each box further out than the one below it', () => {
+    const gaps = Array.from({ length: BOX_COUNT }, (_, box) => intervalFor(box));
+    expect(gaps).toEqual([...gaps].sort((a, b) => a - b));
+    expect(new Set(gaps).size).toBe(BOX_COUNT);
   });
 });
 
@@ -41,36 +60,53 @@ describe('masteryOf', () => {
 
 describe('selectNext', () => {
   const words = [{ es: 'uno', en: 'one' }, { es: 'dos', en: 'two' }, { es: 'tres', en: 'three' }];
+  const at = (box, dueAt) => ({ ...newCard(), box, dueAt });
 
-  it('prefers the most overdue word', () => {
+  it('prefers the word that is furthest past due', () => {
     const cards = {
-      uno: { ...newCard(), box: 3, due: 100 },
-      dos: { ...newCard(), box: 3, due: 100 },
-      tres: { ...newCard(), box: 3, due: 1 }
+      uno: at(3, NOW),
+      dos: at(3, NOW),
+      tres: at(3, NOW - 10 * intervalFor(3))
     };
-    expect(selectNext(words, cards, 50, { random: fixedRandom }).es).toBe('tres');
+    expect(selectNext(words, cards, NOW, { random: fixedRandom }).es).toBe('tres');
   });
 
   it('breaks ties toward the less-known word', () => {
+    const cards = { uno: at(4, 0), dos: at(1, 0), tres: at(4, 0) };
+    expect(selectNext(words, cards, NOW, { random: fixedRandom }).es).toBe('dos');
+  });
+
+  it('leaves a word alone until it comes due', () => {
     const cards = {
-      uno: { ...newCard(), box: 4, due: 0 },
-      dos: { ...newCard(), box: 1, due: 0 },
-      tres: { ...newCard(), box: 4, due: 0 }
+      uno: at(1, NOW + intervalFor(1)), // answered a moment ago, not due
+      dos: at(4, NOW - 1),
+      tres: at(4, NOW + intervalFor(4))
     };
-    expect(selectNext(words, cards, 10, { random: fixedRandom }).es).toBe('dos');
+    expect(isDue(cards.uno, NOW)).toBe(false);
+    // dos is the only due word, so it wins despite sitting in the top box
+    expect(selectNext(words, cards, NOW, { random: fixedRandom }).es).toBe('dos');
+  });
+
+  it('still deals a word when nothing is due, rather than turning the player away', () => {
+    const cards = {
+      uno: at(2, NOW + 5 * intervalFor(2)),
+      dos: at(2, NOW + intervalFor(2)), // the soonest to come up
+      tres: at(2, NOW + 9 * intervalFor(2))
+    };
+    expect(selectNext(words, cards, NOW, { random: fixedRandom }).es).toBe('dos');
   });
 
   it('never repeats the word it was told to avoid', () => {
-    const cards = { uno: { ...newCard(), due: -100 } };
-    const picked = selectNext(words, cards, 0, { avoid: 'uno', random: fixedRandom });
+    const cards = { uno: at(0, NOW - 10 * intervalFor(0)) };
+    const picked = selectNext(words, cards, NOW, { avoid: 'uno', random: fixedRandom });
     expect(picked.es).not.toBe('uno');
   });
 
   it('falls back to the avoided word when it is the only one left', () => {
-    expect(selectNext([words[0]], {}, 0, { avoid: 'uno', random: fixedRandom }).es).toBe('uno');
+    expect(selectNext([words[0]], {}, NOW, { avoid: 'uno', random: fixedRandom }).es).toBe('uno');
   });
 
   it('returns null for an empty word list', () => {
-    expect(selectNext([], {}, 0, { random: fixedRandom })).toBeNull();
+    expect(selectNext([], {}, NOW, { random: fixedRandom })).toBeNull();
   });
 });

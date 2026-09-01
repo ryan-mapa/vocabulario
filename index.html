@@ -63,7 +63,10 @@
 
     <footer class="footer">
       <a class="source-link" href="https://github.com/ryan-mapa/vocabulario" target="_blank" rel="noopener noreferrer">Source on GitHub</a>
-      <button class="ghost" id="reset" type="button">Clear progress</button>
+      <div class="footer-actions">
+        <button class="ghost" id="transfer" type="button">Move progress</button>
+        <button class="ghost danger-hover" id="reset" type="button">Clear progress</button>
+      </div>
     </footer>
     <dialog class="confirm" id="confirm-reset" aria-labelledby="confirm-title">
       <h2 id="confirm-title">Clear all progress?</h2>
@@ -71,6 +74,33 @@
       <div class="confirm-actions">
         <button class="ghost" id="confirm-cancel" type="button" autofocus>Keep it</button>
         <button class="danger" id="confirm-clear" type="button">Clear progress</button>
+      </div>
+    </dialog>
+
+    <dialog class="confirm transfer" id="transfer-dialog" aria-labelledby="transfer-title">
+      <h2 id="transfer-title">Move progress</h2>
+      <p class="confirm-body">
+        Progress is saved in this browser alone. Copy this code to carry it to
+        another browser, another device, or a new address for this app.
+      </p>
+
+      <label class="transfer-field">
+        <span>Your progress code</span>
+        <textarea id="transfer-out" rows="4" readonly spellcheck="false" translate="no"></textarea>
+      </label>
+      <div class="confirm-actions">
+        <button class="ghost" id="transfer-copy" type="button">Copy</button>
+      </div>
+
+      <label class="transfer-field">
+        <span>Paste a code to restore</span>
+        <textarea id="transfer-in" rows="4" spellcheck="false" translate="no" placeholder="Paste a progress code here…"></textarea>
+      </label>
+      <p class="transfer-status" id="transfer-status" role="status" aria-live="polite"></p>
+
+      <div class="confirm-actions">
+        <button class="ghost" id="transfer-close" type="button" autofocus>Close</button>
+        <button class="danger" id="transfer-import" type="button">Replace my progress</button>
       </div>
     </dialog>
   </main>

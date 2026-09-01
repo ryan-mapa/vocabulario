@@ -266,7 +266,39 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   padding: 6px 12px;
   cursor: pointer;
 }
-.ghost:hover { color: var(--rojo); border-color: var(--rojo); }
+.ghost:hover { color: var(--ink); border-color: var(--muted); }
+/* Only the one destructive button down here warns on hover. */
+.danger-hover:hover { color: var(--rojo); border-color: var(--rojo); }
+
+.footer-actions { display: flex; gap: 8px; }
+
+/* Wider than the confirm dialog: this one holds two code fields, and a code
+   wrapped to a 330px column is painful to check by eye before pasting. */
+.transfer { max-width: min(420px, calc(100vw - 32px)); }
+.transfer .confirm-actions { margin-bottom: 16px; }
+.transfer .confirm-actions:last-of-type { margin-bottom: 0; justify-content: space-between; }
+
+.transfer-field { display: block; margin-bottom: 8px; }
+.transfer-field > span { display: block; margin-bottom: 6px; font-size: 12px; color: var(--muted); }
+
+.transfer textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 10px;
+}
+.transfer textarea:focus { outline: none; border-color: var(--oro); }
+
+.transfer-status { margin: 0 0 14px; min-height: 17px; font-size: 12px; }
+.transfer-status.good { color: var(--verde); }
+.transfer-status.bad { color: var(--rojo); }
 
 /* Phones: the vertical budget is the whole problem. Everything above the
    question is touched once a session; the answers are touched ten times a

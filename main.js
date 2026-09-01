@@ -1,7 +1,15 @@
 import { DECKS, STAGE_NAMES, ALL_DECK_ID } from './source/vocab.js';
 import { DIRECTIONS } from './source/quiz.js';
 import { createGame } from './source/game.js';
-import { load, save, withCards, withBests, reset } from './source/storage.js';
+import {
+  load,
+  save,
+  withCards,
+  withBests,
+  reset,
+  exportProgress,
+  parseProgress
+} from './source/storage.js';
 import { deckProgress, unlockedDepth, nextUnlock } from './source/stages.js';
 
 const el = (id) => document.getElementById(id);
@@ -32,7 +40,15 @@ const ui = {
   confirmDialog: el('confirm-reset'),
   confirmBody: el('confirm-body'),
   confirmCancel: el('confirm-cancel'),
-  confirmClear: el('confirm-clear')
+  confirmClear: el('confirm-clear'),
+  transfer: el('transfer'),
+  transferDialog: el('transfer-dialog'),
+  transferOut: el('transfer-out'),
+  transferIn: el('transfer-in'),
+  transferCopy: el('transfer-copy'),
+  transferImport: el('transfer-import'),
+  transferClose: el('transfer-close'),
+  transferStatus: el('transfer-status')
 };
 
 let store = load();
@@ -239,7 +255,9 @@ function showSummary() {
 }
 
 document.addEventListener('keydown', (event) => {
-  if (ui.confirmDialog.open) return; // the dialog owns the keyboard while it is up
+  // A dialog owns the keyboard while it is up. The transfer one has text
+  // fields, where 1-4 has to type digits rather than answer the question.
+  if (document.querySelector('dialog[open]')) return;
   if (event.key >= '1' && event.key <= '4' && !ui.play.hidden) {
     const button = ui.choices.children[Number(event.key) - 1];
     if (button && !button.disabled) button.click();
@@ -264,6 +282,52 @@ ui.reset.addEventListener('click', () => {
 });
 
 ui.confirmCancel.addEventListener('click', () => ui.confirmDialog.close());
+
+function setTransferStatus(message, tone = '') {
+  ui.transferStatus.textContent = message;
+  ui.transferStatus.className = `transfer-status ${tone}`;
+}
+
+ui.transfer.addEventListener('click', () => {
+  ui.transferOut.value = exportProgress(store);
+  ui.transferIn.value = '';
+  setTransferStatus('');
+  ui.transferDialog.showModal();
+});
+
+ui.transferCopy.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(ui.transferOut.value);
+    setTransferStatus('Copied.', 'good');
+  } catch {
+    // No clipboard permission, or an insecure origin. Selecting the text still
+    // leaves the reader one keystroke away from having it.
+    ui.transferOut.select();
+    setTransferStatus('Selected — press ⌘C or Ctrl+C to copy.');
+  }
+});
+
+ui.transferImport.addEventListener('click', () => {
+  let incoming;
+  try {
+    incoming = parseProgress(ui.transferIn.value.trim());
+  } catch (error) {
+    return setTransferStatus(error.message, 'bad');
+  }
+
+  const words = Object.keys(incoming.cards).length;
+  store = incoming;
+  save(store);
+  stage = 0;
+  populateDecks();
+  startGame();
+
+  setTransferStatus(`Restored ${words} word${words === 1 ? '' : 's'}.`, 'good');
+  ui.transferOut.value = exportProgress(store);
+  ui.transferIn.value = '';
+});
+
+ui.transferClose.addEventListener('click', () => ui.transferDialog.close());
 
 ui.confirmClear.addEventListener('click', () => {
   ui.confirmDialog.close();
