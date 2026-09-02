@@ -95,6 +95,7 @@ const ui = {
   deleteFinalCancel: el('delete-final-cancel'),
   deleteConfirm: el('delete-confirm'),
   guardBadge: el('guard-badge'),
+  guardShield: el('guard-shield'),
   guardDialog: el('guard-dialog'),
   guardBody: el('guard-body'),
   guardToggle: el('guard-toggle'),
@@ -330,8 +331,9 @@ function renderScoreboard() {
   ui.streak.classList.toggle('lit', streak.current > 0);
 
   const guarded = streak.guard === GUARD.GUARDED;
-  ui.guardBadge.hidden = !guarded;
   ui.streakStat.classList.toggle('guarded', guarded);
+  ui.guardShield.classList.toggle('on', guarded);
+  ui.guardShield.title = guarded ? 'Streak guard is on' : 'Streak guard';
   ui.mastered.textContent = game ? game.masteredCount() : 0;
   ui.mastery.textContent = game ? `${Math.round(game.mastery() * 100)}%` : '0%';
 
@@ -378,7 +380,8 @@ function renderNote(streak = streakFrom(store.days, localDay(), store.guards)) {
   const rounds = DAILY_GOAL - streak.roundsToday;
   note.innerHTML =
     `Your <strong>${streak.current}-day streak</strong> has ${left} day${left === 1 ? '' : 's'} ` +
-    `of grace left — ${rounds} more round${rounds === 1 ? '' : 's'} today keeps it.`;
+    `of grace left — ${rounds} more round${rounds === 1 ? '' : 's'} today keeps it, or ` +
+    `<button class="linkish" data-open-guard>pause it</button>.`;
   note.className = 'scoreboard-note warning';
 }
 
@@ -830,6 +833,12 @@ function setGuard(state) {
 }
 
 ui.streakStat.addEventListener('click', openGuardDialog);
+ui.guardShield.addEventListener('click', openGuardDialog);
+
+// Delegated, because the note's markup is rebuilt every time it is drawn.
+ui.scoreboardNote.addEventListener('click', (event) => {
+  if (event.target.closest('[data-open-guard]')) openGuardDialog();
+});
 ui.guardClose.addEventListener('click', () => ui.guardDialog.close());
 
 ui.guardToggle.addEventListener('click', () => {

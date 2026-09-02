@@ -65,6 +65,13 @@
             <option value="en-es">English → Spanish</option>
           </select>
         </label>
+
+        <button class="shield" id="guard-shield" type="button"
+                aria-label="Streak guard" title="Streak guard">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 3 5 5.6v5.7c0 4.3 3 8.3 7 9.4 4-1.1 7-5.1 7-9.4V5.6L12 3z"/>
+          </svg>
+        </button>
       </div>
     </header>
 
@@ -78,7 +85,7 @@
               data-tip="Days in a row you have met the goal. It survives up to three missed days — click for streak guard.">
         <span class="stat-value" id="streak">0</span>
         <span class="stat-label">streak</span>
-        <span class="guard-badge" id="guard-badge" hidden aria-hidden="true"></span>
+        <span class="guard-badge" id="guard-badge" aria-hidden="true"></span>
       </button>
       <div class="stat" tabindex="0"
            data-tip="Words in this deck and stage you have reached the top box on — four correct answers in a row, with no miss in between.">

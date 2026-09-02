@@ -50,7 +50,30 @@ body {
   color: transparent;
 }
 
-.settings { display: flex; gap: 10px; }
+.settings { display: flex; align-items: flex-end; gap: 10px; }
+
+/* Streak guard, beside the two selects. The scoreboard tile opens the same
+   thing, but a corner badge is not a control anyone finds — this is. Outline
+   while the streak runs, solid once it is being held. */
+.shield {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  cursor: pointer;
+}
+.shield:hover { color: var(--oro); border-color: var(--oro); }
+.shield:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
+.shield svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+
+.shield.on { color: var(--oro); border-color: var(--oro); }
+.shield.on svg { fill: var(--oro); fill-opacity: 0.18; }
 
 /* The account control. Google's own button artwork and wording, unaltered —
    the whole value of the standard button is that people recognise it on sight,
@@ -409,7 +432,7 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
 
   /* Side by side rather than stacked. min-width:0 lets the grid track shrink
      below the select's intrinsic width instead of overflowing the screen. */
-  .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .settings { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
   .field { min-width: 0; }
   select { width: 100%; font-size: 13px; padding: 6px 8px; }
 
@@ -654,17 +677,27 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
 button.stat { font: inherit; text-align: center; cursor: pointer; }
 button.stat:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
 
-/* Paused. Drawn with borders rather than set as pause characters: at this size
-   a glyph pair closes up into a solid block and reads as a warning square. */
+/* The streak guard, on this tile's corner.
+   
+   Always drawn, faintly, rather than appearing only once the guard is on: it is
+   the only thing telling anyone this tile does something at all, and a control
+   you have to hover to discover is no control on a phone. It brightens when the
+   guard is holding.
+   
+   Borders rather than pause characters — at this size a glyph pair closes up
+   into a solid block and reads as a warning square. */
 .guard-badge {
   position: absolute;
   top: 8px;
   right: 9px;
   width: 7px;
   height: 9px;
-  border-left: 2px solid var(--oro);
-  border-right: 2px solid var(--oro);
+  border-left: 2px solid var(--line);
+  border-right: 2px solid var(--line);
+  transition: border-color 0.2s ease;
 }
+button.stat:hover .guard-badge { border-color: var(--muted); }
+.stat.guarded .guard-badge { border-color: var(--oro); }
 
 .stat.guarded { border-color: var(--oro); border-style: dashed; }
 
