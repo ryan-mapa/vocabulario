@@ -11,6 +11,7 @@
   --panel-hi: #222839;
   --ink: #eef1f7;
   --muted: #8f9bb3;
+  --ink-soft: #c2cad9;
   --line: #2c3346;
   --rojo: #e4572e;
   --oro: #f2b134;
@@ -63,6 +64,15 @@ body {
 }
 
 .settings { display: flex; align-items: flex-end; gap: 10px; }
+
+/* A select is as wide as its widest option, and the deck names are the longest
+   strings in this row — so the deck is what pushes the streak guard past the
+   right edge. It is also the only control here that can give up width without
+   giving up meaning: the chosen deck reads short, and the full names are all
+   still there the moment it opens. */
+.field { min-width: 0; }
+.field-deck { flex: 1 1 auto; min-width: 8rem; }
+.field-deck select { width: 100%; }
 
 /* Streak guard, beside the two selects. The scoreboard tile opens the same
    thing, but a corner badge is not a control anyone finds — this is. Outline
@@ -273,8 +283,20 @@ select {
 }
 
 .direction-hint { margin: 0; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; }
-.prompt { margin: 10px 0; font-size: clamp(30px, 8vw, 42px); font-weight: 700; letter-spacing: -0.02em; }
-.prompt-row { margin-bottom: 22px; }
+/* The word itself. `--prompt-size` is the *unshrunk* size: main.js drops the
+   font-size to keep a long phrase on one line, but the line box is sized from
+   this variable rather than from the font, so shrinking the text never moves
+   the board. Everything below the prompt stays exactly where it was. */
+.prompt-row { --prompt-size: clamp(30px, 8vw, 42px); margin-bottom: 0; }
+.prompt {
+  margin: 10px 0 0;
+  font-size: var(--prompt-size);
+  line-height: calc(var(--prompt-size) * 1.2);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  min-width: 0;
+}
 
 .choices { display: grid; gap: 10px; }
 
@@ -509,7 +531,8 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   .unlock-note { margin-top: 6px; font-size: 11px; }
 
   .card { padding: 20px 14px 16px; }
-  .prompt { margin: 8px 0 16px; }
+  .prompt { margin: 8px 0 0; }
+  .example { margin: 14px 0; }
   .choices { gap: 8px; }
   .choice { padding: 12px 14px; font-size: 16px; }
 
@@ -526,7 +549,9 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   .stat-value { font-size: 17px; }
   .stages { margin-bottom: 8px; }
   .card { padding: 14px 14px 8px; }
-  .prompt { margin: 6px 0 10px; font-size: clamp(26px, 7vw, 34px); }
+  .prompt-row { --prompt-size: clamp(26px, 7vw, 34px); }
+  .prompt { margin: 6px 0 0; }
+  .example { margin: 10px 0; }
   .choices { gap: 6px; }
   .choice { padding: 10px 14px; }
   .footer { margin-top: 10px; }
@@ -670,8 +695,10 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   justify-content: center;
   flex-wrap: wrap;
   gap: 6px 16px;
-  /* Room for the dots, which hang below the button outside the flow. */
-  padding-bottom: 12px;
+  /* The prompt must be free to shrink so a long phrase can be scaled to fit
+     rather than wrapping; without this it holds its full intrinsic width and
+     pushes the speaker button off the row. */
+  flex-wrap: nowrap;
 }
 
 .speak-stack { position: relative; display: inline-flex; }
@@ -679,16 +706,21 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
 /* Which of the four voices you last heard, and that there are more. Deliberately
    not tappable — at 5px they could not be, and cycling reaches any of them in
    at most four taps. */
-/* Taken out of the flow so the stack is exactly the button's height. Otherwise
-   the dots make the stack taller than the button, and centring the stack against
-   the word leaves the button sitting above the word's centre line. */
+/* Taken out of the flow so the stack is exactly the button's width and height.
+   Otherwise the dots change the stack's size and the button stops sitting on the
+   word's centre line.
+
+   Stacked vertically down the button's right side, and read top to bottom in the
+   order the voices play: the top dot is the first voice, which is where every
+   question starts. A horizontal row beneath the button implied no such order. */
 .dots {
   position: absolute;
-  top: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
+  left: calc(100% + 7px);
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
-  gap: 5px;
+  flex-direction: column;
+  gap: 4px;
 }
 .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--line); transition: background 0.2s ease; }
 .dot.on { background: var(--oro); }
@@ -793,7 +825,9 @@ button.stat:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; 
   min-height: 2.1rem;          /* holds the row's height so revealing does not
                                   shove the choices down under the thumb */
   justify-content: center;
-  margin: 0 0 0.35rem;
+  /* Equal above and below: this sits in the gap between the word and the
+     answers, and belongs to neither. */
+  margin: 18px 0;
 }
 
 .example-toggle {
@@ -831,7 +865,7 @@ button.stat:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; 
 }
 
 .example-es {
-  color: var(--ink);
+  color: var(--ink-soft);
   font-size: 0.95rem;
 }
 

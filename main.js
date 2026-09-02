@@ -152,6 +152,31 @@ async function loadAudioManifest() {
 }
 
 /** Which of the four voices was last heard. Nothing lit means none yet. */
+/** Smallest the prompt may be scaled to before it stops reading as the prompt. */
+const PROMPT_MIN_PX = 17;
+
+/**
+ * Shrink the prompt until it fits on one line.
+ *
+ * `la cinta transportadora` and `el aprendizaje automático` are wider than the
+ * card at the full size, and wrapping them moved every answer button down —
+ * so the board changed height depending on which word came up. The CSS holds the
+ * line box at the unshrunk size, so scaling the text down here leaves the board
+ * exactly where it was.
+ *
+ * A loop rather than arithmetic because the width of a string is a property of
+ * the font, not of its length: `ll` and `mm` are the same two characters.
+ */
+function fitPrompt() {
+  const el = ui.prompt;
+  el.style.fontSize = '';
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  while (el.scrollWidth > el.clientWidth && size > PROMPT_MIN_PX) {
+    size -= 1;
+    el.style.fontSize = `${size}px`;
+  }
+}
+
 function renderDots() {
   for (const dots of [ui.speakPromptDots]) {
     if (dots.children.length !== VOICE_COUNT) {
@@ -503,8 +528,18 @@ function render() {
     'Answer with <kbd>1</kbd>\u2013<kbd>4</kbd> \u00b7 <kbd>Enter</kbd> to continue';
   ui.hint.classList.remove('waiting');
   exampleShown = false;
+  // Back to the first voice for each new word, so the dots always fill from the
+  // top. Carrying the position across questions made which voice you got depend
+  // on how many times you had tapped earlier words, which is not a thing anyone
+  // is tracking.
+  lastVoice = null;
   renderSpeakers();
   renderExample();
+  // After renderSpeakers, not before: how much room the word has depends on
+  // whether the speaker button is beside it, and it is absent in the recall
+  // direction. Measuring first would size the word against the *previous*
+  // question's layout and shrink it further than it needs to go.
+  fitPrompt();
 }
 
 /**
@@ -756,6 +791,8 @@ ui.play.addEventListener('click', (event) => {
   if (event.target.closest('button')) return;
   advance();
 });
+
+window.addEventListener('resize', fitPrompt);
 
 ui.exampleToggle.addEventListener('click', () => {
   exampleShown = true;
