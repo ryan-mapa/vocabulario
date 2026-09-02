@@ -11,7 +11,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { DECKS, STAGE_NAMES } from '../source/vocab.js';
 import { SENTENCES } from '../source/sentences.js';
-import { checkPair, overusedOpenings, copulaOveruse, flatten, bare } from './rules.mjs';
+import { checkPair, overusedOpenings, copulaOveruse, flatten, bare, englishLeak, checkGloss } from './rules.mjs';
 
 const targets = JSON.parse(readFileSync(new URL('./targets.json', import.meta.url)));
 const [, , file, ...flags] = process.argv;
@@ -37,6 +37,14 @@ for (const deck of DECKS) {
 }
 for (const [es, [sp]] of Object.entries(SENTENCES)) takenSentences.set(flatten(sp), es);
 
+// Two words that share an English gloss can both be offered as options for the
+// same recall question, and one correct answer then gets marked wrong.
+const takenGlosses = new Map();
+for (const deck of DECKS) {
+  for (const stage of deck.stages) for (const w of stage) takenGlosses.set(flatten(w.en), w.es);
+}
+const seenGloss = new Map();
+
 const accepted = { 0: [], 1: [], 2: [] };
 const rejected = [];
 const seenWord = new Map();
@@ -54,8 +62,18 @@ for (const [stageKey, entries] of Object.entries(batch.stages ?? {})) {
     if (takenWords.has(key)) { reject(`already taught in ${takenWords.get(key)}`); continue; }
     if (seenWord.has(key)) { reject(`duplicate of another entry in this batch (stage ${seenWord.get(key)})`); continue; }
 
+    const glossFaults = checkGloss(en);
+    if (glossFaults.length) { reject(glossFaults.join('; ')); continue; }
+
+    const gKey = flatten(en);
+    if (takenGlosses.has(gKey)) { reject(`English gloss "${en}" is already used by "${takenGlosses.get(gKey)}"`); continue; }
+    if (seenGloss.has(gKey)) { reject(`English gloss "${en}" repeats your own "${seenGloss.get(gKey)}"`); continue; }
+
     const faults = checkPair(es, ex);
     if (faults.length) { reject(faults.join('; ')); continue; }
+
+    const leak = englishLeak(ex[0]);
+    if (leak.length) { reject(`English words in the Spanish sentence: ${leak.join(', ')}`); continue; }
 
     const sKey = flatten(ex[0]);
     if (takenSentences.has(sKey)) { reject(`sentence already used for "${takenSentences.get(sKey)}"`); continue; }
@@ -63,6 +81,7 @@ for (const [stageKey, entries] of Object.entries(batch.stages ?? {})) {
 
     seenWord.set(key, stage);
     seenSentence.set(sKey, es);
+    seenGloss.set(gKey, es);
     accepted[stage].push(entry);
   }
 }

@@ -4,7 +4,7 @@ import { DECKS } from '../source/vocab.js';
 import { exampleFor } from '../source/examples.js';
 // The same rules the batch validator enforces, so a batch that passes the
 // validator cannot then fail the build — see tools/rules.mjs.
-import { uses, overusedOpenings, copulaOveruse } from '../tools/rules.mjs';
+import { uses, copulaOveruse, englishLeak, checkGloss } from '../tools/rules.mjs';
 
 const words = DECKS.flatMap((deck) => deck.stages.flat());
 const headwords = new Set(words.map((word) => word.es));
@@ -98,6 +98,19 @@ describe('sentences that do some work', () => {
       });
     }
     expect(offenders).toEqual([]);
+  });
+});
+
+// The pilot for the 50-word expansion produced a structurally perfect sentence
+// that was half in English — `Flota el chifón gracefully cuando caminas.`
+// Nothing else here would have caught it.
+describe('sentences that are actually in Spanish', () => {
+  it('lets no English word through', () => {
+    const leaks = entries
+      .map(([es, [spanish]]) => [es, englishLeak(spanish)])
+      .filter(([, found]) => found.length)
+      .map(([es, found]) => `${es}: ${found.join(', ')}`);
+    expect(leaks).toEqual([]);
   });
 });
 

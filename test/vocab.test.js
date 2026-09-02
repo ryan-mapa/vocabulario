@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { audioSlug } from '../source/audio.js';
+import { checkGloss } from '../tools/rules.mjs';
 import {
   DECKS,
   STAGE_COUNT,
@@ -11,6 +12,28 @@ import {
 } from '../source/vocab.js';
 
 const everyWord = DECKS.flatMap((deck) => deck.stages.flat());
+
+// A gloss is what the quiz shows as a multiple-choice option, so two words
+// sharing one means a question with two right answers — the app marks one of
+// them wrong. Ten such pairs shipped before this test existed: 'el suelo' and
+// 'el piso' were both "floor", 'rápido' and 'el ayuno' both "fast".
+describe('English glosses', () => {
+  const all = DECKS.flatMap((deck) => deck.stages.flat());
+
+  it('never gives two words the same gloss', () => {
+    const byGloss = new Map();
+    for (const word of all) {
+      const key = word.en.toLowerCase();
+      byGloss.set(key, [...(byGloss.get(key) ?? []), word.es]);
+    }
+    expect([...byGloss.values()].filter((words) => words.length > 1)).toEqual([]);
+  });
+
+  it('writes them bare, with no article and no alternatives', () => {
+    const faults = all.flatMap((word) => checkGloss(word.en).map((f) => `${word.es}: ${f}`));
+    expect(faults).toEqual([]);
+  });
+});
 
 describe('decks', () => {
   it('gives every deck the full set of stages, each big enough for four choices', () => {

@@ -89,3 +89,39 @@ export function copulaOveruse(sentences) {
   const cap = Math.max(3, Math.ceil(sentences.length * LIMITS.copulaShare));
   return hits.length > cap ? { count: hits.length, cap, of: sentences.length, examples: hits.slice(0, 3) } : null;
 }
+
+/**
+ * English words that leaked into a Spanish sentence.
+ *
+ * The pilot produced `Flota el chifón gracefully cuando caminas.` — structurally
+ * perfect and half in the wrong language. Nothing else here would have caught it.
+ *
+ * Two signals, both chosen to have no false positives on real Spanish rather
+ * than to catch everything: an `-ly` ending, which Spanish does not form
+ * adverbs with (it uses `-mente`), and a list of English function words that
+ * are not also Spanish words. Deliberately not `-ing`: the corpus already
+ * teaches `el trekking`.
+ */
+const ENGLISH_FUNCTION_WORDS = new Set([
+  'the', 'and', 'is', 'are', 'was', 'were', 'with', 'from', 'that', 'this',
+  'very', 'when', 'they', 'have', 'has', 'will', 'would', 'there', 'their',
+  'what', 'which', 'about', 'into', 'than', 'then', 'some', 'more', 'most',
+  'been', 'being', 'does', 'doesn', 'you', 'your', 'his', 'her', 'its',
+  'for', 'but', 'not', 'all', 'can', 'could', 'should', 'because', 'while'
+]);
+
+export function englishLeak(sentence) {
+  const tokens = flatten(sentence).replace(/[^\p{L}\s]/gu, ' ').split(/\s+/).filter(Boolean);
+  return tokens.filter(
+    (t) => ENGLISH_FUNCTION_WORDS.has(t) || (t.length >= 5 && t.endsWith('ly'))
+  );
+}
+
+/** A gloss the quiz can show as one unambiguous option. */
+export function checkGloss(en) {
+  const faults = [];
+  if (/^(the|a|an) /i.test(en)) faults.push(`gloss starts with an article: "${en}" — the corpus writes them bare`);
+  if (en.includes('/')) faults.push(`gloss offers alternatives: "${en}" — a multiple-choice option needs one meaning`);
+  if (en.includes(',')) faults.push(`gloss is a list: "${en}" — pick one meaning`);
+  return faults;
+}
