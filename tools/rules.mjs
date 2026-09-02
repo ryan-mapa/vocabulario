@@ -125,3 +125,55 @@ export function checkGloss(en) {
   if (en.includes(',')) faults.push(`gloss is a list: "${en}" — pick one meaning`);
   return faults;
 }
+
+/**
+ * Article that disagrees with the noun.
+ *
+ * The pilot returned `la babero` and `la gafas de sol`. Spanish gender is not
+ * fully predictable from the ending, so this only flags the reliable cases: an
+ * -o noun under `la`, an -a noun under `el`, and a plural noun under a singular
+ * article. Known exceptions are listed rather than guessed at.
+ */
+const FEM_O = new Set(['mano', 'foto', 'moto', 'radio', 'libido', 'disco']);
+const ALWAYS_PLURAL = /^(gafas|tijeras|vacaciones|afueras|celos|lentes|pantalones|jeans)$/;
+
+// Only the reliable direction. Measured against the corpus: an -o noun under
+// "la" occurs twice, and both are the textbook exceptions. An -a noun under
+// "el" occurs 27 times and every one is correct — el agua, el koala, el día,
+// el turista, el mapa, el sistema — so that direction is not a signal at all
+// and flagging it would have cost 27 round trips to fix nothing.
+export function articleFault(es) {
+  const m = es.match(/^(el|la|los|las) (\S+)/);
+  if (!m) return null;
+  const [, article, noun] = m;
+  const n = flatten(noun);
+  if (article === 'la' && n.endsWith('o') && !FEM_O.has(n)) return `"${es}" — an -o noun usually takes "el"`;
+  if ((article === 'el' || article === 'la') && ALWAYS_PLURAL.test(n))
+    return `"${es}" — "${noun}" is always plural, so the article is "${article === 'el' ? 'los' : 'las'}"`;
+  return null;
+}
+
+/**
+ * Multi-word entries whose head noun is already taught.
+ *
+ * `la chaqueta vaquera`, `el traje de noche`, `la falda plisada` — all built
+ * from words the app already has. Each passes the uniqueness rule and teaches
+ * a learner nothing they could not already assemble. Some are legitimate: a
+ * boarding pass really is one idea, not "tarjeta" plus "embarque". So this is a
+ * share, not a per-entry rule — a couple is normal, half a stage is padding.
+ */
+export function compoundPadding(entries, taughtHeads) {
+  // Only entries that begin with an article, so the connector locutions in
+  // Questions & Connectors — 'a pesar de', 'no obstante' — are not counted.
+  // Those are legitimately multi-word and would otherwise flag 28 of 30.
+  const head = (es) => flatten(es).replace(/^(el|la|los|las) /, '').split(/\s+/)[0];
+  const built = entries.filter(
+    (e) => /^(el|la|los|las) /.test(e.es) &&
+           /\s/.test(e.es.replace(/^(el|la|los|las) /, '')) &&
+           taughtHeads.has(head(e.es))
+  );
+  const cap = Math.max(3, Math.ceil(entries.length * 0.5));
+  return built.length > cap
+    ? { count: built.length, cap, of: entries.length, examples: built.slice(0, 4).map((e) => e.es) }
+    : null;
+}

@@ -11,7 +11,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { DECKS, STAGE_NAMES } from '../source/vocab.js';
 import { SENTENCES } from '../source/sentences.js';
-import { checkPair, overusedOpenings, copulaOveruse, flatten, bare, englishLeak, checkGloss } from './rules.mjs';
+import { checkPair, overusedOpenings, copulaOveruse, flatten, bare, englishLeak, checkGloss, articleFault, compoundPadding } from './rules.mjs';
 
 const targets = JSON.parse(readFileSync(new URL('./targets.json', import.meta.url)));
 const [, , file, ...flags] = process.argv;
@@ -39,6 +39,10 @@ for (const [es, [sp]] of Object.entries(SENTENCES)) takenSentences.set(flatten(s
 
 // Two words that share an English gloss can both be offered as options for the
 // same recall question, and one correct answer then gets marked wrong.
+const taughtHeads = new Set(
+  DECKS.flatMap((d) => d.stages.flat())
+    .map((w) => flatten(w.es).replace(/^(el|la|los|las) /, '').split(/\s+/)[0])
+);
 const takenGlosses = new Map();
 for (const deck of DECKS) {
   for (const stage of deck.stages) for (const w of stage) takenGlosses.set(flatten(w.en), w.es);
@@ -61,6 +65,9 @@ for (const [stageKey, entries] of Object.entries(batch.stages ?? {})) {
 
     if (takenWords.has(key)) { reject(`already taught in ${takenWords.get(key)}`); continue; }
     if (seenWord.has(key)) { reject(`duplicate of another entry in this batch (stage ${seenWord.get(key)})`); continue; }
+
+    const badArticle = articleFault(es);
+    if (badArticle) { reject(badArticle); continue; }
 
     const glossFaults = checkGloss(en);
     if (glossFaults.length) { reject(glossFaults.join('; ')); continue; }
@@ -94,6 +101,10 @@ for (const stage of [0, 1, 2]) {
   if (sentences.length < 8) continue;
   for (const o of overusedOpenings(sentences)) {
     advisories.push(`${STAGE_NAMES[stage]}: ${o.count} sentences open with "${o.opening}" — worth a look, not a fault`);
+  }
+  const padding = compoundPadding(accepted[stage], taughtHeads);
+  if (padding) {
+    setFaults.push(`${STAGE_NAMES[stage]}: ${padding.count}/${padding.of} are a taught word plus a modifier — e.g. ${padding.examples.join(', ')}. These teach nothing new; replace them with real words.`);
   }
   const copula = copulaOveruse(sentences);
   if (copula) {

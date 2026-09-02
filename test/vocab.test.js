@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { audioSlug } from '../source/audio.js';
-import { checkGloss } from '../tools/rules.mjs';
+import { checkGloss, articleFault } from '../tools/rules.mjs';
 import {
   DECKS,
   STAGE_COUNT,
@@ -17,6 +17,18 @@ const everyWord = DECKS.flatMap((deck) => deck.stages.flat());
 // sharing one means a question with two right answers — the app marks one of
 // them wrong. Ten such pairs shipped before this test existed: 'el suelo' and
 // 'el piso' were both "floor", 'rápido' and 'el ayuno' both "fast".
+// A pilot batch returned 'la babero' and 'la gafas de sol'. Only the reliable
+// direction is checked: an -a noun under 'el' is correct 27 times out of 27 in
+// this corpus — el agua, el koala, el día — so flagging it would be noise.
+describe('articles', () => {
+  it('agrees with the noun where Spanish is predictable', () => {
+    const faults = DECKS.flatMap((deck) => deck.stages.flat())
+      .map((word) => articleFault(word.es))
+      .filter(Boolean);
+    expect(faults).toEqual([]);
+  });
+});
+
 describe('English glosses', () => {
   const all = DECKS.flatMap((deck) => deck.stages.flat());
 
