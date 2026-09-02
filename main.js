@@ -80,8 +80,10 @@ const ui = {
   signOut: el('sign-out'),
   scoreboardNote: el('scoreboard-note'),
   account: el('account'),
+  openAccount: el('open-account'),
+  accountDanger: el('account-danger'),
   accountDialog: el('account-dialog'),
-  accountName: el('account-name'),
+  accountBody: el('account-body'),
   accountClose: el('account-close'),
   deleteStart: el('delete-start'),
   deleteDialog: el('delete-dialog'),
@@ -706,8 +708,12 @@ ui.play.addEventListener('click', (event) => {
 });
 
 function renderSound() {
-  ui.sound.textContent = muted ? 'Sound off' : 'Sound on';
+  // No visible text, so the accessible name has to come from the label — and it
+  // has to say the state, not just the control, or a screen reader announces a
+  // toggle without saying which way it is set.
   ui.sound.setAttribute('aria-pressed', String(!muted));
+  ui.sound.setAttribute('aria-label', muted ? 'Sound off' : 'Sound on');
+  ui.sound.title = muted ? 'Sound off' : 'Sound on';
 }
 
 ui.sound.addEventListener('click', () => {
@@ -730,10 +736,7 @@ async function renderAccount() {
   ui.auth.hidden = false;
   ui.signIn.hidden = account.signedIn;
   ui.authUser.hidden = !account.signedIn;
-  if (account.signedIn) {
-    ui.authName.textContent = account.name;
-    ui.accountName.textContent = account.name;
-  }
+  if (account.signedIn) ui.authName.textContent = account.name;
 }
 
 /**
@@ -901,6 +904,7 @@ function setTransferStatus(message, tone = '') {
 }
 
 ui.transfer.addEventListener('click', () => {
+  ui.accountDialog.close();
   ui.transferOut.value = exportProgress(store);
   ui.transferIn.value = '';
   setTransferStatus('');
@@ -941,7 +945,27 @@ ui.transferImport.addEventListener('click', () => {
 
 ui.transferClose.addEventListener('click', () => ui.transferDialog.close());
 
-ui.account.addEventListener('click', () => ui.accountDialog.showModal());
+/**
+ * One dialog for everything to do with your data, signed in or not.
+ *
+ * Move progress lives here rather than in the footer, but it has to stay
+ * reachable without an account: carrying progress to another browser is most
+ * useful precisely when there is no account syncing it. So this opens either
+ * way, and only the account-specific parts come and go.
+ */
+function openAccountDialog() {
+  const signedIn = Boolean(account?.signedIn);
+  ui.accountBody.textContent = signedIn
+    ? `Signed in as ${account.name}. Progress syncs to this account and follows you to any device you sign in on.`
+    : 'Not signed in. Progress is saved in this browser only — move it with a code, or sign in to have it follow you.';
+
+  ui.signOut.hidden = !signedIn;
+  ui.accountDanger.hidden = !signedIn;
+  ui.accountDialog.showModal();
+}
+
+ui.account.addEventListener('click', openAccountDialog);
+ui.openAccount.addEventListener('click', openAccountDialog);
 ui.accountClose.addEventListener('click', () => ui.accountDialog.close());
 
 ui.signOut.addEventListener('click', async () => {

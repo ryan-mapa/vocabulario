@@ -405,7 +405,33 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   cursor: pointer;
 }
 
-.footer-actions { display: flex; gap: 8px; }
+.footer-actions { display: flex; align-items: center; gap: 8px; }
+
+/* An icon says "sound" faster than the word does, and the crossed-out speaker
+   is the one symbol everyone already reads as muted. The state lives in the
+   glyph rather than in a label that has to be read. */
+.icon-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  cursor: pointer;
+}
+.icon-toggle:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
+.icon-toggle svg { width: 16px; height: 16px; fill: currentColor; stroke: currentColor; }
+.icon-toggle .on-wave,
+.icon-toggle .off-slash { fill: none; stroke-width: 1.8; stroke-linecap: round; }
+
+/* Waves when it is on, a cross when it is off — never both. */
+.icon-toggle .off-slash { display: none; }
+.icon-toggle[aria-pressed='false'] .on-wave { display: none; }
+.icon-toggle[aria-pressed='false'] .off-slash { display: inline; }
+.icon-toggle[aria-pressed='false'] { color: var(--line); }
 .footer-links { display: flex; flex-wrap: wrap; gap: 14px; }
 
 /* Wider than the confirm dialog: this one holds two code fields, and a code
@@ -748,6 +774,7 @@ button.stat:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; 
   .source-link:hover { color: #f5c95e; text-decoration-thickness: 2px; }
   .danger:hover { filter: brightness(1.1); }
   .ghost:hover { color: var(--ink); border-color: var(--muted); }
+  .icon-toggle:hover { color: var(--oro); border-color: var(--oro); }
   .linkish.danger-hover:hover { color: var(--rojo); }
   .danger:disabled:hover { filter: none; }
   .speak:hover { color: var(--oro); border-color: var(--oro); }

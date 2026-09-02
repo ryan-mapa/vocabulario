@@ -12,10 +12,18 @@
 // Pure data and a stored preference; main.js owns the AudioContext, so this
 // stays testable and `source/` stays free of browser APIs beyond storage.
 
-/** A rising fifth, D5 to A5. Brief and bright. */
+/**
+ * A soft bell. B5 with a fifth above it, struck together and left to ring.
+ *
+ * The interval is what makes it a bell rather than a beep: a single sine tone
+ * reads as electronic however gently it is played, and the quiet fifth on top
+ * supplies the shimmer a struck object has. It rings for a third of a second,
+ * which is long enough to sound like a chime and well short of the 700ms before
+ * the next question arrives.
+ */
 export const CORRECT = [
-  { hz: 587.33, start: 0, seconds: 0.07, gain: 0.16 },
-  { hz: 880.0, start: 0.06, seconds: 0.11, gain: 0.16 }
+  { hz: 987.77, start: 0, seconds: 0.34, gain: 0.13 },
+  { hz: 1479.98, start: 0.006, seconds: 0.26, gain: 0.05 }
 ];
 
 /** One low note, softer and longer. A shrug, not a klaxon. */

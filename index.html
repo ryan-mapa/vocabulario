@@ -138,8 +138,15 @@
         <a class="source-link" href="/terms">Terms</a>
       </span>
       <div class="footer-actions">
-        <button class="ghost" id="sound" type="button" aria-pressed="true">Sound on</button>
-        <button class="ghost" id="transfer" type="button">Move progress</button>
+        <button class="icon-toggle" id="sound" type="button" aria-pressed="true" aria-label="Sound on">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 9v6h4l5 4V5L8 9H4z"/>
+            <path class="on-wave" d="M16.5 8.8a4.5 4.5 0 0 1 0 6.4"/>
+            <path class="on-wave" d="M19.2 6.2a8 8 0 0 1 0 11.6"/>
+            <path class="off-slash" d="M17 9l5 6M22 9l-5 6"/>
+          </svg>
+        </button>
+        <button class="ghost" id="open-account" type="button">Account &amp; data</button>
       </div>
     </footer>
 
@@ -168,15 +175,13 @@
 
     <dialog class="confirm" id="account-dialog" aria-labelledby="account-title">
       <h2 id="account-title">Your account</h2>
-      <p class="confirm-body">
-        Signed in as <strong id="account-name" translate="no"></strong>. Progress
-        syncs to this account and follows you to any device you sign in on.
-      </p>
+      <p class="confirm-body" id="account-body"></p>
       <div class="confirm-actions">
         <button class="ghost" id="account-close" type="button" autofocus>Close</button>
-        <button class="ghost" id="sign-out" type="button">Sign out</button>
+        <button class="ghost" id="transfer" type="button">Move progress</button>
+        <button class="ghost" id="sign-out" type="button" hidden>Sign out</button>
       </div>
-      <p class="account-danger-note">
+      <p class="account-danger-note" id="account-danger" hidden>
         <button class="linkish danger-hover" id="delete-start" type="button">Delete my account…</button>
       </p>
     </dialog>

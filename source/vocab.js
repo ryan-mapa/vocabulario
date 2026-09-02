@@ -48,7 +48,9 @@ export const DECKS = [
         { es: 'la pimienta', en: 'pepper' },
         { es: 'el agua', en: 'water' },
         { es: 'el café', en: 'coffee' },
-        { es: 'el té', en: 'tea' }
+        { es: 'el té', en: 'tea' },
+        { es: 'el yogur', en: 'yogurt' },
+        { es: 'la nuez', en: 'walnut' }
       ],
       [
         { es: 'la carne', en: 'meat' },
@@ -69,7 +71,18 @@ export const DECKS = [
         { es: 'la miel', en: 'honey' },
         { es: 'el jugo', en: 'juice' },
         { es: 'la bebida', en: 'beverage' },
-        { es: 'el sabor', en: 'flavor' }
+        { es: 'el sabor', en: 'flavor' },
+        { es: 'la pasta', en: 'pasta' },
+        { es: 'el pavo', en: 'turkey' },
+        { es: 'la mostaza', en: 'mustard' },
+        { es: 'la salsa', en: 'sauce' },
+        { es: 'el vinagre', en: 'vinegar' },
+        { es: 'la mermelada', en: 'jam' },
+        { es: 'el cereal', en: 'cereal' },
+        { es: 'la tostada', en: 'toast' },
+        { es: 'el sándwich', en: 'sandwich' },
+        { es: 'el bocadillo', en: 'snack' },
+        { es: 'la merienda', en: 'afternoon snack' }
       ],
       [
         { es: 'el aguacate', en: 'avocado', alt: [{ es: 'la palta', region: 'Andes & Southern Cone' }] },
@@ -97,7 +110,11 @@ export const DECKS = [
         { es: 'la olla', en: 'pot' },
         { es: 'el horno de leña', en: 'wood oven' },
         { es: 'hervir', en: 'to boil' },
-        { es: 'freír', en: 'to fry' }
+        { es: 'freír', en: 'to fry' },
+        { es: 'el escabeche', en: 'pickling' },
+        { es: 'la levadura', en: 'yeast' },
+        { es: 'el puré', en: 'purée' },
+        { es: 'la guarnición', en: 'side dish' }
       ]
     ]
   },
@@ -128,7 +145,15 @@ export const DECKS = [
         { es: 'la abeja', en: 'bee' },
         { es: 'la mariposa', en: 'butterfly' },
         { es: 'la hormiga', en: 'ant' },
-        { es: 'la mosca', en: 'fly' }
+        { es: 'la mosca', en: 'fly' },
+        { es: 'la cucaracha', en: 'cockroach' },
+        { es: 'el grillo', en: 'cricket' },
+        { es: 'la paloma', en: 'pigeon' },
+        { es: 'el pollito', en: 'chick' },
+        { es: 'el ternero', en: 'calf' },
+        { es: 'el cachorro', en: 'puppy' },
+        { es: 'el gatito', en: 'kitten' },
+        { es: 'la mula', en: 'mule' }
       ],
       [
         { es: 'el león', en: 'lion' },
@@ -145,7 +170,22 @@ export const DECKS = [
         { es: 'la ardilla', en: 'squirrel' },
         { es: 'el cocodrilo', en: 'crocodile' },
         { es: 'el delfín', en: 'dolphin' },
-        { es: 'el tiburón', en: 'shark' }
+        { es: 'el tiburón', en: 'shark' },
+        { es: 'el rinoceronte', en: 'rhinoceros' },
+        { es: 'el hipopótamo', en: 'hippopotamus' },
+        { es: 'la cebra', en: 'zebra' },
+        { es: 'el canguro', en: 'kangaroo' },
+        { es: 'el koala', en: 'koala' },
+        { es: 'el panda', en: 'panda' },
+        { es: 'el leopardo', en: 'leopard' },
+        { es: 'la pantera', en: 'panther' },
+        { es: 'el chimpancé', en: 'chimpanzee' },
+        { es: 'el gorila', en: 'gorilla' },
+        { es: 'la llama', en: 'llama' },
+        { es: 'la alpaca', en: 'alpaca' },
+        { es: 'el jaguar', en: 'jaguar' },
+        { es: 'el puma', en: 'puma' },
+        { es: 'el venado', en: 'deer' }
       ],
       [
         { es: 'el camello', en: 'camel' },
@@ -159,7 +199,25 @@ export const DECKS = [
         { es: 'la garra', en: 'claw' },
         { es: 'el ganso', en: 'goose' },
         { es: 'el cisne', en: 'swan' },
-        { es: 'el halcón', en: 'falcon' }
+        { es: 'el halcón', en: 'falcon' },
+        { es: 'el pulpo', en: 'octopus' },
+        { es: 'el calamar', en: 'squid' },
+        { es: 'la medusa', en: 'jellyfish' },
+        { es: 'el cangrejo', en: 'crab' },
+        { es: 'la langosta', en: 'lobster' },
+        { es: 'la almeja', en: 'clam' },
+        { es: 'el mejillón', en: 'mussel' },
+        { es: 'la trucha', en: 'trout' },
+        { es: 'el salmón', en: 'salmon' },
+        { es: 'la anguila', en: 'eel' },
+        { es: 'el lagarto', en: 'lizard' },
+        { es: 'el camaleón', en: 'chameleon' },
+        { es: 'la iguana', en: 'iguana' },
+        { es: 'el sapo', en: 'toad' },
+        { es: 'la libélula', en: 'dragonfly' },
+        { es: 'la avispa', en: 'wasp' },
+        { es: 'la polilla', en: 'moth' },
+        { es: 'el gusano', en: 'worm' }
       ]
     ]
   },
@@ -183,7 +241,22 @@ export const DECKS = [
         { es: 'la escalera', en: 'stairs' },
         { es: 'el jardín', en: 'garden' },
         { es: 'la almohada', en: 'pillow' },
-        { es: 'el cajón', en: 'drawer' }
+        { es: 'el cajón', en: 'drawer' },
+        { es: 'el cuarto', en: 'bedroom' },
+        { es: 'la sala', en: 'living room' },
+        { es: 'el comedor', en: 'dining room' },
+        { es: 'el garaje', en: 'garage' },
+        { es: 'el patio', en: 'patio' },
+        { es: 'el balcón', en: 'balcony' },
+        { es: 'el mueble', en: 'piece of furniture' },
+        { es: 'el reloj de pared', en: 'wall clock' },
+        { es: 'la maceta', en: 'flowerpot' },
+        { es: 'el cuadro', en: 'framed picture' },
+        { es: 'la sábana', en: 'bedsheet' },
+        { es: 'el colchón', en: 'mattress' },
+        { es: 'la ducha caliente', en: 'hot shower' },
+        { es: 'el lavabo', en: 'bathroom sink' },
+        { es: 'el inodoro', en: 'toilet' }
       ],
       [
         { es: 'el suelo', en: 'floor' },
@@ -200,7 +273,22 @@ export const DECKS = [
         { es: 'la cuchara', en: 'spoon' },
         { es: 'la toalla', en: 'towel' },
         { es: 'el jabón', en: 'soap' },
-        { es: 'la manta', en: 'blanket', alt: [{ es: 'la cobija', region: 'Mexico' }, { es: 'la frazada', region: 'South America' }] }
+        { es: 'la manta', en: 'blanket', alt: [{ es: 'la cobija', region: 'Mexico' }, { es: 'la frazada', region: 'South America' }] },
+        { es: 'la olla a presión', en: 'pressure cooker' },
+        { es: 'la licuadora', en: 'blender' },
+        { es: 'la cafetera', en: 'coffee maker' },
+        { es: 'el microondas', en: 'microwave' },
+        { es: 'la lavadora', en: 'washing machine' },
+        { es: 'la secadora', en: 'clothes dryer' },
+        { es: 'el ventilador', en: 'fan' },
+        { es: 'la calefacción', en: 'heating' },
+        { es: 'el aire acondicionado', en: 'air conditioning' },
+        { es: 'la servilleta', en: 'napkin' },
+        { es: 'el mantel', en: 'tablecloth' },
+        { es: 'la bandeja', en: 'tray' },
+        { es: 'el tazón', en: 'bowl' },
+        { es: 'la jarra', en: 'pitcher' },
+        { es: 'el abrelatas', en: 'can opener' }
       ],
       [
         { es: 'el pasillo', en: 'hallway' },
@@ -217,7 +305,22 @@ export const DECKS = [
         { es: 'el estante', en: 'shelf' },
         { es: 'la basura', en: 'trash' },
         { es: 'la cerradura', en: 'lock' },
-        { es: 'el timbre', en: 'doorbell' }
+        { es: 'el timbre', en: 'doorbell' },
+        { es: 'el zaguán', en: 'entryway' },
+        { es: 'el altillo', en: 'loft' },
+        { es: 'la buhardilla', en: 'garret' },
+        { es: 'el tragaluz', en: 'skylight' },
+        { es: 'la viga', en: 'beam' },
+        { es: 'el marco', en: 'frame' },
+        { es: 'el umbral', en: 'threshold' },
+        { es: 'la bisagra', en: 'hinge' },
+        { es: 'el pomo', en: 'doorknob' },
+        { es: 'la persiana', en: 'blind' },
+        { es: 'el zócalo', en: 'baseboard' },
+        { es: 'la moldura', en: 'molding' },
+        { es: 'el revestimiento', en: 'cladding' },
+        { es: 'la tubería', en: 'plumbing' },
+        { es: 'el desagüe', en: 'drain' }
       ]
     ]
   },
@@ -241,7 +344,22 @@ export const DECKS = [
         { es: 'venir', en: 'to come' },
         { es: 'pensar', en: 'to think' },
         { es: 'entender', en: 'to understand' },
-        { es: 'olvidar', en: 'to forget' }
+        { es: 'olvidar', en: 'to forget' },
+        { es: 'ser', en: 'to be' },
+        { es: 'estar', en: 'to be located' },
+        { es: 'tener', en: 'to have' },
+        { es: 'hacer', en: 'to do' },
+        { es: 'ir', en: 'to go' },
+        { es: 'poder', en: 'to be able to' },
+        { es: 'querer', en: 'to want' },
+        { es: 'saber', en: 'to know a fact' },
+        { es: 'conocer', en: 'to be acquainted with' },
+        { es: 'dar', en: 'to give' },
+        { es: 'ver', en: 'to see' },
+        { es: 'poner', en: 'to put' },
+        { es: 'decir', en: 'to say' },
+        { es: 'sentir', en: 'to feel' },
+        { es: 'vender', en: 'to sell' }
       ],
       [
         { es: 'abrir', en: 'to open' },
@@ -258,7 +376,22 @@ export const DECKS = [
         { es: 'perder', en: 'to lose' },
         { es: 'ganar', en: 'to win' },
         { es: 'jugar', en: 'to play' },
-        { es: 'cantar', en: 'to sing' }
+        { es: 'cantar', en: 'to sing' },
+        { es: 'recordar', en: 'to remember' },
+        { es: 'aprender', en: 'to learn' },
+        { es: 'enseñar', en: 'to teach' },
+        { es: 'escuchar', en: 'to listen' },
+        { es: 'mirar', en: 'to watch' },
+        { es: 'esperar', en: 'to wait' },
+        { es: 'ayudar', en: 'to help' },
+        { es: 'necesitar', en: 'to need' },
+        { es: 'usar', en: 'to use' },
+        { es: 'cambiar', en: 'to change' },
+        { es: 'empujar', en: 'to push' },
+        { es: 'tirar', en: 'to pull' },
+        { es: 'tocar', en: 'to touch' },
+        { es: 'caminar', en: 'to walk' },
+        { es: 'viajar', en: 'to travel' }
       ],
       [
         { es: 'construir', en: 'to build' },
@@ -275,7 +408,22 @@ export const DECKS = [
         { es: 'apagar', en: 'to turn off' },
         { es: 'encender', en: 'to turn on' },
         { es: 'avisar', en: 'to warn' },
-        { es: 'lograr', en: 'to achieve' }
+        { es: 'lograr', en: 'to achieve' },
+        { es: 'atreverse', en: 'to dare' },
+        { es: 'arrepentirse', en: 'to regret' },
+        { es: 'agradecer', en: 'to be grateful' },
+        { es: 'merecer', en: 'to deserve' },
+        { es: 'pertenecer', en: 'to belong' },
+        { es: 'surgir', en: 'to arise' },
+        { es: 'desarrollar', en: 'to develop' },
+        { es: 'aportar', en: 'to contribute' },
+        { es: 'reconocer', en: 'to recognize' },
+        { es: 'advertir', en: 'to caution' },
+        { es: 'sugerir', en: 'to suggest' },
+        { es: 'exigir', en: 'to demand' },
+        { es: 'impedir', en: 'to prevent from' },
+        { es: 'resolver', en: 'to solve' },
+        { es: 'suponer', en: 'to assume' }
       ]
     ]
   },

@@ -32,14 +32,18 @@ describe('the tones', () => {
     expect(loudest(WRONG)).toBeLessThan(loudest(CORRECT));
   });
 
-  it('rises for a correct answer', () => {
+  // The overtone is what stops a sine tone sounding electronic, and it has to
+  // stay well under the fundamental or it becomes the note instead of colour.
+  it('colours the correct cue with a quieter overtone', () => {
     expect(CORRECT[1].hz).toBeGreaterThan(CORRECT[0].hz);
+    expect(CORRECT[1].gain).toBeLessThan(CORRECT[0].gain / 2);
   });
 
   it('keeps every cue short enough not to hold up the next question', () => {
-    // A correct answer moves on after 700ms; the sound must be long gone.
-    expect(duration(CORRECT)).toBeLessThan(0.3);
-    expect(duration(WRONG)).toBeLessThan(0.3);
+    // A correct answer moves on after 700ms. A bell needs to ring to sound like
+    // one, so the limit is what fits inside that gap, not the shortest possible.
+    expect(duration(CORRECT)).toBeLessThan(0.5);
+    expect(duration(WRONG)).toBeLessThan(0.5);
   });
 
   it('measures a cue from its last note ending, not its longest note', () => {
