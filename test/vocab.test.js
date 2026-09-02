@@ -91,6 +91,19 @@ describe('decks', () => {
     expect(clashes).toEqual([]);
   });
 
+  // A word listed as somewhere else's way of saying something should not also be
+  // taught as its own card: the vocabulary is Latin American, so adding
+  // `el aparcamiento` beside `el estacionamiento` quietly teaches the Spain
+  // form as a separate word. `la llave` is the exception and is allowed by
+  // name — it is a genuine second meaning, a key as well as a faucet.
+  it('does not teach a regional variant as a word of its own', () => {
+    const heads = new Set(everyWord.map((w) => w.es));
+    const doubled = everyWord
+      .flatMap((w) => (w.alt ?? []).map((a) => a.es))
+      .filter((variant) => heads.has(variant) && variant !== 'la llave');
+    expect(doubled).toEqual([]);
+  });
+
   it('gives every regional variant a word and a region, and never repeats itself', () => {
     for (const word of everyWord) {
       if (!word.alt) continue;
