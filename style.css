@@ -275,7 +275,6 @@ select {
 .direction-hint { margin: 0; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; }
 .prompt { margin: 10px 0; font-size: clamp(30px, 8vw, 42px); font-weight: 700; letter-spacing: -0.02em; }
 .prompt-row { margin-bottom: 22px; }
-.feedback-row { margin-top: 2px; }
 
 .choices { display: grid; gap: 10px; }
 
@@ -639,8 +638,7 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
    The row wraps rather than carrying a second layout: on a narrow screen a long
    word like `el estacionamiento` fills the card on its own, and the button
    drops beneath it instead of squeezing the word or running off the edge. */
-.prompt-row,
-.feedback-row {
+.prompt-row {
   display: flex;
   align-items: center;
   justify-content: center;

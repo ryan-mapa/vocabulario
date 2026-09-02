@@ -48,15 +48,16 @@ export function nextVoice(previous, count = VOICE_COUNT) {
 }
 
 /**
- * Whether the Spanish may be spoken yet.
+ * Whether this question may be spoken at all.
  *
- * In the recall direction the Spanish *is* the answer, so a speaker button on
- * the prompt would read it out. Same trap as the regional-variant note, which
- * is why that only appears once answered. Half of every mixed round is recall,
- * so this is the common case, not an edge one.
+ * Only when the prompt is already Spanish. In the recall direction the Spanish
+ * *is* the answer, so speaking it would simply give it away — and offering it
+ * afterwards instead put a button under the feedback line that nobody wanted
+ * there. Half of every mixed round is recall, so this is the common case, not
+ * an edge one.
  */
-export function canPlay(direction, answered) {
-  return direction === 'es-en' || answered;
+export function canPlay(direction) {
+  return direction === 'es-en';
 }
 
 /**

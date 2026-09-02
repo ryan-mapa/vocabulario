@@ -34,6 +34,11 @@ ahead. Rounds are 20 questions, about two minutes.
   button is that stage's mastery. Under **All words**, a stage counts as open
   once any single deck has opened it, and draws only from the decks that have
   — a locked deck never leaks its harder words into a combined round.
+- **Pronunciation** — words with a Spanish prompt carry a speaker button, and
+  tapping again cycles four Latin American voices, so hearing a word four times
+  means four different mouths rather than one recording repeated. Recall
+  questions have none: the Spanish is the answer there, and speaking it would
+  give it away.
 - **Direction** — a round is **Mixed** by default: ten questions of recognition
   (Español → English) and ten of recall (English → Español), interleaved rather
   than run as two blocks. Mixed practice retains better than blocked, and a

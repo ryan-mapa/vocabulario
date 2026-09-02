@@ -60,16 +60,19 @@ describe('nextVoice', () => {
 });
 
 // The bug this prevents: in the recall direction the Spanish is the answer, so
-// speaking it before the learner has answered simply tells them.
+// speaking it would simply tell them.
 describe('when the Spanish may be spoken', () => {
-  it('allows it straight away when the prompt is already Spanish', () => {
-    expect(canPlay('es-en', false)).toBe(true);
-    expect(canPlay('es-en', true)).toBe(true);
+  it('allows it when the prompt is already Spanish', () => {
+    expect(canPlay('es-en')).toBe(true);
   });
 
-  it('withholds it in the recall direction until the answer is in', () => {
-    expect(canPlay('en-es', false)).toBe(false);
-    expect(canPlay('en-es', true)).toBe(true);
+  it('never in the recall direction, answered or not', () => {
+    expect(canPlay('en-es')).toBe(false);
+  });
+
+  it('says no to a direction it does not know', () => {
+    expect(canPlay('mixed')).toBe(false);
+    expect(canPlay(undefined)).toBe(false);
   });
 });
 

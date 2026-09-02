@@ -103,9 +103,7 @@ const ui = {
   guardNoticeBody: el('guard-notice-body'),
   guardNoticeOk: el('guard-notice-ok'),
   speakPrompt: el('speak-prompt'),
-  speakAnswer: el('speak-answer'),
-  speakPromptDots: el('speak-prompt-dots'),
-  speakAnswerDots: el('speak-answer-dots')
+  speakPromptDots: el('speak-prompt-dots')
 };
 
 let store = load();
@@ -145,7 +143,7 @@ async function loadAudioManifest() {
 
 /** Which of the four voices was last heard. Nothing lit means none yet. */
 function renderDots() {
-  for (const dots of [ui.speakPromptDots, ui.speakAnswerDots]) {
+  for (const dots of [ui.speakPromptDots]) {
     if (dots.children.length !== VOICE_COUNT) {
       dots.innerHTML = '';
       for (let i = 0; i < VOICE_COUNT; i++) {
@@ -226,17 +224,12 @@ function speak(button, word) {
  */
 function renderSpeakers() {
   const question = game?.state.question;
-  const answered = Boolean(game?.state.lastAnswer);
+  const show =
+    Boolean(question) && hasClip(spoken, question.word.es) && canPlay(question.direction);
 
-  const sayable = Boolean(question) && hasClip(spoken, question.word.es);
-  const showPrompt = sayable && canPlay(question.direction, false);
-  const showAnswer = sayable && answered && !canPlay(question.direction, false);
-
-  ui.speakPrompt.hidden = !showPrompt;
-  ui.speakAnswer.hidden = !showAnswer;
-  ui.speakPromptDots.hidden = !showPrompt;
-  ui.speakAnswerDots.hidden = !showAnswer;
-  if (showPrompt || showAnswer) renderDots();
+  ui.speakPrompt.hidden = !show;
+  ui.speakPromptDots.hidden = !show;
+  if (show) renderDots();
 }
 
 function populateDecks() {
@@ -987,7 +980,7 @@ for (const tile of document.querySelectorAll('[data-tip]')) {
   tile.addEventListener('blur', hide);
 }
 
-for (const button of [ui.speakPrompt, ui.speakAnswer]) {
+for (const button of [ui.speakPrompt]) {
   button.addEventListener('click', () => {
     const word = game?.state.question?.word;
     if (word) speak(button, word);
