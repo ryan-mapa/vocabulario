@@ -143,6 +143,14 @@ p('    The gloss is shown as one option in a multiple-choice question.');
 p('14. **No two words may share an English gloss**, yours or the app\'s. If your');
 p('    word means the same as one already taught, it is a duplicate — pick a');
 p('    different word rather than a different way of writing the same gloss.');
+p('15. **Do not pad with a taught word plus a modifier.** A real submission came');
+p('    back with `la chaqueta vaquera`, `el traje de noche`, `la falda plisada`,');
+p('    `el cinturón de cuero` — every half of every one already taught. They pass');
+p('    the uniqueness rule and teach nothing. A compound is fine when it names');
+p('    one idea a learner could not assemble (`la tarjeta de embarque` really is');
+p('    a boarding pass); it is padding when it is just a noun with an adjective.');
+p('16. **Get the article right.** `el babero`, not `la babero`. Words that are');
+p('    always plural take a plural article: `las gafas de sol`, `las tijeras`.');
 p('');
 
 p('## Output format');

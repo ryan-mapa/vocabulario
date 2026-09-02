@@ -11,7 +11,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { DECKS, STAGE_NAMES } from '../source/vocab.js';
 import { SENTENCES } from '../source/sentences.js';
-import { checkPair, overusedOpenings, copulaOveruse, flatten, bare, englishLeak, checkGloss, articleFault, compoundPadding } from './rules.mjs';
+import { checkPair, overusedOpenings, copulaOveruse, flatten, bare, englishLeak, checkGloss, articleFault, compoundPadding, headwordKey } from './rules.mjs';
 
 const targets = JSON.parse(readFileSync(new URL('./targets.json', import.meta.url)));
 const [, , file, ...flags] = process.argv;
@@ -30,8 +30,8 @@ const takenSentences = new Map();
 for (const deck of DECKS) {
   for (const stage of deck.stages) {
     for (const w of stage) {
-      takenWords.set(flatten(w.es), deck.name);
-      for (const v of w.alt ?? []) takenWords.set(flatten(v.es), `${deck.name} (variant of ${w.es})`);
+      takenWords.set(headwordKey(w.es), deck.name);
+      for (const v of w.alt ?? []) takenWords.set(headwordKey(v.es), `${deck.name} (variant of ${w.es})`);
     }
   }
 }
@@ -61,7 +61,7 @@ for (const [stageKey, entries] of Object.entries(batch.stages ?? {})) {
     const reject = (why) => rejected.push({ stage, es: es ?? '(no es)', why });
 
     if (!es || !en) { reject('missing es or en'); continue; }
-    const key = flatten(es);
+    const key = headwordKey(es);
 
     if (takenWords.has(key)) { reject(`already taught in ${takenWords.get(key)}`); continue; }
     if (seenWord.has(key)) { reject(`duplicate of another entry in this batch (stage ${seenWord.get(key)})`); continue; }

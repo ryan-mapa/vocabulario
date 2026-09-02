@@ -5,6 +5,14 @@
 // then fails the build, and a validator stricter than the suite would send
 // agents back to fix things that were never wrong. Either costs a round trip.
 
+/**
+ * Identity of a headword. Case-folded but accent-PRESERVING, because in Spanish
+ * the accent is the word: 'el moño' is a bun and 'el mono' is a monkey, 'papá'
+ * is a father and 'papa' a potato, 'el año' is a year and 'el ano' is not.
+ * Stripping accents here rejected 'el moño' as a duplicate of a monkey.
+ */
+export const headwordKey = (es) => es.trim().toLowerCase();
+
 /** Lowercase, accents stripped — for comparing a word against an inflected form. */
 export const flatten = (text) =>
   text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
