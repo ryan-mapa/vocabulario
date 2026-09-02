@@ -1,31 +1,29 @@
 import { ALL_DECK_ID } from './vocab.js';
-import { newCard, review, masteryOf, isMastered, selectNext } from './srs.js';
+import { newCard, review, masteryOf, isMastered, selectNext, BOX_COUNT } from './srs.js';
 import { buildQuestion, isCorrect } from './quiz.js';
 import { stagePool, isStageUnlocked } from './stages.js';
-import { shuffle } from './random.js';
 
 export const ROUND_LENGTH = 20;
 
 /** Both directions in one round, evenly split. */
 export const MIXED = 'mixed';
 
+// How likely a word is to be asked the harder way, from barely known to
+// mastered. Never 0 or 1: a new word gets the occasional recall so the round
+// stays mixed from the start, and a mastered one still gets recognised
+// sometimes so it does not become a different exercise entirely.
+const RECALL_FLOOR = 0.2;
+const RECALL_CEIL = 0.8;
+
 /**
- * Which way each question runs.
- *
- * On `mixed`, half the round is recognition and half is recall, interleaved
- * rather than run as two blocks — mixed practice retains better than blocked,
- * and a round that changes character halfway through reads as two games stuck
- * together. An odd round length gives the extra question to recall, the harder
- * of the two.
+ * Recognition (Spanish → English) is the easier direction; recall
+ * (English → Spanish) is the one that actually proves you know a word. So the
+ * odds of being asked to recall rise with how well the word is known — a word
+ * you have just met is mostly shown to you, a word you have mastered is mostly
+ * demanded of you.
  */
-function directionPlan(direction, length, random) {
-  if (direction !== MIXED) return Array.from({ length }, () => direction);
-  const recall = Math.ceil(length / 2);
-  return shuffle(
-    [...Array.from({ length: recall }, () => 'en-es'),
-     ...Array.from({ length: length - recall }, () => 'es-en')],
-    random
-  );
+function recallChance(card) {
+  return RECALL_FLOOR + (RECALL_CEIL - RECALL_FLOOR) * (card.box / (BOX_COUNT - 1));
 }
 
 /**
@@ -55,6 +53,7 @@ export function createGame({
     cards: { ...cards },
     roundLength,
     plan: [],
+    remaining: {},
     asked: 0,
     correct: 0,
     startedAt: 0,
@@ -66,6 +65,35 @@ export function createGame({
     return state.cards[word.es] ?? newCard();
   }
 
+  /**
+   * Which way to ask this particular word.
+   *
+   * A mixed round is still exactly half and half — the two directions hold a
+   * budget of slots and each question spends one. The weighting decides which
+   * budget a word *prefers*; the budget decides what is actually left. So the
+   * balance of the round is guaranteed while the harder direction still lands
+   * on the words that have earned it.
+   */
+  function directionFor(word) {
+    if (state.direction !== MIXED) return state.direction;
+
+    const left = state.remaining;
+    const total = left['en-es'] + left['es-en'];
+    // Half the decision is what the word deserves, half is what the round still
+    // owes. Steering toward the budget rather than only enforcing it at the end
+    // is what keeps the last few questions from all being the same direction
+    // once one side runs dry.
+    const pressure = total > 0 ? left['en-es'] / total : 0.5;
+    const chance = 0.5 * recallChance(cardFor(word)) + 0.5 * pressure;
+
+    const wanted = random() < chance ? 'en-es' : 'es-en';
+    const other = wanted === 'en-es' ? 'es-en' : 'en-es';
+    const picked = left[wanted] > 0 || left[other] <= 0 ? wanted : other;
+
+    left[picked] -= 1;
+    return picked;
+  }
+
   function nextQuestion() {
     if (state.asked >= state.roundLength) {
       state.question = null;
@@ -75,7 +103,9 @@ export function createGame({
       avoid: state.question?.word.es ?? null,
       random
     });
-    state.question = buildQuestion(word, state.words, state.plan[state.asked], random);
+    const direction = directionFor(word);
+    state.plan.push(direction);
+    state.question = buildQuestion(word, state.words, direction, random);
     state.lastAnswer = null;
     return state.question;
   }
@@ -97,7 +127,10 @@ export function createGame({
   }
 
   function startRound() {
-    state.plan = directionPlan(state.direction, state.roundLength, random);
+    // An odd round length gives the extra question to recall, the harder one.
+    const recall = Math.ceil(state.roundLength / 2);
+    state.remaining = { 'en-es': recall, 'es-en': state.roundLength - recall };
+    state.plan = [];
     state.asked = 0;
     state.correct = 0;
     state.startedAt = now();

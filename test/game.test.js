@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { createGame } from '../source/game.js';
 import { mulberry32 } from '../source/random.js';
+import { stageWords } from '../source/vocab.js';
+import { newCard } from '../source/srs.js';
 
 const newGame = (overrides = {}) =>
   createGame({ deckId: 'animales', roundLength: 5, random: mulberry32(11), ...overrides });
@@ -148,37 +150,84 @@ describe('progress arriving mid-round', () => {
 });
 
 describe('direction', () => {
-  const plan = (game) => { game.startRound(); return game.state.plan; };
-
   it('splits a mixed round evenly between the two directions', () => {
-    const p = plan(createGame({ deckId: 'animales', random: mulberry32(9) }));
+    const game = createGame({ deckId: 'animales', random: mulberry32(9) });
+    game.startRound();
+    while (!game.isRoundOver()) {
+      game.answer(game.state.question.answer);
+      game.nextQuestion();
+    }
+    const p = game.state.plan;
     expect(p).toHaveLength(20);
     expect(p.filter((d) => d === 'es-en')).toHaveLength(10);
     expect(p.filter((d) => d === 'en-es')).toHaveLength(10);
   });
 
   // Blocked practice would make the round feel like two games bolted together,
-  // and interleaving retains better besides.
+  // and interleaving retains better besides. The budget is steered rather than
+  // merely enforced, so neither direction should bunch at the end.
   it('interleaves them rather than running two blocks', () => {
-    const p = plan(createGame({ deckId: 'animales', random: mulberry32(9) }));
-    const firstHalf = p.slice(0, 10);
-    expect(new Set(firstHalf).size).toBe(2);
+    const game = createGame({ deckId: 'animales', random: mulberry32(9) });
+    game.startRound();
+    while (!game.isRoundOver()) {
+      game.answer(game.state.question.answer);
+      game.nextQuestion();
+    }
+    const p = game.state.plan;
+    expect(new Set(p.slice(0, 10)).size).toBe(2);
+    expect(new Set(p.slice(10)).size).toBe(2);
+  });
+
+  // Recognition is the easier direction; recall is the one that proves you know
+  // a word. Words that have been earned should be asked the harder way more
+  // often than words only just met.
+  it('leans on recall for words that are well known', () => {
+    const words = stageWords('animales', 0);
+    const cards = {};
+    words.forEach((word, i) => {
+      if (i % 2 === 0) cards[word.es] = { ...newCard(), box: 4, seen: 9, correct: 9 };
+    });
+
+    const tally = { known: [0, 0], fresh: [0, 0] };
+    for (let seed = 0; seed < 120; seed++) {
+      const game = createGame({ deckId: 'animales', cards, random: mulberry32(seed) });
+      game.startRound();
+      while (!game.isRoundOver()) {
+        const question = game.state.question;
+        const bucket = (cards[question.word.es]?.box ?? 0) >= 4 ? 'known' : 'fresh';
+        tally[bucket][question.direction === 'en-es' ? 0 : 1] += 1;
+        game.answer(question.answer);
+        game.nextQuestion();
+      }
+    }
+    const share = ([recall, recognition]) => recall / (recall + recognition);
+    expect(share(tally.known)).toBeGreaterThan(share(tally.fresh) + 0.15);
   });
 
   it('gives the odd question to recall, the harder direction', () => {
-    const p = plan(createGame({ deckId: 'animales', roundLength: 7, random: mulberry32(4) }));
-    expect(p.filter((d) => d === 'en-es')).toHaveLength(4);
-    expect(p.filter((d) => d === 'es-en')).toHaveLength(3);
+    const game = createGame({ deckId: 'animales', roundLength: 7, random: mulberry32(4) });
+    game.startRound();
+    while (!game.isRoundOver()) {
+      game.answer(game.state.question.answer);
+      game.nextQuestion();
+    }
+    expect(game.state.plan.filter((d) => d === 'en-es')).toHaveLength(4);
+    expect(game.state.plan.filter((d) => d === 'es-en')).toHaveLength(3);
   });
 
   it('runs one direction throughout when one is chosen', () => {
     for (const direction of ['es-en', 'en-es']) {
-      const p = plan(createGame({ deckId: 'animales', direction, random: mulberry32(2) }));
-      expect(new Set(p)).toEqual(new Set([direction]));
+      const game = createGame({ deckId: 'animales', direction, random: mulberry32(2) });
+      game.startRound();
+      while (!game.isRoundOver()) {
+        expect(game.state.question.direction).toBe(direction);
+        game.answer(game.state.question.answer);
+        game.nextQuestion();
+      }
     }
   });
 
-  it('asks each question in the direction the plan called for', () => {
+  it('records the direction each question was actually asked in', () => {
     const game = createGame({ deckId: 'animales', roundLength: 6, random: mulberry32(21) });
     game.startRound();
     for (let i = 0; i < 6; i++) {
@@ -186,5 +235,6 @@ describe('direction', () => {
       game.answer(game.state.question.answer);
       game.nextQuestion();
     }
+    expect(game.state.plan).toHaveLength(6);
   });
 });

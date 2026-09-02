@@ -38,7 +38,12 @@ ahead. Rounds are 20 questions, about two minutes.
   (Español → English) and ten of recall (English → Español), interleaved rather
   than run as two blocks. Mixed practice retains better than blocked, and a
   round that changes character halfway reads as two games stuck together.
-  Either direction can still be drilled on its own.
+  Which words get which is weighted by how well you know them: recall is the
+  direction that actually proves you know a word, so its odds climb from about
+  20% for a word you have just met to 80% for one you have mastered. The round
+  stays exactly half and half — the weighting decides which direction a word
+  *prefers*, and a running budget decides what is still available. Either
+  direction can also be drilled on its own.
 - **Regional variants** — words are Latin American Spanish with US English
   glosses. Where a word changes across the Spanish-speaking world, the answer
   is followed by a note: *la fresa — also la frutilla (Southern Cone)*. It
@@ -78,6 +83,8 @@ ahead. Rounds are 20 questions, about two minutes.
 
 ```
 index.html      markup
+privacy.html    what is stored, and what is not
+terms.html      the short version: free, no guarantees
 style.css       styles
 main.js         DOM wiring — the only file that touches the document
 source/
