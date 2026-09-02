@@ -10,6 +10,7 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { DECKS, STAGE_NAMES } from '../source/vocab.js';
+import { audioSlug } from '../source/audio.js';
 import { SENTENCES } from '../source/sentences.js';
 import { checkPair, overusedOpenings, copulaOveruse, flatten, bare, englishLeak, checkGloss, articleFault, compoundPadding, headwordKey } from './rules.mjs';
 
@@ -26,11 +27,14 @@ const want = existing ? targets.existing[deckId] : fresh.targets;
 
 // Everything the corpus already holds.
 const takenWords = new Map();
+const takenSlugs = new Map();
+const seenSlug = new Map();
 const takenSentences = new Map();
 for (const deck of DECKS) {
   for (const stage of deck.stages) {
     for (const w of stage) {
       takenWords.set(headwordKey(w.es), deck.name);
+      takenSlugs.set(audioSlug(w.es), w.es);
       for (const v of w.alt ?? []) takenWords.set(headwordKey(v.es), `${deck.name} (variant of ${w.es})`);
     }
   }
@@ -66,6 +70,14 @@ for (const [stageKey, entries] of Object.entries(batch.stages ?? {})) {
     if (takenWords.has(key)) { reject(`already taught in ${takenWords.get(key)}`); continue; }
     if (seenWord.has(key)) { reject(`duplicate of another entry in this batch (stage ${seenWord.get(key)})`); continue; }
 
+    // Recordings are named from the word with its accents stripped, so two
+    // words that differ only by an accent would claim the same mp3 and one
+    // would silently overwrite the other. They are different words — 'el moño'
+    // is a bow and 'el mono' a monkey — but only one of them can have audio.
+    const slug = audioSlug(es);
+    if (takenSlugs.has(slug)) { reject(`would share the audio file "${slug}.mp3" with "${takenSlugs.get(slug)}" — differs only by an accent; pick another word`); continue; }
+    if (seenSlug.has(slug)) { reject(`would share an audio file with your own "${seenSlug.get(slug)}"`); continue; }
+
     const badArticle = articleFault(es);
     if (badArticle) { reject(badArticle); continue; }
 
@@ -89,6 +101,7 @@ for (const [stageKey, entries] of Object.entries(batch.stages ?? {})) {
     seenWord.set(key, stage);
     seenSentence.set(sKey, es);
     seenGloss.set(gKey, es);
+    seenSlug.set(slug, es);
     accepted[stage].push(entry);
   }
 }
