@@ -99,6 +99,10 @@ const ui = {
   guardBody: el('guard-body'),
   guardToggle: el('guard-toggle'),
   guardClose: el('guard-close'),
+  guardNotice: el('guard-notice'),
+  guardNoticeTitle: el('guard-notice-title'),
+  guardNoticeBody: el('guard-notice-body'),
+  guardNoticeOk: el('guard-notice-ok'),
   speakPrompt: el('speak-prompt'),
   speakAnswer: el('speak-answer'),
   speakPromptDots: el('speak-prompt-dots'),
@@ -355,9 +359,7 @@ function renderNote(streak = streakFrom(store.days, localDay(), store.guards)) {
   if (streak.guard === GUARD.GUARDED) {
     ui.streakStat.classList.remove('at-risk');
     note.textContent =
-      streak.guardSource === 'manual'
-        ? `Streak guard is on — your ${streak.current}-day streak is held until you turn it off.`
-        : `Streak guard held your ${streak.current}-day streak. Finish today to pick it up again.`;
+      `Streak guard is on — your ${streak.current}-day streak is held until you turn it off.`;
     note.className = 'scoreboard-note warning';
     return;
   }
@@ -499,7 +501,7 @@ function advance() {
  */
 function creditRound() {
   const day = localDay();
-  const before = streakFrom(store.days);
+  const before = streakFrom(store.days, day, store.guards);
 
   store = withDays(store, recordRound(store.days, day));
   save(store);
@@ -517,7 +519,11 @@ function creditRound() {
     endedAt: Date.now()
   });
 
-  return { before, after: streakFrom(store.days) };
+  // Playing is the clearest possible signal that the hold is no longer wanted.
+  const released = before.guard === GUARD.GUARDED;
+  if (released) setGuard(GUARD.ACTIVE);
+
+  return { before, after: streakFrom(store.days, day, store.guards), released };
 }
 
 /** The one line at the top of the summary worth reading. */
@@ -574,6 +580,10 @@ function showSummary() {
   ui.summaryToday.textContent = `${streaks.after.roundsToday}/${DAILY_GOAL}`;
   ui.summaryMastered.textContent = game.masteredCount();
   ui.summaryLongest.textContent = streaks.after.longest;
+
+  // After the summary is up, so the notice lands on top of it rather than
+  // being the first thing seen and hiding what the round achieved.
+  if (streaks.released) noticeGuard(GUARD.ACTIVE, true);
 }
 
 document.addEventListener('keydown', (event) => {
@@ -779,34 +789,56 @@ function readAuthResult() {
   history.replaceState(null, '', location.pathname);
 }
 
+/**
+ * Say when the guard changes, whichever way and whoever caused it.
+ *
+ * The release matters most: finishing a round turns the guard off without
+ * anybody asking, and a hold quietly disappearing is exactly the kind of thing
+ * someone discovers a fortnight later when their streak is gone.
+ */
+function noticeGuard(state, released) {
+  ui.guardNoticeTitle.textContent =
+    state === GUARD.GUARDED ? 'Streak guard on' : 'Streak guard off';
+  ui.guardNoticeBody.textContent =
+    state === GUARD.GUARDED
+      ? 'Your streak is held. It will not run down while this is on, and finishing a round turns it off again.'
+      : released
+        ? 'You finished a round, so the guard stepped aside and your streak is running again.'
+        : 'Your streak is running again, and the usual three-day grace applies.';
+  ui.guardNotice.showModal();
+}
+
 function openGuardDialog() {
   const streak = streakFrom(store.days, localDay(), store.guards);
-  const manual = streak.guardSource === 'manual';
+  const guarded = streak.guard === GUARD.GUARDED;
 
-  ui.guardBody.textContent = manual
-    ? `Your ${streak.current}-day streak is paused. It will not run down until you resume.`
-    : streak.guard === GUARD.GUARDED
-      ? `Your ${streak.current}-day streak is being held automatically. Finish today's goal and it carries on.`
-      : `Your streak is running normally.`;
+  ui.guardBody.textContent = guarded
+    ? `Your ${streak.current}-day streak is held. It will not run down until you turn this off.`
+    : 'Your streak is running normally.';
 
-  ui.guardToggle.textContent = manual ? 'Resume my streak' : 'Pause my streak';
+  ui.guardToggle.textContent = guarded ? 'Resume my streak' : 'Pause my streak';
   ui.guardDialog.showModal();
+}
+
+/** Append a guard change and save. Returns the state now in force. */
+function setGuard(state) {
+  store = withGuards(store, [...store.guards, guardEvent(state)]);
+  save(store);
+  renderScoreboard();
+  syncProgress();
+  return state;
 }
 
 ui.streakStat.addEventListener('click', openGuardDialog);
 ui.guardClose.addEventListener('click', () => ui.guardDialog.close());
 
 ui.guardToggle.addEventListener('click', () => {
-  const manual = streakFrom(store.days, localDay(), store.guards).guardSource === 'manual';
-  store = withGuards(store, [
-    ...store.guards,
-    guardEvent(manual ? GUARD.ACTIVE : GUARD.GUARDED)
-  ]);
-  save(store);
+  const guarded = streakFrom(store.days, localDay(), store.guards).guard === GUARD.GUARDED;
   ui.guardDialog.close();
-  renderScoreboard();
-  syncProgress();
+  noticeGuard(setGuard(guarded ? GUARD.ACTIVE : GUARD.GUARDED), false);
 });
+
+ui.guardNoticeOk.addEventListener('click', () => ui.guardNotice.close());
 
 ui.account.addEventListener('click', () => ui.accountDialog.showModal());
 ui.accountClose.addEventListener('click', () => ui.accountDialog.close());

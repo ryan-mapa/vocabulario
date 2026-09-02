@@ -26,21 +26,35 @@ export const GRACE_DAYS = 3;
 const MAX_GAP = GRACE_DAYS + 1;
 
 /**
- * Streak guard: what happens after the grace runs out.
+ * Streak guard: a hold the learner puts on their own streak, for a holiday or
+ * any other stretch they know they will miss.
+ *
+ * Only ever engaged by hand. Nothing turns it on for you, so a streak that
+ * survives is one somebody decided to protect — which is the only way the
+ * number keeps meaning anything.
  *
  * A string rather than a flag, because "paused" is unlikely to be the last
  * state this ever needs — the fold below reads whatever state an event names.
  */
 export const GUARD = { ACTIVE: 'active', GUARDED: 'guarded' };
 
-/** How often the guard engages by itself: once in any window this long. */
-export const AUTO_GUARD_DAYS = 7;
-
-/** Ordered manual guard events. Ties break on id so two devices agree. */
+/**
+ * Guard events oldest first.
+ *
+ * `day` decides which gaps a guard covers, but two changes on the same day
+ * need `at` to say which came last — pausing and then resuming an hour later
+ * must not fold to "paused". Id is the final tiebreak so two devices holding
+ * the same events always agree, never because it means anything.
+ */
 function orderedEvents(events) {
   return [...events]
     .filter((event) => event && typeof event.day === 'string' && event.state)
-    .sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : String(a.id) < String(b.id) ? -1 : 1));
+    .sort(
+      (a, b) =>
+        (a.day < b.day ? -1 : a.day > b.day ? 1 : 0) ||
+        (a.at ?? 0) - (b.at ?? 0) ||
+        (String(a.id) < String(b.id) ? -1 : 1)
+    );
 }
 
 /** The manually chosen state as of a day — the last event on or before it. */
@@ -106,31 +120,17 @@ export function streakFrom(counts, today = localDay(), events = []) {
     current: 0,
     longest: 0,
     graceDaysLeft: GRACE_DAYS,
-    guard: manual,
-    guardSource: manual === GUARD.GUARDED ? 'manual' : null
+    guard: manual
   };
   if (days.length === 0) return state;
 
-  // Walking forward, a gap either falls inside the grace window, is bridged by
-  // a guard, or ends the run. Auto-guards are worked out here rather than
-  // recorded, because one has to engage on a day nobody opened the app.
+  // Walking forward, a gap either falls inside the grace window, was covered by
+  // a guard somebody had turned on, or ends the run.
   let run = 0;
   let longest = 0;
-  let lastAutoGuard = null;
 
-  const bridges = (from, to) => {
-    if (daysBetween(from, to) <= MAX_GAP) return true;
-    if (manuallyGuardedBetween(events, from, to)) return true;
-
-    // The guard would engage the day the grace ran out.
-    const engagedOn = addDays(from, MAX_GAP);
-    const available =
-      lastAutoGuard === null || daysBetween(lastAutoGuard, engagedOn) >= AUTO_GUARD_DAYS;
-    if (!available) return false;
-
-    lastAutoGuard = engagedOn;
-    return true;
-  };
+  const bridges = (from, to) =>
+    daysBetween(from, to) <= MAX_GAP || manuallyGuardedBetween(events, from, to);
 
   for (const [index, day] of days.entries()) {
     run = index > 0 && bridges(days[index - 1], day) ? run + 1 : 1;
@@ -142,16 +142,7 @@ export function streakFrom(counts, today = localDay(), events = []) {
   state.longest = longest;
   state.graceDaysLeft = Math.max(0, GRACE_DAYS - Math.max(0, sinceLast));
 
-  if (sinceLast <= MAX_GAP) {
-    state.current = run;
-  } else if (bridges(last, today)) {
-    // Still running, but only because something is holding it.
-    state.current = run;
-    if (state.guard === GUARD.ACTIVE) {
-      state.guard = GUARD.GUARDED;
-      state.guardSource = 'auto';
-    }
-  }
+  if (sinceLast <= MAX_GAP || bridges(last, today)) state.current = run;
   return state;
 }
 
@@ -163,8 +154,14 @@ export function addDays(day, count) {
 }
 
 /** A manual guard change, ready to store and sync. */
-export function guardEvent(state, day = localDay(), id = null) {
-  return { id: id ?? `g-${day}-${Math.random().toString(36).slice(2, 10)}`, day, state, source: 'manual' };
+export function guardEvent(state, day = localDay(), id = null, at = Date.now()) {
+  return {
+    id: id ?? `g-${day}-${Math.random().toString(36).slice(2, 10)}`,
+    day,
+    at,
+    state,
+    source: 'manual'
+  };
 }
 
 /** Record one completed round against a day, returning a new counts map. */

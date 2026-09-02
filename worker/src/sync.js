@@ -103,7 +103,13 @@ function readGuard(raw) {
   const state = text(raw?.state, 20);
   if (!id || !state) throw new Error('every guard change needs an id and a state');
   if (!day || !DAY_PATTERN.test(day)) throw new Error(`guard ${id} has no day`);
-  return { id, day, state, source: text(raw.source, 10) ?? 'manual' };
+  return {
+    id,
+    day,
+    at: Math.round(finite(raw.at)),
+    state,
+    source: text(raw.source, 10) ?? 'manual'
+  };
 }
 
 /** A day count handed over on a first sync, from a browser played signed out. */
@@ -273,9 +279,9 @@ export async function sync(request, env, user) {
     ),
     ...guards.map((entry) =>
       env.DB.prepare(
-        `INSERT OR IGNORE INTO guards (id, user_id, day, state, source, created_at)
-         VALUES (?, ?, ?, ?, ?, ?)`
-      ).bind(entry.id, user.sub, entry.day, entry.state, entry.source, now)
+        `INSERT OR IGNORE INTO guards (id, user_id, day, at, state, source, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      ).bind(entry.id, user.sub, entry.day, entry.at, entry.state, entry.source, now)
     ),
     ...imports.map((entry) =>
       env.DB.prepare(
@@ -358,7 +364,7 @@ export async function sync(request, env, user) {
   // years, and a set union is only conflict-free if both sides can see all of
   // it — an incremental slice would let one device fold a different history.
   const { results: guardRows } = await env.DB.prepare(
-    'SELECT id, day, state, source FROM guards WHERE user_id = ? ORDER BY day, id'
+    'SELECT id, day, at, state, source FROM guards WHERE user_id = ? ORDER BY day, at, id'
   ).bind(user.sub).all();
 
   return {

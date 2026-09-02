@@ -1,0 +1,11 @@
+-- When a guard change was actually made, by the clock of the device that made
+-- it. `created_at` stays as when this server heard about it.
+--
+-- Ordering by day alone was not enough: two changes on the same day fell back
+-- to comparing ids, which are random, so pausing and then resuming could fold
+-- to either answer. The day decides which gaps a guard covers; `at` decides
+-- which of two changes on that day came last.
+--
+-- Same split as `reviews`, which carries both `reviewed_at` and `received_at`
+-- for exactly this reason.
+ALTER TABLE guards ADD COLUMN at INTEGER;

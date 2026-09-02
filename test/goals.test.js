@@ -3,7 +3,6 @@ import {
   DAILY_GOAL,
   GRACE_DAYS,
   GUARD,
-  AUTO_GUARD_DAYS,
   guardEvent,
   manualGuardOn,
   addDays,
@@ -97,9 +96,12 @@ describe(`the ${GRACE_DAYS}-day grace`, () => {
     expect(streakFrom(played, '2026-09-07').current).toBe(4);
   });
 
-  it('hands over to the guard on the fourth, rather than breaking', () => {
+  it('breaks on the fourth, unless a guard was turned on', () => {
     const played = counts(...base, hit('2026-09-08'));
-    expect(streakFrom(played, '2026-09-08').current).toBe(4);
+    expect(streakFrom(played, '2026-09-08').current).toBe(1);
+
+    const guarded = [guardEvent(GUARD.GUARDED, '2026-09-04', 'g')];
+    expect(streakFrom(played, '2026-09-08', guarded).current).toBe(4);
   });
 
   it('keeps showing the streak during the grace window', () => {
@@ -108,11 +110,10 @@ describe(`the ${GRACE_DAYS}-day grace`, () => {
     expect(streakFrom(played, '2026-09-06').current).toBe(3); // three, still savable
   });
 
-  it('is held by the guard once the window has passed', () => {
+  it('drops it once the window has passed, with no guard on', () => {
     const state = streakFrom(counts(...base), '2026-09-09');
-    expect(state.current).toBe(3);
-    expect(state.guard).toBe(GUARD.GUARDED);
-    expect(state.guardSource).toBe('auto');
+    expect(state.current).toBe(0);
+    expect(state.guard).toBe(GUARD.ACTIVE);
   });
 
   it('reports how much grace is left, and refills it on a completed day', () => {
@@ -124,17 +125,14 @@ describe(`the ${GRACE_DAYS}-day grace`, () => {
 });
 
 describe('the longest streak', () => {
-  it('remembers a run that a second lapse did break', () => {
+  it('remembers a run that has since been broken', () => {
     const played = counts(
       hit('2026-08-01'), hit('2026-08-02'), hit('2026-08-03'), hit('2026-08-04'),
-      // guard carries this gap: it engages on the 8th
-      hit('2026-08-10'),
-      // this one would want a guard on the 14th, only six days later
-      hit('2026-08-16')
+      hit('2026-09-01')  // a month away, and nothing was guarding it
     );
-    const state = streakFrom(played, '2026-08-16');
+    const state = streakFrom(played, '2026-09-01');
     expect(state.current).toBe(1);
-    expect(state.longest).toBe(5);
+    expect(state.longest).toBe(4);
   });
 
   it('is never smaller than the current one', () => {
@@ -149,48 +147,30 @@ describe('the longest streak', () => {
   });
 });
 
-// Streak guard: what happens after the grace runs out. An auto-guard is worked
-// out rather than recorded, because one has to engage on a day nobody opened
-// the app — you cannot write an event on a day the program never ran.
+// Nothing engages the guard on its own. A streak that survives an absence is
+// one somebody decided to protect, which is what keeps the number meaning
+// something.
 describe('the streak guard', () => {
   const run = [hit('2026-09-01'), hit('2026-09-02'), hit('2026-09-03')];
 
-  it('is inactive while a streak is healthy', () => {
-    const state = streakFrom(counts(...run), '2026-09-03');
-    expect(state.guard).toBe(GUARD.ACTIVE);
-    expect(state.guardSource).toBeNull();
+  it('is off unless it was turned on', () => {
+    expect(streakFrom(counts(...run), '2026-09-03').guard).toBe(GUARD.ACTIVE);
+    expect(streakFrom(counts(...run), '2026-09-30').guard).toBe(GUARD.ACTIVE);
   });
 
-  it('engages by itself once the grace is spent, and holds the streak', () => {
-    const state = streakFrom(counts(...run), '2026-09-20');
-    expect(state.current).toBe(3);
-    expect(state.guard).toBe(GUARD.GUARDED);
-    expect(state.guardSource).toBe('auto');
+  it('does not save a streak nobody protected', () => {
+    expect(streakFrom(counts(...run), '2026-09-30').current).toBe(0);
   });
 
-  it('holds however long the absence runs', () => {
-    expect(streakFrom(counts(...run), '2027-06-01').current).toBe(3);
+  it('holds however long the absence runs, once it is on', () => {
+    const on = [guardEvent(GUARD.GUARDED, '2026-09-04', 'g')];
+    expect(streakFrom(counts(...run), '2027-06-01', on).current).toBe(3);
   });
 
-  it('lets go the moment they play again', () => {
-    const back = counts(...run, hit('2026-09-20'));
-    const state = streakFrom(back, '2026-09-20');
-    expect(state.current).toBe(4);
-    expect(state.guard).toBe(GUARD.ACTIVE);
-  });
-
-  // A guard engages where a gap *starts*, not where it ends, so the spacing
-  // that matters is between the qualifying days that open each gap.
-  it('only engages once in a week, so a second lapse does break the streak', () => {
-    // Guards would fall on the 7th and the 13th — six days apart.
-    const played = counts(...run, hit('2026-09-09'), hit('2026-09-15'));
-    expect(streakFrom(played, '2026-09-15').current).toBe(1);
-  });
-
-  it('engages again once a week has passed', () => {
-    // Guards fall on the 7th and the 14th — seven days apart, so both are due.
-    const played = counts(...run, hit('2026-09-10'), hit('2026-09-20'));
-    expect(streakFrom(played, '2026-09-20').current).toBe(5);
+  it('stops holding from the day it is turned off', () => {
+    const away = [guardEvent(GUARD.GUARDED, '2026-09-04', 'a'), guardEvent(GUARD.ACTIVE, '2026-09-06', 'b')];
+    // Guarded across the gap, so the run is intact when they return.
+    expect(streakFrom(counts(...run, hit('2026-09-06')), '2026-09-06', away).current).toBe(4);
   });
 });
 
@@ -209,16 +189,19 @@ describe('pausing by hand', () => {
     expect(manualGuardOn([paused('2026-09-10')], '2026-09-05')).toBe(GUARD.ACTIVE);
   });
 
-  it('carries a streak through a holiday without spending the automatic one', () => {
+  it('carries a streak through a holiday', () => {
     const away = [paused('2026-09-03'), resumed('2026-09-25')];
     const state = streakFrom(counts(...run), '2026-09-24', away);
     expect(state.current).toBe(2);
     expect(state.guard).toBe(GUARD.GUARDED);
-    expect(state.guardSource).toBe('manual');
+  });
 
-    // Back from holiday, a later lapse still has its automatic guard to spend.
-    const after = counts(...run, hit('2026-09-25'), hit('2026-10-05'));
-    expect(streakFrom(after, '2026-10-05', away).current).toBe(4);
+  // Once it is off, the streak is on its own again — a later lapse breaks it.
+  it('protects nothing after it is turned off', () => {
+    const away = [paused('2026-09-03'), resumed('2026-09-25')];
+    const after = counts(...run, hit('2026-09-25'));
+    expect(streakFrom(after, '2026-09-25', away).current).toBe(3);
+    expect(streakFrom(after, '2026-10-05', away).current).toBe(0);
   });
 
   it('orders events by day, then by id, so two devices agree', () => {
@@ -230,5 +213,33 @@ describe('pausing by hand', () => {
     expect(addDays('2026-09-30', 1)).toBe('2026-10-01');
     expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
     expect(addDays('2024-02-28', 2)).toBe('2024-03-01');
+  });
+});
+
+// The bug this prevents: pausing and then resuming an hour later folded to
+// whichever id happened to sort first, because both events share a day.
+describe('two guard changes on one day', () => {
+  const at = (state, at, id) => ({ id, day: '2026-09-04', at, state, source: 'manual' });
+
+  it('takes the later one, whatever the ids are', () => {
+    const events = [at(GUARD.GUARDED, 1000, 'zzz'), at(GUARD.ACTIVE, 2000, 'aaa')];
+    expect(manualGuardOn(events, '2026-09-04')).toBe(GUARD.ACTIVE);
+    expect(manualGuardOn([...events].reverse(), '2026-09-04')).toBe(GUARD.ACTIVE);
+  });
+
+  it('and the other way round', () => {
+    const events = [at(GUARD.ACTIVE, 1000, 'aaa'), at(GUARD.GUARDED, 2000, 'zzz')];
+    expect(manualGuardOn(events, '2026-09-04')).toBe(GUARD.GUARDED);
+    expect(manualGuardOn([...events].reverse(), '2026-09-04')).toBe(GUARD.GUARDED);
+  });
+
+  it('falls back to the id only when the moment is identical, so devices agree', () => {
+    const tied = [at(GUARD.GUARDED, 1000, 'b'), at(GUARD.ACTIVE, 1000, 'a')];
+    expect(manualGuardOn(tied, '2026-09-04')).toBe(manualGuardOn([...tied].reverse(), '2026-09-04'));
+  });
+
+  it('treats an event with no moment as the oldest, not the newest', () => {
+    const mixed = [{ id: 'old', day: '2026-09-04', state: GUARD.GUARDED }, at(GUARD.ACTIVE, 5, 'new')];
+    expect(manualGuardOn(mixed, '2026-09-04')).toBe(GUARD.ACTIVE);
   });
 });

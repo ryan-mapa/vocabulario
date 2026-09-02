@@ -147,14 +147,22 @@
       </div>
     </dialog>
 
+    <dialog class="confirm" id="guard-notice" aria-labelledby="guard-notice-title">
+      <h2 id="guard-notice-title"></h2>
+      <p class="confirm-body" id="guard-notice-body"></p>
+      <div class="confirm-actions">
+        <button class="primary" id="guard-notice-ok" type="button" autofocus>Got it</button>
+      </div>
+    </dialog>
+
     <dialog class="confirm" id="guard-dialog" aria-labelledby="guard-title">
       <h2 id="guard-title">Streak guard</h2>
       <p class="confirm-body" id="guard-body"></p>
       <p class="confirm-body guard-explainer">
-        Miss a day and the three-day grace covers it. Once that runs out the
-        guard engages by itself — at most once a week — and holds your streak
-        until you next play. Turn it on yourself for a holiday, and it stays on
-        until you turn it off.
+        Turn this on before a holiday, or any stretch you know you will miss,
+        and your streak is held instead of running down. It stays on until you
+        turn it off — or until you finish a round, which picks the streak up
+        again by itself.
       </p>
       <div class="confirm-actions">
         <button class="ghost" id="guard-close" type="button" autofocus>Close</button>

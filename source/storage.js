@@ -88,7 +88,13 @@ function readGuards(raw) {
         typeof event.state === 'string' &&
         /^\d{4}-\d{2}-\d{2}$/.test(event.day)
     )
-    .map(({ id, day, state, source }) => ({ id, day, state, source: source ?? 'manual' }));
+    .map(({ id, day, at, state, source }) => ({
+      id,
+      day,
+      at: Number.isFinite(at) ? at : 0,
+      state,
+      source: source ?? 'manual'
+    }));
 }
 
 /** `{ 'YYYY-MM-DD': roundsCompleted }`, trimmed to the most recent DAY_LIMIT. */
