@@ -21,6 +21,7 @@ const MODULES = [
   'source/storage.js',
   'source/game.js',
   'source/api.js',
+  'source/sound.js',
   'main.js'
 ];
 

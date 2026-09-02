@@ -101,6 +101,7 @@ source/
   srs.js        Leitner boxes, scheduling, mastery
   stages.js     which stages are unlocked, and the pool each one draws from
   goals.js      the daily goal, the day streak, and the grace window
+  sound.js      the two notes an answer makes, and whether they are muted
   quiz.js       builds a multiple-choice question
   game.js       round state, scoring, streaks
   storage.js    localStorage persistence, and the queue of unsent answers

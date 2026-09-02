@@ -21,6 +21,7 @@ import {
 import { deckProgress, unlockedDepth, commonDepth, nextUnlock } from './source/stages.js';
 import { fetchMe, signOut, sync, deleteAccount } from './source/api.js';
 import { clipUrl, nextVoice, canPlay, hasClip, MANIFEST_URL, VOICE_COUNT } from './source/audio.js';
+import { tonesFor, isMuted, setMuted } from './source/sound.js';
 import {
   DAILY_GOAL,
   GRACE_DAYS,
@@ -62,6 +63,7 @@ const ui = {
   goalBanner: el('goal-banner'),
   again: el('again'),
   transfer: el('transfer'),
+  sound: el('sound'),
   transferDialog: el('transfer-dialog'),
   transferOut: el('transfer-out'),
   transferIn: el('transfer-in'),
@@ -151,6 +153,45 @@ function renderDots() {
       }
     }
     [...dots.children].forEach((dot, i) => dot.classList.toggle('on', i === lastVoice));
+  }
+}
+
+/**
+ * The little tone an answer makes.
+ *
+ * The context is built on first use rather than at load, because a browser
+ * refuses to start one before the page has been interacted with — and the
+ * first answer is always a click or a keypress, so by then it is allowed.
+ */
+let tones = null;
+let muted = isMuted();
+
+function chime(correct) {
+  if (muted) return;
+  try {
+    tones ??= new (window.AudioContext ?? window.webkitAudioContext)();
+    if (tones.state === 'suspended') tones.resume();
+
+    for (const tone of tonesFor(correct)) {
+      const at = tones.currentTime + tone.start;
+      const osc = tones.createOscillator();
+      const gain = tones.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.value = tone.hz;
+      // Eased in and out. A square-edged envelope clicks, and the click is
+      // louder than the note it is wrapping.
+      gain.gain.setValueAtTime(0.0001, at);
+      gain.gain.exponentialRampToValueAtTime(tone.gain, at + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, at + tone.seconds);
+
+      osc.connect(gain).connect(tones.destination);
+      osc.start(at);
+      osc.stop(at + tone.seconds + 0.02);
+    }
+  } catch {
+    // No audio on this device, or the context refused. Silence is a fine
+    // outcome; the colours already said whether the answer was right.
   }
 }
 
@@ -473,6 +514,7 @@ function submit(choice) {
     else if (value === choice) button.classList.add('wrong');
   }
 
+  chime(result.correct);
   ui.feedback.className = `feedback ${result.correct ? 'good' : 'bad'}`;
   ui.feedback.textContent = result.correct
     ? 'Correct!'
@@ -638,6 +680,17 @@ ui.direction.addEventListener('change', startGame);
 ui.play.addEventListener('click', (event) => {
   if (event.target.closest('button')) return;
   advance();
+});
+
+function renderSound() {
+  ui.sound.textContent = muted ? 'Sound off' : 'Sound on';
+  ui.sound.setAttribute('aria-pressed', String(!muted));
+}
+
+ui.sound.addEventListener('click', () => {
+  muted = setMuted(!muted);
+  renderSound();
+  if (!muted) chime(true);   // so the choice is audible immediately
 });
 
 ui.again.addEventListener('click', startGame);
@@ -942,6 +995,7 @@ for (const button of [ui.speakPrompt, ui.speakAnswer]) {
 }
 
 fitDirectionLabels();
+renderSound();
 populateDecks();
 startGame();
 loadAudioManifest().then(renderSpeakers);
