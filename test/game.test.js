@@ -99,7 +99,9 @@ describe('rounds', () => {
     const cards = { 'el perro': { box: 4, due: 0, seen: 9, correct: 9 } };
     const game = newGame({ cards });
     expect(game.masteredCount()).toBe(1);
-    expect(game.mastery()).toBeCloseTo(4 / (15 * 4));
+    // Measured against the pool rather than a fixed 15: decks are not all the
+    // same size, and a topic gets as many words as it deserves.
+    expect(game.mastery()).toBeCloseTo(4 / (game.state.words.length * 4));
   });
 
   it('never asks the same word twice in a row', () => {

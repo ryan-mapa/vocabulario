@@ -29,7 +29,10 @@ describe('decks', () => {
     expect(stageWords(deck.id, 0)).toEqual(deck.stages[0]);
     expect(deckWords(deck.id)).toHaveLength(deck.stages.flat().length);
     expect(deckWords(ALL_DECK_ID)).toHaveLength(everyWord.length);
-    expect(stageWords(ALL_DECK_ID, 0)).toHaveLength(DECKS.length * deck.stages[0].length);
+    // Decks are not all the same size: a topic gets as many words as it
+    // deserves, and a closed set like the days of the week has fewer.
+    const everyFirstStage = DECKS.reduce((n, d) => n + d.stages[0].length, 0);
+    expect(stageWords(ALL_DECK_ID, 0)).toHaveLength(everyFirstStage);
     expect(deckWords('nope')).toEqual([]);
     expect(stageWords('nope', 0)).toEqual([]);
     expect(getDeck('nope')).toBeNull();
