@@ -60,17 +60,17 @@
         <label class="field">
           <span>Direction</span>
           <select id="direction" translate="no">
-            <option value="mixed">Mixed (recommended)</option>
+            <option value="mixed" data-full="Mixed (recommended)" data-short="Mixed">Mixed (recommended)</option>
             <option value="es-en">Spanish → English</option>
             <option value="en-es">English → Spanish</option>
           </select>
         </label>
 
-        <button class="shield" id="guard-shield" type="button"
-                aria-label="Streak guard" title="Streak guard">
+        <button class="shield" id="guard-shield" type="button" title="Streak guard">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M12 3 5 5.6v5.7c0 4.3 3 8.3 7 9.4 4-1.1 7-5.1 7-9.4V5.6L12 3z"/>
           </svg>
+          <span class="shield-label">Streak guard</span>
         </button>
       </div>
     </header>
@@ -142,17 +142,8 @@
       </span>
       <div class="footer-actions">
         <button class="ghost" id="transfer" type="button">Move progress</button>
-        <button class="ghost danger-hover" id="reset" type="button">Clear progress</button>
       </div>
     </footer>
-    <dialog class="confirm" id="confirm-reset" aria-labelledby="confirm-title">
-      <h2 id="confirm-title">Clear all progress?</h2>
-      <p class="confirm-body" id="confirm-body"></p>
-      <div class="confirm-actions">
-        <button class="ghost" id="confirm-cancel" type="button" autofocus>Keep it</button>
-        <button class="danger" id="confirm-clear" type="button">Clear progress</button>
-      </div>
-    </dialog>
 
     <dialog class="confirm" id="guard-notice" aria-labelledby="guard-notice-title">
       <h2 id="guard-notice-title"></h2>

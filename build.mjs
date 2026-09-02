@@ -57,10 +57,6 @@ const css = read('style.css');
 
 const out = `<title>Vocabulario</title>
 <style>
-/* The host's reset defaults to a light color-scheme; this page is committed
-   dark, so native controls (select popups, scrollbars) are told to match. */
-:root { color-scheme: dark; }
-
 ${css}
 </style>
 

@@ -60,11 +60,6 @@ const ui = {
   summaryLongest: el('summary-longest'),
   goalBanner: el('goal-banner'),
   again: el('again'),
-  reset: el('reset'),
-  confirmDialog: el('confirm-reset'),
-  confirmBody: el('confirm-body'),
-  confirmCancel: el('confirm-cancel'),
-  confirmClear: el('confirm-clear'),
   transfer: el('transfer'),
   transferDialog: el('transfer-dialog'),
   transferOut: el('transfer-out'),
@@ -462,6 +457,11 @@ function submit(choice) {
   store = withCards(store, game.state.cards);
   save(store);
 
+  // Let go of the tapped button before disabling it. A disabled element that
+  // still holds focus keeps its ring in some mobile browsers, and the keyboard
+  // route reads from the document rather than the button, so nothing is lost.
+  document.activeElement?.blur?.();
+
   for (const button of ui.choices.querySelectorAll('.choice')) {
     const value = button.dataset.choice;
     button.disabled = true;
@@ -603,74 +603,25 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
+/**
+ * "Mixed (recommended)" does not fit a phone's select, and a native option
+ * cannot be trimmed with CSS — it truncates to "Mixed (reco…", which reads as
+ * a mistake. The word is dropped where there is no room for it and kept where
+ * there is, rather than being lost everywhere to satisfy the narrowest case.
+ */
+function fitDirectionLabels() {
+  const narrow = window.matchMedia('(max-width: 460px)').matches;
+  for (const option of ui.direction.options) {
+    const wanted = narrow ? option.dataset.short : option.dataset.full;
+    if (wanted) option.textContent = wanted;
+  }
+}
+
+window.matchMedia('(max-width: 460px)').addEventListener('change', fitDirectionLabels);
+
 ui.deck.addEventListener('change', startGame);
 ui.direction.addEventListener('change', startGame);
 ui.again.addEventListener('click', startGame);
-ui.reset.addEventListener('click', () => {
-  const tracked = Object.keys(store.cards).length;
-  ui.confirmBody.textContent = tracked
-    ? `This erases progress on ${tracked} word${tracked === 1 ? '' : 's'}, your ` +
-      `${streakFrom(store.days).current}-day streak, and relocks every stage. It is saved ` +
-      `only in this browser, so there is no copy to restore from.`
-    : 'Nothing is saved on this device yet, so there is nothing to clear.';
-  ui.confirmDialog.showModal();
-});
-
-ui.confirmCancel.addEventListener('click', () => ui.confirmDialog.close());
-
-function setTransferStatus(message, tone = '') {
-  ui.transferStatus.textContent = message;
-  ui.transferStatus.className = `transfer-status ${tone}`;
-}
-
-ui.transfer.addEventListener('click', () => {
-  ui.transferOut.value = exportProgress(store);
-  ui.transferIn.value = '';
-  setTransferStatus('');
-  ui.transferDialog.showModal();
-});
-
-ui.transferCopy.addEventListener('click', async () => {
-  try {
-    await navigator.clipboard.writeText(ui.transferOut.value);
-    setTransferStatus('Copied.', 'good');
-  } catch {
-    // No clipboard permission, or an insecure origin. Selecting the text still
-    // leaves the reader one keystroke away from having it.
-    ui.transferOut.select();
-    setTransferStatus('Selected — press ⌘C or Ctrl+C to copy.');
-  }
-});
-
-ui.transferImport.addEventListener('click', () => {
-  let incoming;
-  try {
-    incoming = parseProgress(ui.transferIn.value.trim());
-  } catch (error) {
-    return setTransferStatus(error.message, 'bad');
-  }
-
-  const words = Object.keys(incoming.cards).length;
-  store = incoming;
-  save(store);
-  stage = 0;
-  populateDecks();
-  startGame();
-
-  setTransferStatus(`Restored ${words} word${words === 1 ? '' : 's'}.`, 'good');
-  ui.transferOut.value = exportProgress(store);
-  ui.transferIn.value = '';
-});
-
-ui.transferClose.addEventListener('click', () => ui.transferDialog.close());
-
-ui.confirmClear.addEventListener('click', () => {
-  ui.confirmDialog.close();
-  store = reset();
-  stage = 0;
-  populateDecks();
-  startGame();
-});
 
 /**
  * Show the account control, but only where there is an API to back it. Served
@@ -849,6 +800,52 @@ ui.guardToggle.addEventListener('click', () => {
 
 ui.guardNoticeOk.addEventListener('click', () => ui.guardNotice.close());
 
+function setTransferStatus(message, tone = '') {
+  ui.transferStatus.textContent = message;
+  ui.transferStatus.className = `transfer-status ${tone}`;
+}
+
+ui.transfer.addEventListener('click', () => {
+  ui.transferOut.value = exportProgress(store);
+  ui.transferIn.value = '';
+  setTransferStatus('');
+  ui.transferDialog.showModal();
+});
+
+ui.transferCopy.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(ui.transferOut.value);
+    setTransferStatus('Copied.', 'good');
+  } catch {
+    // No clipboard permission, or an insecure origin. Selecting the text still
+    // leaves the reader one keystroke away from having it.
+    ui.transferOut.select();
+    setTransferStatus('Selected — press ⌘C or Ctrl+C to copy.');
+  }
+});
+
+ui.transferImport.addEventListener('click', () => {
+  let incoming;
+  try {
+    incoming = parseProgress(ui.transferIn.value.trim());
+  } catch (error) {
+    return setTransferStatus(error.message, 'bad');
+  }
+
+  const words = Object.keys(incoming.cards).length;
+  store = incoming;
+  save(store);
+  stage = 0;
+  populateDecks();
+  startGame();
+
+  setTransferStatus(`Restored ${words} word${words === 1 ? '' : 's'}.`, 'good');
+  ui.transferOut.value = exportProgress(store);
+  ui.transferIn.value = '';
+});
+
+ui.transferClose.addEventListener('click', () => ui.transferDialog.close());
+
 ui.account.addEventListener('click', () => ui.accountDialog.showModal());
 ui.accountClose.addEventListener('click', () => ui.accountDialog.close());
 
@@ -925,6 +922,7 @@ for (const button of [ui.speakPrompt, ui.speakAnswer]) {
   });
 }
 
+fitDirectionLabels();
 populateDecks();
 startGame();
 loadAudioManifest().then(renderSpeakers);

@@ -79,10 +79,15 @@ async function withRetry(fn, label) {
     try {
       return await fn();
     } catch (error) {
-      const throttled = /\b429\b/.test(error.message);
-      if (!throttled || attempt >= MAX_TRIES) throw error;
+      // Throttling is the expected failure, but a dropped connection is just as
+      // temporary and used to kill a whole voice — the first full run lost 388
+      // words to one `fetch failed`. Only a refusal that says something about
+      // the request itself is worth giving up on.
+      const permanent = /\b(400|401|403|404)\b/.test(error.message);
+      if (permanent || attempt >= MAX_TRIES) throw error;
+
       const wait = Math.min(60_000, 2 ** attempt * 1000);
-      process.stdout.write(`\r  ${label} throttled, waiting ${wait / 1000}s…            `);
+      process.stdout.write(`\r  ${label} retrying in ${wait / 1000}s (${error.message.slice(0, 40)})   `);
       await sleep(wait);
     }
   }

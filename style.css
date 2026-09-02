@@ -1,4 +1,11 @@
 :root {
+  /* This page is committed dark. Saying so is what makes the browser draw its
+     own parts to match — the select arrow, the dropdown it opens, scrollbars.
+     Without it a phone assumes a light page and paints a near-black arrow onto
+     a near-black control, which is invisible. Desktop hid the problem by
+     inferring dark from the system setting. */
+  color-scheme: dark;
+
   --bg: #10131a;
   --panel: #1a1f2b;
   --panel-hi: #222839;
@@ -12,6 +19,11 @@
 }
 
 * { box-sizing: border-box; }
+
+/* No tap flash on touch. Every control here already answers a press with a
+   colour of its own, so the browser's grey rectangle only ever arrives late
+   and lingers. */
+button, a, select, [tabindex] { -webkit-tap-highlight-color: transparent; }
 
 body {
   margin: 0;
@@ -59,18 +71,37 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
+  gap: 7px;
   height: 34px;
+  padding: 0 12px;
   flex: none;
+  font: inherit;
+  font-size: 13px;
   color: var(--muted);
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 9px;
+  white-space: nowrap;
   cursor: pointer;
 }
-.shield:hover { color: var(--oro); border-color: var(--oro); }
 .shield:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
 .shield svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+
+/* Narrow screens keep the icon alone — the label is what makes this too wide
+   for a row that already holds two selects. Hidden rather than removed, so the
+   button still announces itself as "Streak guard" and does not fall back to a
+   bare aria-label duplicating text that is on screen everywhere else. */
+@media (max-width: 460px) {
+  .shield { width: 34px; padding: 0; gap: 0; }
+  .shield-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
 
 .shield.on { color: var(--oro); border-color: var(--oro); }
 .shield.on svg { fill: var(--oro); fill-opacity: 0.18; }
@@ -95,7 +126,6 @@ body {
   border: 1px solid #8e918f; border-radius: 18px;
   text-decoration: none; white-space: nowrap;
 }
-.google-btn:hover { background: #1d1d1e; }
 .google-btn:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
 .g-mark { width: 17px; height: 17px; flex: none; }
 
@@ -193,7 +223,6 @@ select {
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.stage:hover:not(:disabled) { border-color: var(--oro); }
 .stage[aria-pressed="true"] { background: var(--panel-hi); border-color: var(--oro); }
 .stage:disabled { cursor: not-allowed; color: var(--muted); }
 
@@ -267,8 +296,15 @@ select {
   transition: transform 0.08s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
-.choice:hover:not(:disabled) { border-color: var(--oro); transform: translateY(-1px); }
 .choice:disabled { cursor: default; opacity: 0.75; }
+
+/* Tapping an answer on a phone left the browser's own focus ring behind, over
+   the top of the correct/wrong colouring — a mouse click does not, which is why
+   this only showed on mobile. The ring is replaced with one of our own, shown
+   only for keyboard focus, and the grey flash the browser paints on tap is
+   turned off since the answer colouring already says what was pressed. */
+.choice:focus { outline: none; }
+.choice:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
 .choice.correct { background: rgba(56, 178, 106, 0.18); border-color: var(--verde); opacity: 1; }
 .choice.wrong { background: rgba(228, 87, 46, 0.18); border-color: var(--rojo); opacity: 1; }
 
@@ -327,7 +363,6 @@ select {
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
 }
-.source-link:hover { color: #f5c95e; text-decoration-thickness: 2px; }
 kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; font-size: 11px; }
 
 /* Clearing progress is irreversible and there is no backup, so it asks first
@@ -357,7 +392,6 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   padding: 6px 12px;
   cursor: pointer;
 }
-.danger:hover { filter: brightness(1.1); }
 
 .ghost {
   font: inherit;
@@ -369,9 +403,6 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   padding: 6px 12px;
   cursor: pointer;
 }
-.ghost:hover { color: var(--ink); border-color: var(--muted); }
-/* Only the one destructive button down here warns on hover. */
-.danger-hover:hover { color: var(--rojo); border-color: var(--rojo); }
 
 .footer-actions { display: flex; gap: 8px; }
 .footer-links { display: flex; flex-wrap: wrap; gap: 14px; }
@@ -545,7 +576,6 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
    a phone screen from the outer two, so the text goes in one line below the
    row instead, where it has the full width and never overflows. */
 .stat[data-tip] { cursor: help; }
-.stat[data-tip]:hover,
 .stat[data-tip]:focus-visible { border-color: var(--muted); outline: none; }
 
 .scoreboard-note {
@@ -581,7 +611,6 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.linkish.danger-hover:hover { color: var(--rojo); }
 
 .confirm-input {
   width: 100%;
@@ -597,7 +626,6 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
 .confirm-input:focus { outline: none; border-color: var(--rojo); }
 
 .danger:disabled { opacity: 0.4; cursor: not-allowed; }
-.danger:disabled:hover { filter: none; }
 
 /* Hear it pronounced, beside the word. Tapping again cycles to another voice,
    so this stays one button rather than becoming four.
@@ -649,7 +677,6 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease;
 }
-.speak:hover { color: var(--oro); border-color: var(--oro); }
 .speak:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
 
 .speak svg { width: 20px; height: 20px; fill: currentColor; stroke: currentColor; }
@@ -696,9 +723,30 @@ button.stat:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; 
   border-right: 2px solid var(--line);
   transition: border-color 0.2s ease;
 }
-button.stat:hover .guard-badge { border-color: var(--muted); }
 .stat.guarded .guard-badge { border-color: var(--oro); }
 
 .stat.guarded { border-color: var(--oro); border-style: dashed; }
 
 .guard-explainer { font-size: 13px; }
+
+/* Hover states, for devices that actually have a pointer.
+   
+   A touch screen has no way to stop hovering. Tapping answer three left the
+   browser hovering that spot, so the *next* question's third button — a brand
+   new element rendered at the same coordinates — came up already outlined. It
+   looked like a selection that would not clear, and it survived three attempts
+   to fix it as a focus ring, because it never was one. */
+@media (hover: hover) {
+  .shield:hover { color: var(--oro); border-color: var(--oro); }
+  .google-btn:hover { background: #1d1d1e; }
+  .stage:hover:not(:disabled) { border-color: var(--oro); }
+  .choice:hover:not(:disabled) { border-color: var(--oro); transform: translateY(-1px); }
+  .source-link:hover { color: #f5c95e; text-decoration-thickness: 2px; }
+  .danger:hover { filter: brightness(1.1); }
+  .ghost:hover { color: var(--ink); border-color: var(--muted); }
+  .linkish.danger-hover:hover { color: var(--rojo); }
+  .danger:disabled:hover { filter: none; }
+  .speak:hover { color: var(--oro); border-color: var(--oro); }
+  button.stat:hover .guard-badge { border-color: var(--muted); }
+  .stat[data-tip]:hover { border-color: var(--muted); outline: none; }
+}
