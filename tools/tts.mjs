@@ -1,6 +1,7 @@
 // Generates the pronunciation clips.
 //
 //   node tools/tts.mjs --voices          list the Latin American voices on offer
+//   node tools/tts.mjs --manifest        rebuild audio/words.json from what is on disk
 //   node tools/tts.mjs --sample          eight words, every candidate voice
 //   node tools/tts.mjs --limit 15        the first 15 words only, for testing
 //   node tools/tts.mjs                   every word, the four chosen voices
@@ -20,7 +21,7 @@
 // would mean depending on ffmpeg to convert audio nobody would hear a
 // difference in — every browser has played mp3 for twenty years.
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, readdirSync } from 'node:fs';
 import { createHmac, createHash } from 'node:crypto';
 import { DECKS } from '../source/vocab.js';
 import { audioSlug } from '../source/audio.js';
@@ -186,6 +187,33 @@ const polly = (vars) => ({
  * What the provider actually offers, rather than what anyone remembered. Voice
  * names change; a wrong one fails 2,640 times in a row otherwise.
  */
+/**
+ * The words that have a recording in *every* voice.
+ *
+ * The app reads this to decide which words get a speaker button, so a partly
+ * generated set degrades to "some words have audio" instead of a button that
+ * does nothing on the ones that do not. Without it the choice is all or
+ * nothing, and a single failed clip would mean shipping neither.
+ */
+function writeManifest(voiceCount) {
+  const complete = [];
+  const first = new URL('1/', OUT);
+  if (!existsSync(first)) return;
+
+  for (const name of readdirSync(first)) {
+    if (!name.endsWith('.mp3')) continue;
+    let everywhere = true;
+    for (let i = 2; i <= voiceCount; i++) {
+      if (!existsSync(new URL(`${i}/${name}`, OUT))) { everywhere = false; break; }
+    }
+    if (everywhere) complete.push(name.replace(/\.mp3$/, ''));
+  }
+
+  complete.sort();
+  writeFileSync(new URL('words.json', OUT), JSON.stringify(complete) + '\n');
+  console.log(`\nmanifest: ${complete.length} words have all ${voiceCount} voices`);
+}
+
 async function listVoices(vars) {
   const res = await fetch(
     `https://${vars.AZURE_REGION}.tts.speech.microsoft.com/cognitiveservices/voices/list`,
@@ -224,6 +252,7 @@ async function main() {
   }
 
   if (process.argv.includes('--voices')) return listVoices(vars);
+  if (process.argv.includes('--manifest')) return writeManifest(VOICES.length);
 
   const limitArg = process.argv.indexOf('--limit');
   const limit = limitArg > -1 ? Number(process.argv[limitArg + 1]) : Infinity;
@@ -272,8 +301,6 @@ async function main() {
         bytes += statSync(file).size;
         continue;
       }
-      // One unavailable voice should not abandon the run — HD voices in
-      // particular are not offered on every tier or in every region.
       try {
         const audio = await withRetry(() => provider.speak(word, voice.id), voice.label);
         writeFileSync(file, audio);
@@ -281,8 +308,12 @@ async function main() {
         bytes += audio.length;
         await sleep(PACE_MS);
       } catch (error) {
-        failed.push(`${voice.id}: ${error.message.slice(0, 90)}`);
-        break;
+        failed.push(`${voice.id} / ${word}: ${error.message.slice(0, 80)}`);
+        // A voice that cannot say its very first word is not available at all,
+        // so move on. Anything later is one bad word, and abandoning the other
+        // six hundred over it is how a voice ends up half generated — which is
+        // exactly what happened the first time this ran.
+        if (made === 0 && skipped === 0) break;
       }
       process.stdout.write(`\r  ${voice.label.padEnd(24)} ${made + skipped}/${words.length * voices.length}`);
     }
@@ -293,6 +324,7 @@ async function main() {
       stampFile,
       JSON.stringify(Object.fromEntries(voices.map((v, i) => [i + 1, v.id])), null, 2) + '\n'
     );
+    writeManifest(voices.length);
   }
 
   console.log(

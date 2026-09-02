@@ -19,7 +19,7 @@ import {
 } from './source/storage.js';
 import { deckProgress, unlockedDepth, nextUnlock } from './source/stages.js';
 import { fetchMe, signOut, sync, deleteAccount } from './source/api.js';
-import { clipUrl, nextVoice, canPlay, VOICE_COUNT } from './source/audio.js';
+import { clipUrl, nextVoice, canPlay, hasClip, MANIFEST_URL, VOICE_COUNT } from './source/audio.js';
 import {
   DAILY_GOAL,
   GRACE_DAYS,
@@ -115,16 +115,20 @@ const SYNC_BATCH = 250;
  * have none — the single-file build most obviously. So one probe decides
  * whether the button ever appears, rather than every word failing quietly.
  */
-let audioReady = false;
+let spoken = new Set();
 let lastVoice = null;
 let playing = null;
 
-async function checkAudio() {
+async function loadAudioManifest() {
   try {
-    const res = await fetch(clipUrl('la manzana', 0), { method: 'HEAD' });
-    audioReady = res.ok;
+    const res = await fetch(MANIFEST_URL);
+    if (!res.ok) return;
+    const words = await res.json();
+    if (Array.isArray(words)) spoken = new Set(words);
   } catch {
-    audioReady = false;
+    // No manifest, so no audio. The single-file build and any copy served
+    // before the clips were generated both land here, and correctly show
+    // nothing rather than a button that cannot work.
   }
 }
 
@@ -142,7 +146,7 @@ function renderDots() {
 }
 
 function speak(button, word) {
-  if (!audioReady) return;
+  if (!hasClip(spoken, word.es)) return;
 
   if (playing) {
     playing.audio.pause();
@@ -174,8 +178,9 @@ function renderSpeakers() {
   const question = game?.state.question;
   const answered = Boolean(game?.state.lastAnswer);
 
-  const showPrompt = audioReady && question && canPlay(question.direction, false);
-  const showAnswer = audioReady && question && answered && !canPlay(question.direction, false);
+  const sayable = Boolean(question) && hasClip(spoken, question.word.es);
+  const showPrompt = sayable && canPlay(question.direction, false);
+  const showAnswer = sayable && answered && !canPlay(question.direction, false);
 
   ui.speakPrompt.hidden = !showPrompt;
   ui.speakAnswer.hidden = !showAnswer;
@@ -799,6 +804,6 @@ for (const button of [ui.speakPrompt, ui.speakAnswer]) {
 
 populateDecks();
 startGame();
-checkAudio().then(renderSpeakers);
+loadAudioManifest().then(renderSpeakers);
 readAuthResult();
 renderAccount().then(syncProgress);

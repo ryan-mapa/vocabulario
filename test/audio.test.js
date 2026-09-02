@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { audioSlug, clipUrl, nextVoice, canPlay, VOICE_COUNT } from '../source/audio.js';
+import { audioSlug, clipUrl, nextVoice, canPlay, hasClip, VOICE_COUNT } from '../source/audio.js';
 
 describe('audioSlug', () => {
   it('strips accents and spaces into something safe for a filename', () => {
@@ -70,5 +70,25 @@ describe('when the Spanish may be spoken', () => {
   it('withholds it in the recall direction until the answer is in', () => {
     expect(canPlay('en-es', false)).toBe(false);
     expect(canPlay('en-es', true)).toBe(true);
+  });
+});
+
+// Recordings arrive a few thousand files at a time. One that fails to generate
+// should cost that word its button, not cost every word its button.
+describe('hasClip', () => {
+  const spoken = new Set(['la-manzana', 'el-murcielago']);
+
+  it('says yes only for words that were recorded', () => {
+    expect(hasClip(spoken, 'la manzana')).toBe(true);
+    expect(hasClip(spoken, 'el murciélago')).toBe(true);
+    expect(hasClip(spoken, 'el ferrocarril')).toBe(false);
+  });
+
+  it('says no to everything when there is no audio at all', () => {
+    expect(hasClip(new Set(), 'la manzana')).toBe(false);
+  });
+
+  it('matches on the filename, so accents do not decide it', () => {
+    expect(hasClip(new Set(['el-ano']), 'el año')).toBe(true);
   });
 });

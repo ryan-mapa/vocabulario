@@ -30,6 +30,9 @@ export function audioSlug(es) {
     .toLowerCase();
 }
 
+/** Where the list of words that have a full set of recordings lives. */
+export const MANIFEST_URL = `${DIR}/words.json`;
+
 /** Path to one voice's recording of a word, relative to the app. */
 export function clipUrl(es, voice) {
   return `${DIR}/${voice + 1}/${audioSlug(es)}.${FORMAT}`;
@@ -54,4 +57,17 @@ export function nextVoice(previous, count = VOICE_COUNT) {
  */
 export function canPlay(direction, answered) {
   return direction === 'es-en' || answered;
+}
+
+/**
+ * Whether this particular word can be heard.
+ *
+ * Recordings arrive a few thousand files at a time, and one that fails to
+ * generate should cost that word its button rather than cost every word its
+ * button. `spoken` is the manifest's set of slugs; empty means no audio at all,
+ * which is the normal state of the single-file build and of any copy served
+ * before the clips were made.
+ */
+export function hasClip(spoken, es) {
+  return spoken.size > 0 && spoken.has(audioSlug(es));
 }
