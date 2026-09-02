@@ -122,6 +122,21 @@ select {
   transition: width 0.35s ease;
 }
 
+/* The streak carries the wordmark's gradient — it is the number on this row
+   worth looking at. Only once there is a streak, though: a gradient zero would
+   be celebrating nothing.
+   
+   Diagonal rather than the wordmark's horizontal: a long word has room for a
+   sweep across its width, a single digit does not and would show only the
+   middle of the range, reading as flat orange. Falling across the glyph works
+   at one digit and still at three. */
+.stat-value.lit {
+  background: linear-gradient(145deg, var(--rojo) 10%, var(--oro) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 /* Goal met: the tile itself says so, so the number is not the only signal. */
 .stat.met { border-color: var(--verde); }
 .stat.met .stat-fill { background: var(--verde); }
@@ -497,7 +512,11 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
 /* A streak inside its grace window. Amber rather than red: nothing is lost
    yet, and the point is to be noticed without being alarming. */
 .stat.at-risk { border-color: var(--oro); }
-.stat.at-risk .stat-value { color: var(--oro); }
+/* Flat amber inside the grace window. The gradient has to be cleared as well as
+   recoloured — clipped text paints from the background, so `color` alone would
+   do nothing. */
+.stat.at-risk .stat-value,
+.stat.at-risk .stat-value.lit { background: none; color: var(--oro); }
 
 /* Pointing at a tile explains it. A tooltip anchored to the tile would run off
    a phone screen from the outer two, so the text goes in one line below the
