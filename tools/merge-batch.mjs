@@ -11,7 +11,7 @@
 // Brackets are walked rather than matched with a regex, because a stage array
 // contains nested [ ] in every `alt:` list and a regex cannot see the nesting.
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, copyFileSync, mkdirSync } from 'node:fs';
 
 const [, , file, ...flags] = process.argv;
 const dry = flags.includes('--dry');
@@ -58,6 +58,23 @@ function stageRange(src, deckId, stage) {
     if (n === stage) return [cursor, end];
     cursor = end + 1;
   }
+}
+
+// Idempotency. A batch merged twice would silently double its words, and the
+// second copy would be invisible until a duplicate test caught it much later.
+// Cheaper to refuse: re-running a merge is exactly what happens when a session
+// dies and you are not sure how far it got.
+const { DECKS: CURRENT } = await import('../source/vocab.js?t=' + Date.now());
+const already = new Set(CURRENT.flatMap((d) => d.stages.flat()).map((w) => w.es));
+const clashes = [0, 1, 2]
+  .flatMap((s) => batch.stages[s] ?? [])
+  .filter((w) => already.has(w.es))
+  .map((w) => w.es);
+if (clashes.length) {
+  console.error(`refusing to merge ${batch.deck}: ${clashes.length} of these words are already in the corpus.`);
+  console.error(`This batch looks already merged. First few: ${clashes.slice(0, 5).join(', ')}`);
+  console.error('If you really mean to, remove them from the batch file first.');
+  process.exit(2);
 }
 
 let vocab = readFileSync(VOCAB, 'utf8');
@@ -107,7 +124,13 @@ console.log(`${batch.deck}: ${isNew ? 'NEW deck' : 'appending'} — ${added} wor
 if (dry) {
   console.log('(dry run — nothing written)');
 } else {
+  mkdirSync('staging/.backup', { recursive: true });
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  copyFileSync(VOCAB, `staging/.backup/vocab.${stamp}.js`);
+  copyFileSync(SENTS, `staging/.backup/sentences.${stamp}.js`);
   writeFileSync(VOCAB, vocab);
   writeFileSync(SENTS, sentences);
-  console.log(`wrote ${VOCAB} and ${SENTS}. Run: npx vitest run`);
+  console.log(`wrote ${VOCAB} and ${SENTS}`);
+  console.log(`backup: staging/.backup/*.${stamp}.js   (git checkout also works — commit per batch)`);
+  console.log('next: npx vitest run');
 }
