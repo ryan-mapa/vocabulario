@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { audioSlug } from '../source/audio.js';
 import {
   DECKS,
   STAGE_COUNT,
@@ -63,6 +64,27 @@ describe('decks', () => {
         }
       }
     }
+    expect(clashes).toEqual([]);
+  });
+
+  // Pronunciation files are named after the word with its accents stripped, so
+  // two *different* words that differ only by an accent would fight over one
+  // filename — 'el año' and 'el ano' are not the same word. Silent if
+  // unchecked: one would simply play the other's recording.
+  //
+  // The same string appearing twice is fine and does happen: 'la llave' is a
+  // headword meaning key and a regional variant of 'el grifo' meaning faucet.
+  // Two meanings, one pronunciation, one recording.
+  it('never lets two different words claim the same audio file', () => {
+    const byStem = new Map();
+    for (const word of [...everyWord, ...everyWord.flatMap((w) => w.alt ?? [])]) {
+      const stem = audioSlug(word.es);
+      if (!byStem.has(stem)) byStem.set(stem, new Set());
+      byStem.get(stem).add(word.es);
+    }
+    const clashes = [...byStem]
+      .filter(([, spellings]) => spellings.size > 1)
+      .map(([stem, spellings]) => `${stem}: ${[...spellings].join(' + ')}`);
     expect(clashes).toEqual([]);
   });
 

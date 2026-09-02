@@ -5,3 +5,4 @@ coverage/
 dist/
 .wrangler/
 .dev.vars
+.tts.env

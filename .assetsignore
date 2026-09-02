@@ -6,6 +6,7 @@
 .wrangler
 node_modules
 worker
+tools
 test
 dist
 build.mjs
@@ -15,4 +16,5 @@ package.json
 package-lock.json
 .assetsignore
 .gitignore
+.tts.env
 .DS_Store
