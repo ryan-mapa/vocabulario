@@ -398,6 +398,20 @@ function renderStages() {
   }
 }
 
+/**
+ * Every stage a deck has opened.
+ *
+ * What a freshly chosen deck plays. Carrying the previous deck's selection over
+ * meant picking a deck you had taken all the way to Fluent and being given
+ * Basics alone — which reads as progress lost, when it is only a stale toggle.
+ * Deliberately not applied on every startGame: turning a stage off calls that
+ * too, and reselecting everything would make the toggles impossible to use.
+ */
+function unlockedStages(deckId) {
+  const depth = unlockedDepth(deckId, store.cards);
+  return Array.from({ length: depth + 1 }, (_, index) => index);
+}
+
 function startGame() {
   const deckId = ui.deck.value;
   // Switching decks can leave stages selected that this deck has not opened.
@@ -809,7 +823,10 @@ function fitDirectionLabels() {
 
 window.matchMedia('(max-width: 460px)').addEventListener('change', fitDirectionLabels);
 
-ui.deck.addEventListener('change', startGame);
+ui.deck.addEventListener('change', () => {
+  stages = unlockedStages(ui.deck.value);
+  startGame();
+});
 ui.direction.addEventListener('change', startGame);
 // Tapping the card carries on after a miss — a phone has no Enter key. Buttons
 // inside keep their own jobs, so the speaker still just speaks.
@@ -1164,6 +1181,7 @@ for (const button of [ui.speakPrompt]) {
 fitDirectionLabels();
 renderSound();
 populateDecks();
+stages = unlockedStages(ui.deck.value);
 startGame();
 loadAudioManifest().then(renderSpeakers);
 readAuthResult();
