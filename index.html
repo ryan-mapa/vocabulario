@@ -99,11 +99,15 @@
 
     <section class="card" id="play">
       <p class="direction-hint" id="direction-hint">What does it mean…?</p>
-      <p class="prompt" id="prompt" translate="no">—</p>
-      <div class="speak-row"><button class="speak" id="speak-prompt" type="button" hidden aria-label="Hear it pronounced" title="Hear it pronounced"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path class="wave wave-1" d="M16.5 8.8a4.5 4.5 0 0 1 0 6.4"/><path class="wave wave-2" d="M19.2 6.2a8 8 0 0 1 0 11.6"/></svg></button></div>
+      <div class="prompt-row">
+        <p class="prompt" id="prompt" translate="no">—</p>
+        <span class="speak-stack"><button class="speak" id="speak-prompt" type="button" hidden aria-label="Hear it pronounced" title="Hear it pronounced"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path class="wave wave-1" d="M16.5 8.8a4.5 4.5 0 0 1 0 6.4"/><path class="wave wave-2" d="M19.2 6.2a8 8 0 0 1 0 11.6"/></svg></button><span class="dots" id="speak-prompt-dots" hidden aria-hidden="true"></span></span>
+      </div>
       <div class="choices" id="choices" translate="no"></div>
-      <p class="feedback" id="feedback" role="status" aria-live="polite" translate="no">&nbsp;</p>
-      <div class="speak-row"><button class="speak" id="speak-answer" type="button" hidden aria-label="Hear it pronounced" title="Hear it pronounced"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path class="wave wave-1" d="M16.5 8.8a4.5 4.5 0 0 1 0 6.4"/><path class="wave wave-2" d="M19.2 6.2a8 8 0 0 1 0 11.6"/></svg></button></div>
+      <div class="feedback-row">
+        <p class="feedback" id="feedback" role="status" aria-live="polite" translate="no">&nbsp;</p>
+        <span class="speak-stack"><button class="speak" id="speak-answer" type="button" hidden aria-label="Hear it pronounced" title="Hear it pronounced"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path class="wave wave-1" d="M16.5 8.8a4.5 4.5 0 0 1 0 6.4"/><path class="wave wave-2" d="M19.2 6.2a8 8 0 0 1 0 11.6"/></svg></button><span class="dots" id="speak-answer-dots" hidden aria-hidden="true"></span></span>
+      </div>
       <p class="variant-note" id="variant-note" translate="no" hidden></p>
       <p class="hint">Answer with <kbd>1</kbd>–<kbd>4</kbd> · <kbd>Enter</kbd> to continue</p>
     </section>

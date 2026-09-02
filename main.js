@@ -92,12 +92,14 @@ const ui = {
   deleteFinalCancel: el('delete-final-cancel'),
   deleteConfirm: el('delete-confirm'),
   speakPrompt: el('speak-prompt'),
-  speakAnswer: el('speak-answer')
+  speakAnswer: el('speak-answer'),
+  speakPromptDots: el('speak-prompt-dots'),
+  speakAnswerDots: el('speak-answer-dots')
 };
 
 let store = load();
 let game = null;
-let stage = 0;
+let stages = [0];   // which stages the round draws from; never empty
 let depthAtRoundStart = 0;
 let account = null;   // { signedIn, name } once /me has answered, else null
 /** Guards the end of a round against being counted twice. See showSummary. */
@@ -126,6 +128,19 @@ async function checkAudio() {
   }
 }
 
+/** Which of the four voices was last heard. Nothing lit means none yet. */
+function renderDots() {
+  for (const dots of [ui.speakPromptDots, ui.speakAnswerDots]) {
+    if (dots.children.length !== VOICE_COUNT) {
+      dots.innerHTML = '';
+      for (let i = 0; i < VOICE_COUNT; i++) {
+        dots.append(Object.assign(document.createElement('span'), { className: 'dot' }));
+      }
+    }
+    [...dots.children].forEach((dot, i) => dot.classList.toggle('on', i === lastVoice));
+  }
+}
+
 function speak(button, word) {
   if (!audioReady) return;
 
@@ -135,6 +150,7 @@ function speak(button, word) {
   }
 
   lastVoice = nextVoice(lastVoice, VOICE_COUNT);
+  renderDots();
   const audio = new Audio(clipUrl(word.es, lastVoice));
   playing = { audio, button };
   button.classList.add('playing');
@@ -163,6 +179,9 @@ function renderSpeakers() {
 
   ui.speakPrompt.hidden = !showPrompt;
   ui.speakAnswer.hidden = !showAnswer;
+  ui.speakPromptDots.hidden = !showPrompt;
+  ui.speakAnswerDots.hidden = !showAnswer;
+  if (showPrompt || showAnswer) renderDots();
 }
 
 function populateDecks() {
@@ -193,7 +212,7 @@ function renderStages() {
     button.type = 'button';
     button.className = 'stage';
     button.disabled = !info.unlocked;
-    button.setAttribute('aria-pressed', String(index === stage));
+    button.setAttribute('aria-pressed', String(stages.includes(index)));
 
     const name = document.createElement('span');
     name.className = 'stage-name';
@@ -211,8 +230,14 @@ function renderStages() {
 
     button.append(name, meta, fill);
     button.addEventListener('click', () => {
-      if (index === stage) return;
-      stage = index;
+      // Toggling, not choosing — Basics and Everyday can be studied together.
+      // The last one cannot be turned off, because a round with no words is not
+      // a state worth being able to reach.
+      const next = stages.includes(index)
+        ? stages.filter((s) => s !== index)
+        : [...stages, index];
+      if (next.length === 0) return;
+      stages = next.sort();
       startGame();
     });
     ui.stageRow.append(button);
@@ -232,13 +257,15 @@ function renderStages() {
 
 function startGame() {
   const deckId = ui.deck.value;
-  // Switching decks can land on a stage this deck has not opened yet.
-  stage = Math.min(stage, unlockedDepth(deckId, store.cards));
+  // Switching decks can leave stages selected that this deck has not opened.
+  const depth = unlockedDepth(deckId, store.cards);
+  stages = stages.filter((index) => index <= depth);
+  if (stages.length === 0) stages = [0];
 
-  depthAtRoundStart = unlockedDepth(deckId, store.cards);
+  depthAtRoundStart = depth;
   game = createGame({
     deckId,
-    stage,
+    stages,
     direction: ui.direction.value,
     cards: store.cards
   });
@@ -374,8 +401,8 @@ function submit(choice) {
     id: newReviewId(),
     wordEs: result.question.word.es,
     deckId: game.state.deckId,
-    stage: game.state.stage,
-    direction: game.state.direction,
+    stage: result.question.word.stage,
+    direction: result.question.direction,
     correct: result.correct,
     reviewedAt: result.at
   });
@@ -429,7 +456,8 @@ function creditRound() {
     id: newReviewId(),
     localDay: day,
     deckId: game.state.deckId,
-    stage: game.state.stage,
+    stage: Math.min(...game.state.stages),
+    stages: game.state.stages.join(','),
     direction: game.state.direction,
     asked: game.state.asked,
     correct: game.state.correct,

@@ -87,6 +87,7 @@ function readRound(raw, now) {
     localDay: day,
     deckId: text(raw.deckId, 40) ?? 'todos',
     stage: Number.isInteger(raw.stage) ? raw.stage : 0,
+    stages: text(raw.stages, 20) ?? String(Number.isInteger(raw.stage) ? raw.stage : 0),
     direction: text(raw.direction, 10) ?? 'mixed',
     asked: Math.max(0, Math.round(finite(raw.asked))),
     correct: Math.max(0, Math.round(finite(raw.correct))),
@@ -249,11 +250,11 @@ export async function sync(request, env, user) {
     ...rounds.map((entry) =>
       env.DB.prepare(
         `INSERT OR IGNORE INTO rounds
-           (id, user_id, deck_id, stage, direction, asked, correct,
+           (id, user_id, deck_id, stage, stages, direction, asked, correct,
             score, best_streak, started_at, ended_at, local_day)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?)`
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?)`
       ).bind(
-        entry.id, user.sub, entry.deckId, entry.stage, entry.direction,
+        entry.id, user.sub, entry.deckId, entry.stage, entry.stages, entry.direction,
         entry.asked, entry.correct, entry.startedAt, entry.endedAt, entry.localDay
       )
     ),

@@ -56,6 +56,31 @@ export function stagePool(deckId, stage, cards) {
   );
 }
 
+/**
+ * The words for a set of stages at once, so Basics and Everyday can be studied
+ * together rather than one or the other.
+ *
+ * Each word keeps the stage it belongs to. A round can now span stages, so
+ * "which stage was this answered under" is a property of the word rather than
+ * of the round — and that is the more truthful record either way.
+ */
+export function selectionPool(deckId, stages, cards) {
+  const wanted = [...new Set(stages)].filter((stage) => isStageUnlocked(deckId, stage, cards)).sort();
+  const seen = new Set();
+  const pool = [];
+
+  for (const stage of wanted) {
+    for (const word of stagePool(deckId, stage, cards)) {
+      // The combined deck can offer the same word from more than one deck at
+      // the same stage; one card, so one entry.
+      if (seen.has(word.es)) continue;
+      seen.add(word.es);
+      pool.push({ ...word, stage });
+    }
+  }
+  return pool;
+}
+
 /** Per-stage progress for one deck, for the stage picker and the deck report. */
 export function stageProgress(deckId, stage, cards) {
   const words = stagePool(deckId, stage, cards);

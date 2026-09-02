@@ -1,7 +1,7 @@
 import { ALL_DECK_ID } from './vocab.js';
 import { newCard, review, masteryOf, isMastered, selectNext, BOX_COUNT } from './srs.js';
 import { buildQuestion, isCorrect } from './quiz.js';
-import { stagePool, isStageUnlocked } from './stages.js';
+import { selectionPool, isStageUnlocked } from './stages.js';
 
 export const ROUND_LENGTH = 20;
 
@@ -32,22 +32,26 @@ function recallChance(card) {
  */
 export function createGame({
   deckId = ALL_DECK_ID,
-  stage = 0,
+  stages = [0],
   direction = MIXED,
   cards = {},
   roundLength = ROUND_LENGTH,
   random = Math.random,
   now = Date.now
 } = {}) {
-  if (!isStageUnlocked(deckId, stage, cards)) {
-    throw new Error(`stage ${stage} of deck "${deckId}" is locked`);
+  const chosen = [...new Set(stages)].sort();
+  const locked = chosen.filter((stage) => !isStageUnlocked(deckId, stage, cards));
+  if (locked.length) {
+    throw new Error(`stage ${locked[0]} of deck "${deckId}" is locked`);
   }
-  const words = stagePool(deckId, stage, cards);
-  if (words.length === 0) throw new Error(`no words for deck "${deckId}" stage ${stage}`);
+  const words = selectionPool(deckId, chosen, cards);
+  if (words.length === 0) {
+    throw new Error(`no words for deck "${deckId}" stages ${chosen.join(',') || '(none)'}`);
+  }
 
   const state = {
     deckId,
-    stage,
+    stages: chosen,
     direction,
     words,
     cards: { ...cards },

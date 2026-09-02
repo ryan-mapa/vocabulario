@@ -8,7 +8,8 @@ import {
   stagePool,
   stageProgress,
   deckProgress,
-  nextUnlock
+  nextUnlock,
+  selectionPool
 } from '../source/stages.js';
 
 const TOP_BOX = BOX_COUNT - 1;
@@ -117,5 +118,52 @@ describe('progress reporting', () => {
     const report = deckProgress('comida', {});
     expect(report).toHaveLength(STAGE_COUNT);
     expect(report.map((s) => s.unlocked)).toEqual([true, false, false]);
+  });
+});
+
+// Studying Basics and Everyday together, rather than one or the other.
+describe('a selection of several stages', () => {
+  const open = (deckId) => cardsAt(deckId, 0, stageWords(deckId, 0).length);
+
+  it('is just that stage when only one is chosen', () => {
+    const pool = selectionPool('comida', [0], {});
+    expect(pool.map((w) => w.es)).toEqual(stageWords('comida', 0).map((w) => w.es));
+  });
+
+  it('joins the stages asked for', () => {
+    const cards = open('comida');
+    const pool = selectionPool('comida', [0, 1], cards);
+    expect(pool).toHaveLength(stageWords('comida', 0).length + stageWords('comida', 1).length);
+  });
+
+  it('tags each word with the stage it belongs to, not the selection', () => {
+    const pool = selectionPool('comida', [0, 1], open('comida'));
+    const first = stageWords('comida', 0).map((w) => w.es);
+    for (const word of pool) {
+      expect(word.stage).toBe(first.includes(word.es) ? 0 : 1);
+    }
+  });
+
+  it('silently drops a stage that is still locked', () => {
+    // Nothing learned yet, so Everyday is shut — asking for it changes nothing.
+    const pool = selectionPool('comida', [0, 1], {});
+    expect(pool.map((w) => w.es)).toEqual(stageWords('comida', 0).map((w) => w.es));
+  });
+
+  it('never offers the same word twice', () => {
+    const cards = DECKS.reduce((acc, deck) => Object.assign(acc, open(deck.id)), {});
+    const pool = selectionPool(ALL_DECK_ID, [0, 1], cards);
+    expect(new Set(pool.map((w) => w.es)).size).toBe(pool.length);
+  });
+
+  it('is empty when nothing is selected', () => {
+    expect(selectionPool('comida', [], {})).toEqual([]);
+  });
+
+  it('does not care what order the stages are given in', () => {
+    const cards = open('comida');
+    const forwards = selectionPool('comida', [0, 1], cards).map((w) => w.es);
+    const backwards = selectionPool('comida', [1, 0], cards).map((w) => w.es);
+    expect(backwards).toEqual(forwards);
   });
 });

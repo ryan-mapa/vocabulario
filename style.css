@@ -206,7 +206,9 @@ select {
 }
 
 .direction-hint { margin: 0; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; }
-.prompt { margin: 10px 0 26px; font-size: clamp(30px, 8vw, 42px); font-weight: 700; letter-spacing: -0.02em; }
+.prompt { margin: 10px 0; font-size: clamp(30px, 8vw, 42px); font-weight: 700; letter-spacing: -0.02em; }
+.prompt-row { margin-bottom: 22px; }
+.feedback-row { margin-top: 2px; }
 
 .choices { display: grid; gap: 10px; }
 
@@ -555,17 +557,37 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
 .danger:disabled { opacity: 0.4; cursor: not-allowed; }
 .danger:disabled:hover { filter: none; }
 
-/* Hear it pronounced. Tapping again cycles to a different voice, so the button
-   stays put rather than turning into four. */
-.speak-row { display: flex; justify-content: center; min-height: 0; }
+/* Hear it pronounced, beside the word. Tapping again cycles to another voice,
+   so this stays one button rather than becoming four.
+   
+   The row wraps rather than carrying a second layout: on a narrow screen a long
+   word like `el estacionamiento` fills the card on its own, and the button
+   drops beneath it instead of squeezing the word or running off the edge. */
+.prompt-row,
+.feedback-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.speak-stack { display: inline-flex; flex-direction: column; align-items: center; }
+
+/* Which of the four voices you last heard, and that there are more. Deliberately
+   not tappable — at 5px they could not be, and cycling reaches any of them in
+   at most four taps. */
+.dots { display: flex; gap: 5px; margin-top: 6px; }
+.dot { width: 5px; height: 5px; border-radius: 50%; background: var(--line); transition: background 0.2s ease; }
+.dot.on { background: var(--oro); }
 
 .speak {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  margin: 10px 0 0;
+  width: 38px;
+  height: 38px;
+  flex: none;
   color: var(--muted);
   background: none;
   border: 1px solid var(--line);
