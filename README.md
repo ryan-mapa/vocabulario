@@ -53,8 +53,9 @@ ahead. Rounds are 20 questions, about two minutes.
   arbitrary number: at five rounds a day, a 210-word stage goes from nothing to
   203 words mastered in a month. Only finished rounds count.
 - **The streak** is consecutive days that met the goal, and it forgives three
-  missed days. Losing a streak is the most reliable way to make someone stop
-  coming back, so a busy week costs nothing. It is *derived* from a per-day
+  missed days, and says so on the scoreboard while the window is open rather
+  than waiting until the streak is gone. Losing a streak is the most reliable
+  way to make someone stop coming back, so a busy week costs nothing. It is *derived* from a per-day
   count of rounds rather than tracked as a number of its own — a stored counter
   drifts across devices and cannot be repaired, a derived one cannot. Days are
   the learner's own local dates, never UTC, so an evening session never lands on
@@ -77,7 +78,9 @@ ahead. Rounds are 20 questions, about two minutes.
 - **Signing in is optional**, and only ever adds. Signed out, the game is
   exactly what it was — everything lives in this browser. Signing in with Google
   makes your progress follow you between devices, and carries whatever this
-  browser had already earned across on the first sync.
+  browser had already earned across on the first sync. **Account** in the header
+  signs you out, or deletes everything — asked twice, the second time by typing
+  the word.
 
 ## Layout
 

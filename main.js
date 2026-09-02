@@ -18,8 +18,15 @@ import {
   clearQueuedRounds
 } from './source/storage.js';
 import { deckProgress, unlockedDepth, nextUnlock } from './source/stages.js';
-import { fetchMe, signOut, sync } from './source/api.js';
-import { DAILY_GOAL, localDay, streakFrom, recordRound, goalProgress } from './source/goals.js';
+import { fetchMe, signOut, sync, deleteAccount } from './source/api.js';
+import {
+  DAILY_GOAL,
+  GRACE_DAYS,
+  localDay,
+  streakFrom,
+  recordRound,
+  goalProgress
+} from './source/goals.js';
 
 const el = (id) => document.getElementById(id);
 const ui = {
@@ -29,6 +36,7 @@ const ui = {
   todayStat: el('today-stat'),
   goalFill: el('goal-fill'),
   streak: el('streak'),
+  streakStat: el('streak-stat'),
   mastered: el('mastered'),
   mastery: el('mastery'),
   roundProgress: el('round-progress'),
@@ -66,7 +74,22 @@ const ui = {
   authUser: el('auth-user'),
   authName: el('auth-name'),
   authNote: el('auth-note'),
-  signOut: el('sign-out')
+  signOut: el('sign-out'),
+  streakNote: el('streak-note'),
+  account: el('account'),
+  accountDialog: el('account-dialog'),
+  accountName: el('account-name'),
+  accountClose: el('account-close'),
+  deleteStart: el('delete-start'),
+  deleteDialog: el('delete-dialog'),
+  deleteBody: el('delete-body'),
+  deleteCancel: el('delete-cancel'),
+  deleteContinue: el('delete-continue'),
+  deleteFinal: el('delete-final'),
+  deleteTyped: el('delete-typed'),
+  deleteStatus: el('delete-status'),
+  deleteFinalCancel: el('delete-final-cancel'),
+  deleteConfirm: el('delete-confirm')
 };
 
 let store = load();
@@ -180,6 +203,35 @@ function renderScoreboard() {
   ui.streak.textContent = streak.current;
   ui.mastered.textContent = game ? game.masteredCount() : 0;
   ui.mastery.textContent = game ? `${Math.round(game.mastery() * 100)}%` : '0%';
+
+  renderGraceNote(streak);
+}
+
+/**
+ * A streak inside its grace window.
+ *
+ * Without this the only warning arrives at the end of a round, which is exactly
+ * too late to be useful — someone two days into their grace opens the app, sees
+ * a healthy-looking streak, and has no idea it is about to lapse. Shown only
+ * once a day has actually been missed; the day after a completed one is normal,
+ * not a warning.
+ */
+function renderGraceNote(streak) {
+  const missed = GRACE_DAYS - streak.graceDaysLeft;
+  const atRisk = streak.current > 0 && !streak.hitToday && missed > 0;
+
+  ui.streakStat.classList.toggle('at-risk', atRisk);
+
+  if (!atRisk) {
+    ui.streakNote.hidden = true;
+    return;
+  }
+  const left = streak.graceDaysLeft;
+  const rounds = DAILY_GOAL - streak.roundsToday;
+  ui.streakNote.innerHTML =
+    `Your <strong>${streak.current}-day streak</strong> has ${left} day${left === 1 ? '' : 's'} ` +
+    `of grace left — ${rounds} more round${rounds === 1 ? '' : 's'} today keeps it.`;
+  ui.streakNote.hidden = false;
 }
 
 function render() {
@@ -464,7 +516,10 @@ async function renderAccount() {
   ui.auth.hidden = false;
   ui.signIn.hidden = account.signedIn;
   ui.authUser.hidden = !account.signedIn;
-  if (account.signedIn) ui.authName.textContent = account.name;
+  if (account.signedIn) {
+    ui.authName.textContent = account.name;
+    ui.accountName.textContent = account.name;
+  }
 }
 
 /**
@@ -563,8 +618,61 @@ function readAuthResult() {
   history.replaceState(null, '', location.pathname);
 }
 
+ui.account.addEventListener('click', () => ui.accountDialog.showModal());
+ui.accountClose.addEventListener('click', () => ui.accountDialog.close());
+
 ui.signOut.addEventListener('click', async () => {
   await signOut();
+  location.assign('/');
+});
+
+// Deleting an account is asked twice on purpose. The first asks whether, and
+// says exactly what will go; the second asks the person to type the word, which
+// is the difference between a mis-click and a decision.
+ui.deleteStart.addEventListener('click', () => {
+  const words = Object.keys(store.cards).length;
+  const streak = streakFrom(store.days);
+  ui.deleteBody.textContent =
+    `This deletes progress on ${words} word${words === 1 ? '' : 's'}, your ` +
+    `${streak.current}-day streak, and every answer you have given — from this ` +
+    `browser and from the account, on every device you have signed in on.`;
+  ui.accountDialog.close();
+  ui.deleteDialog.showModal();
+});
+
+ui.deleteCancel.addEventListener('click', () => ui.deleteDialog.close());
+
+ui.deleteContinue.addEventListener('click', () => {
+  ui.deleteDialog.close();
+  ui.deleteTyped.value = '';
+  ui.deleteConfirm.disabled = true;
+  ui.deleteStatus.textContent = '';
+  ui.deleteStatus.className = 'transfer-status';
+  ui.deleteFinal.showModal();
+});
+
+ui.deleteTyped.addEventListener('input', () => {
+  ui.deleteConfirm.disabled = ui.deleteTyped.value.trim().toLowerCase() !== 'delete';
+});
+
+ui.deleteFinalCancel.addEventListener('click', () => ui.deleteFinal.close());
+
+ui.deleteConfirm.addEventListener('click', async () => {
+  ui.deleteConfirm.disabled = true;
+  ui.deleteStatus.className = 'transfer-status';
+  ui.deleteStatus.textContent = 'Deleting…';
+
+  if (!(await deleteAccount())) {
+    ui.deleteStatus.className = 'transfer-status bad';
+    ui.deleteStatus.textContent = 'That did not go through. Nothing was deleted — try again.';
+    ui.deleteConfirm.disabled = false;
+    return;
+  }
+
+  // Only once the server has confirmed. Local progress goes too: leaving it
+  // behind would hand it straight back as an import on the next sign-in,
+  // resurrecting exactly what was just deleted.
+  reset();
   location.assign('/');
 });
 

@@ -489,3 +489,53 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   font-size: 13px;
   color: var(--muted);
 }
+
+/* A streak inside its grace window. Amber rather than red: nothing is lost
+   yet, and the point is to be noticed without being alarming. */
+.stat.at-risk { border-color: var(--oro); }
+.stat.at-risk .stat-value { color: var(--oro); }
+
+.streak-note {
+  margin: 0 2px 12px;
+  font-size: 12px;
+  color: var(--oro);
+}
+.streak-note strong { font-weight: 600; }
+
+/* Deleting an account is not a peer of the buttons above it, so it does not
+   look like one — it sits below the actions as plain text until hovered. */
+.account-danger-note {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+.linkish {
+  font: inherit;
+  font-size: 12px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.linkish.danger-hover:hover { color: var(--rojo); }
+
+.confirm-input {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 10px;
+}
+.confirm-input:focus { outline: none; border-color: var(--rojo); }
+
+.danger:disabled { opacity: 0.4; cursor: not-allowed; }
+.danger:disabled:hover { filter: none; }

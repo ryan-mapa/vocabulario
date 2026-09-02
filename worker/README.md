@@ -40,6 +40,15 @@ handle what is left.
 | `GET` | `/auth/google/callback` | Finish it, set the session cookie, redirect home. |
 | `POST` | `/auth/logout` | Clear the session cookie. |
 | `POST` | `/sync` | Push this device's answers, pull every device's cards. Requires a session. |
+| `POST` | `/account/delete` | Delete the account and everything attached to it. Requires a session. |
+
+Deletion names every table explicitly rather than leaning on `ON DELETE
+CASCADE`. The privacy policy promises it, and a promise should not rest on a
+database pragma being in the state you assume — if foreign keys were ever not
+enforced, a cascade would leave the history behind while reporting success. The
+session cookie is cleared in the same response, and the client wipes local
+progress only once the server has confirmed: leaving it would hand it back as
+an import on the next sign-in, resurrecting what was just deleted.
 
 ## Sync
 

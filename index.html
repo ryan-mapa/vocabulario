@@ -47,7 +47,7 @@
             <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/>
           </svg>
           <span class="auth-name" id="auth-name" translate="no"></span>
-          <button class="ghost" id="sign-out" type="button">Sign out</button>
+          <button class="ghost" id="account" type="button">Account</button>
         </div>
         <p class="auth-note" id="auth-note" role="status" aria-live="polite" hidden></p>
       </div>
@@ -73,10 +73,12 @@
         <span class="stat-value" id="today">0/5</span><span class="stat-label">today</span>
         <span class="stat-fill" id="goal-fill"></span>
       </div>
-      <div class="stat"><span class="stat-value" id="streak">0</span><span class="stat-label">streak</span></div>
+      <div class="stat" id="streak-stat"><span class="stat-value" id="streak">0</span><span class="stat-label">streak</span></div>
       <div class="stat"><span class="stat-value" id="mastered">0</span><span class="stat-label">mastered</span></div>
       <div class="stat"><span class="stat-value" id="mastery">0%</span><span class="stat-label">mastery</span></div>
     </section>
+
+    <p class="streak-note" id="streak-note" role="status" aria-live="polite" hidden></p>
 
     <div class="progress" aria-hidden="true"><div class="progress-fill" id="round-progress"></div></div>
 
@@ -124,6 +126,48 @@
       <div class="confirm-actions">
         <button class="ghost" id="confirm-cancel" type="button" autofocus>Keep it</button>
         <button class="danger" id="confirm-clear" type="button">Clear progress</button>
+      </div>
+    </dialog>
+
+    <dialog class="confirm" id="account-dialog" aria-labelledby="account-title">
+      <h2 id="account-title">Your account</h2>
+      <p class="confirm-body">
+        Signed in as <strong id="account-name" translate="no"></strong>. Progress
+        syncs to this account and follows you to any device you sign in on.
+      </p>
+      <div class="confirm-actions">
+        <button class="ghost" id="account-close" type="button" autofocus>Close</button>
+        <button class="ghost" id="sign-out" type="button">Sign out</button>
+      </div>
+      <p class="account-danger-note">
+        <button class="linkish danger-hover" id="delete-start" type="button">Delete my account…</button>
+      </p>
+    </dialog>
+
+    <dialog class="confirm" id="delete-dialog" aria-labelledby="delete-title">
+      <h2 id="delete-title">Delete your account?</h2>
+      <p class="confirm-body" id="delete-body"></p>
+      <div class="confirm-actions">
+        <button class="ghost" id="delete-cancel" type="button" autofocus>Keep my account</button>
+        <button class="danger" id="delete-continue" type="button">Continue</button>
+      </div>
+    </dialog>
+
+    <dialog class="confirm" id="delete-final" aria-labelledby="delete-final-title">
+      <h2 id="delete-final-title">This cannot be undone</h2>
+      <p class="confirm-body">
+        Everything goes: every word you have learned, every answer, every round,
+        your streak, and the account itself. There is no backup and no way back.
+        Type <strong>delete</strong> to confirm.
+      </p>
+      <label class="transfer-field">
+        <span>Type delete</span>
+        <input class="confirm-input" id="delete-typed" type="text" autocomplete="off" spellcheck="false" />
+      </label>
+      <p class="transfer-status" id="delete-status" role="status" aria-live="polite"></p>
+      <div class="confirm-actions">
+        <button class="ghost" id="delete-final-cancel" type="button" autofocus>Cancel</button>
+        <button class="danger" id="delete-confirm" type="button" disabled>Delete everything</button>
       </div>
     </dialog>
 

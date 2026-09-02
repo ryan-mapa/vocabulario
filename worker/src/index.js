@@ -141,6 +141,37 @@ async function authCallback(request, env) {
 
 const signOut = () => json({ signedIn: false }, 200, { 'Set-Cookie': sessionCookie('', 0) });
 
+/**
+ * POST /account/delete — remove the account and everything attached to it.
+ *
+ * Every table is named explicitly rather than leaning on ON DELETE CASCADE.
+ * The privacy policy promises this deletion, and a promise should not rest on
+ * a database pragma being in the state you assume: if foreign keys were ever
+ * not enforced, a cascade would silently leave the history behind while
+ * reporting success.
+ *
+ * The session cookie is cleared in the same response, so the browser cannot be
+ * left holding a token for a user that no longer exists.
+ */
+async function deleteAccount(request, env) {
+  const user = await currentUser(request, env);
+  if (!user) return fail('sign in first', 401);
+
+  const wipe = (table) =>
+    env.DB.prepare(`DELETE FROM ${table} WHERE user_id = ?`).bind(user.sub);
+
+  await env.DB.batch([
+    wipe('reviews'),
+    wipe('cards'),
+    wipe('imports'),
+    wipe('rounds'),
+    wipe('profiles'),
+    env.DB.prepare('DELETE FROM users WHERE id = ?').bind(user.sub)
+  ]);
+
+  return json({ deleted: true }, 200, { 'Set-Cookie': sessionCookie('', 0) });
+}
+
 export default {
   async fetch(request, env) {
     const { pathname } = new URL(request.url);
@@ -150,6 +181,7 @@ export default {
     if (method === 'GET' && pathname === '/auth/google/start') return authStart(request, env);
     if (method === 'GET' && pathname === '/auth/google/callback') return authCallback(request, env);
     if (method === 'POST' && pathname === '/auth/logout') return signOut();
+    if (method === 'POST' && pathname === '/account/delete') return deleteAccount(request, env);
 
     if (method === 'POST' && pathname === '/sync') {
       const user = await currentUser(request, env);

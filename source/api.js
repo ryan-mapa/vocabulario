@@ -57,6 +57,22 @@ export async function sync(payload) {
   return data && typeof data.serverTime === 'number' ? data : null;
 }
 
+/**
+ * Delete the account and everything attached to it. Returns true only when the
+ * server confirms — the caller wipes local progress on the strength of that, so
+ * guessing would leave someone thinking their data is gone when it is not.
+ */
+export async function deleteAccount() {
+  try {
+    const data = await readJson(
+      await fetch('/account/delete', { method: 'POST', credentials: 'same-origin' })
+    );
+    return data?.deleted === true;
+  } catch {
+    return false;
+  }
+}
+
 export async function signOut() {
   try {
     await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' });
