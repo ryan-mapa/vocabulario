@@ -1,5 +1,6 @@
 // Generates the pronunciation clips.
 //
+//   node tools/tts.mjs --voices          list the Latin American voices on offer
 //   node tools/tts.mjs --sample          eight words, every candidate voice
 //   node tools/tts.mjs                   every word, the four chosen voices
 //
@@ -135,6 +136,32 @@ const polly = (vars) => ({
 
 // ---- run ----------------------------------------------------------------
 
+/**
+ * What the provider actually offers, rather than what anyone remembered. Voice
+ * names change; a wrong one fails 2,640 times in a row otherwise.
+ */
+async function listVoices(vars) {
+  const res = await fetch(
+    `https://${vars.AZURE_REGION}.tts.speech.microsoft.com/cognitiveservices/voices/list`,
+    { headers: { 'Ocp-Apim-Subscription-Key': vars.AZURE_KEY } }
+  );
+  if (!res.ok) throw new Error(`azure ${res.status}: ${(await res.text()).slice(0, 200)}`);
+
+  const spanish = (await res.json())
+    .filter((v) => v.Locale.startsWith('es-') && v.Locale !== 'es-ES')
+    .sort((a, b) => a.Locale.localeCompare(b.Locale) || a.Gender.localeCompare(b.Gender));
+
+  let locale = null;
+  for (const voice of spanish) {
+    if (voice.Locale !== locale) {
+      locale = voice.Locale;
+      console.log(`\n${voice.LocaleName}  (${locale})`);
+    }
+    console.log(`  ${voice.ShortName.padEnd(28)} ${voice.Gender}`);
+  }
+  console.log(`\n${spanish.length} Latin American voices. Castilian (es-ES) omitted — it would contradict the vocabulary.`);
+}
+
 async function main() {
   const sampling = process.argv.includes('--sample');
   const vars = env();
@@ -149,6 +176,8 @@ async function main() {
     );
     process.exit(1);
   }
+
+  if (process.argv.includes('--voices')) return listVoices(vars);
 
   const words = sampling ? SAMPLE : allWords();
   console.log(`${provider.name}: ${words.length} words x ${VOICES.length} voices\n`);
