@@ -19,6 +19,7 @@ import {
 } from './source/storage.js';
 import { deckProgress, unlockedDepth, nextUnlock } from './source/stages.js';
 import { fetchMe, signOut, sync, deleteAccount } from './source/api.js';
+import { clipUrl, nextVoice, canPlay, VOICE_COUNT } from './source/audio.js';
 import {
   DAILY_GOAL,
   GRACE_DAYS,
@@ -89,7 +90,9 @@ const ui = {
   deleteTyped: el('delete-typed'),
   deleteStatus: el('delete-status'),
   deleteFinalCancel: el('delete-final-cancel'),
-  deleteConfirm: el('delete-confirm')
+  deleteConfirm: el('delete-confirm'),
+  speakPrompt: el('speak-prompt'),
+  speakAnswer: el('speak-answer')
 };
 
 let store = load();
@@ -102,6 +105,65 @@ let roundCredited = false;
 
 /** Answers per sync request; the server refuses more than 500. */
 const SYNC_BATCH = 250;
+
+/**
+ * Pronunciation, when there is any.
+ *
+ * The clips are static files, and the same markup is served from places that
+ * have none — the single-file build most obviously. So one probe decides
+ * whether the button ever appears, rather than every word failing quietly.
+ */
+let audioReady = false;
+let lastVoice = null;
+let playing = null;
+
+async function checkAudio() {
+  try {
+    const res = await fetch(clipUrl('la manzana', 0), { method: 'HEAD' });
+    audioReady = res.ok;
+  } catch {
+    audioReady = false;
+  }
+}
+
+function speak(button, word) {
+  if (!audioReady) return;
+
+  if (playing) {
+    playing.audio.pause();
+    playing.button.classList.remove('playing');
+  }
+
+  lastVoice = nextVoice(lastVoice, VOICE_COUNT);
+  const audio = new Audio(clipUrl(word.es, lastVoice));
+  playing = { audio, button };
+  button.classList.add('playing');
+
+  const done = () => {
+    button.classList.remove('playing');
+    if (playing?.audio === audio) playing = null;
+  };
+  audio.addEventListener('ended', done);
+  // A missing clip should look like nothing happened, not like a broken button.
+  audio.addEventListener('error', done);
+  audio.play().catch(done);
+}
+
+/**
+ * Show the button only where speaking the word would not simply answer the
+ * question — beside the prompt when the prompt is already Spanish, and only
+ * after answering when the Spanish is what was being asked for.
+ */
+function renderSpeakers() {
+  const question = game?.state.question;
+  const answered = Boolean(game?.state.lastAnswer);
+
+  const showPrompt = audioReady && question && canPlay(question.direction, false);
+  const showAnswer = audioReady && question && answered && !canPlay(question.direction, false);
+
+  ui.speakPrompt.hidden = !showPrompt;
+  ui.speakAnswer.hidden = !showAnswer;
+}
 
 function populateDecks() {
   const options = [{ id: ALL_DECK_ID, emoji: '🌎', name: 'All words' }, ...DECKS];
@@ -277,6 +339,7 @@ function render() {
   ui.feedback.className = 'feedback';
   ui.variantNote.hidden = true;
   ui.variantNote.textContent = '';
+  renderSpeakers();
 }
 
 /**
@@ -332,6 +395,7 @@ function submit(choice) {
     : `${result.question.prompt} = ${result.question.answer}`;
 
   showVariants(result.question.word);
+  renderSpeakers();
 
   renderScoreboard();
   ui.roundProgress.style.width = `${(game.state.asked / game.state.roundLength) * 100}%`;
@@ -698,7 +762,15 @@ for (const tile of document.querySelectorAll('.stat[data-tip]')) {
   tile.addEventListener('blur', hide);
 }
 
+for (const button of [ui.speakPrompt, ui.speakAnswer]) {
+  button.addEventListener('click', () => {
+    const word = game?.state.question?.word;
+    if (word) speak(button, word);
+  });
+}
+
 populateDecks();
 startGame();
+checkAudio().then(renderSpeakers);
 readAuthResult();
 renderAccount().then(syncProgress);

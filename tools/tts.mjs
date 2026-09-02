@@ -2,6 +2,7 @@
 //
 //   node tools/tts.mjs --voices          list the Latin American voices on offer
 //   node tools/tts.mjs --sample          eight words, every candidate voice
+//   node tools/tts.mjs --limit 15        the first 15 words only, for testing
 //   node tools/tts.mjs                   every word, the four chosen voices
 //
 // Credentials come from `.tts.env` beside this repo's root, which is
@@ -35,11 +36,56 @@ const VOICES = [
   { id: 'es-AR-TomasNeural', label: 'Argentina, male' }
 ];
 
+/**
+ * Auditioned by --sample: a wider field than the four that ship, so the choice
+ * is made by ear rather than by which names came to mind first. Azure's newer
+ * HD voices are in here alongside the standard neural ones.
+ */
+const CANDIDATES = [
+  { id: 'es-MX-DaliaNeural', label: 'Mexico F · Dalia' },
+  { id: 'es-MX-Valeria:MAI-Voice-2', label: 'Mexico F · Valeria HD' },
+  { id: 'es-CO-SalomeNeural', label: 'Colombia F · Salome' },
+  { id: 'es-AR-ElenaNeural', label: 'Argentina F · Elena' },
+  { id: 'es-MX-JorgeNeural', label: 'Mexico M · Jorge' },
+  { id: 'es-MX-Tristan:DragonHDLatestNeural', label: 'Mexico M · Tristan HD' },
+  { id: 'es-CO-GonzaloNeural', label: 'Colombia M · Gonzalo' },
+  { id: 'es-AR-TomasNeural', label: 'Argentina M · Tomas' }
+];
+
 /** Words that stress the sounds most likely to expose a bad voice. */
 const SAMPLE = [
   'la manzana', 'el murciélago', 'la vergüenza', 'el año',
   'el ferrocarril', 'el pingüino', 'la mujer', 'el aguacate'
 ];
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Azure's free F0 tier allows roughly twenty requests a minute, and the whole
+ * corpus is 2,640 of them. Firing them as fast as the network allows earns a
+ * wall of 429s, so requests are paced and a throttled one waits and tries
+ * again rather than being lost.
+ *
+ * At this pace a full run takes a couple of hours. That is fine unattended —
+ * and the run is resumable, so it can be stopped and restarted. On a paid S0
+ * tier the limit effectively disappears and the whole job costs under a dollar.
+ */
+const PACE_MS = Number(process.env.TTS_PACE_MS ?? 3200);
+const MAX_TRIES = 6;
+
+async function withRetry(fn, label) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      const throttled = /\b429\b/.test(error.message);
+      if (!throttled || attempt >= MAX_TRIES) throw error;
+      const wait = Math.min(60_000, 2 ** attempt * 1000);
+      process.stdout.write(`\r  ${label} throttled, waiting ${wait / 1000}s…            `);
+      await sleep(wait);
+    }
+  }
+}
 
 function env() {
   const file = new URL('.tts.env', ROOT);
@@ -179,15 +225,21 @@ async function main() {
 
   if (process.argv.includes('--voices')) return listVoices(vars);
 
-  const words = sampling ? SAMPLE : allWords();
-  console.log(`${provider.name}: ${words.length} words x ${VOICES.length} voices\n`);
+  const limitArg = process.argv.indexOf('--limit');
+  const limit = limitArg > -1 ? Number(process.argv[limitArg + 1]) : Infinity;
+
+  const words = (sampling ? SAMPLE : allWords()).slice(0, limit);
+  const voices = sampling ? CANDIDATES : VOICES;
+  console.log(`${provider.name}: ${words.length} words x ${voices.length} voices\n`);
 
   let made = 0;
   let skipped = 0;
   let bytes = 0;
 
-  for (const [index, voice] of VOICES.entries()) {
-    const dir = new URL(`${index + 1}/`, OUT);
+  const failed = [];
+
+  for (const [index, voice] of voices.entries()) {
+    const dir = new URL(`${sampling ? voice.id.replace(/[^\w-]/g, '_') : index + 1}/`, OUT);
     mkdirSync(dir, { recursive: true });
 
     for (const word of words) {
@@ -199,11 +251,19 @@ async function main() {
         bytes += statSync(file).size;
         continue;
       }
-      const audio = await provider.speak(word, voice.id);
-      writeFileSync(file, audio);
-      made += 1;
-      bytes += audio.length;
-      process.stdout.write(`\r  ${voice.label.padEnd(18)} ${made + skipped}/${words.length * VOICES.length}`);
+      // One unavailable voice should not abandon the run — HD voices in
+      // particular are not offered on every tier or in every region.
+      try {
+        const audio = await withRetry(() => provider.speak(word, voice.id), voice.label);
+        writeFileSync(file, audio);
+        made += 1;
+        bytes += audio.length;
+        await sleep(PACE_MS);
+      } catch (error) {
+        failed.push(`${voice.id}: ${error.message.slice(0, 90)}`);
+        break;
+      }
+      process.stdout.write(`\r  ${voice.label.padEnd(24)} ${made + skipped}/${words.length * voices.length}`);
     }
   }
 
@@ -211,6 +271,9 @@ async function main() {
     `\n\ndone — ${made} generated, ${skipped} already present, ` +
     `${(bytes / 1048576).toFixed(1)} MB total`
   );
+  if (failed.length) {
+    console.log(`\nunavailable:\n  ${[...new Set(failed)].join('\n  ')}`);
+  }
 }
 
 main().catch((error) => {
