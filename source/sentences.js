@@ -2469,5 +2469,39 @@ export const SENTENCES = {
   'parcial': ['El seguro solo cubrió un reembolso parcial.', 'The insurance only covered a partial refund.'],
   'incompleto': ['El pasante entregó el formulario incompleto por error.', 'The intern turned in the incomplete form by mistake.'],
   'caótico': ['El tráfico se volvió caótico durante la tormenta.', 'Traffic became chaotic during the storm.'],
-  'tenso': ['El ambiente en la oficina se puso tenso esa tarde.', 'The atmosphere at the office got tense that afternoon.']
+  'tenso': ['El ambiente en la oficina se puso tenso esa tarde.', 'The atmosphere at the office got tense that afternoon.'],
+
+  // --- naturaleza / Basics ---
+  'el fuego': ['Apagamos el fuego antes de dormir en la carpa.', 'We put out the fire before sleeping in the tent.'],
+  'el humo': ['El humo subía despacio entre los árboles.', 'The smoke rose slowly among the trees.'],
+  'la sombra': ['Nos sentamos a la sombra de un árbol grande.', 'We sat in the shade of a big tree.'],
+  'el charco': ['El perro saltó dentro de un charco de agua.', 'The dog jumped into a puddle of water.'],
+  'el aire': ['El aire de la montaña se siente muy puro.', 'The mountain air feels very pure.'],
+  'el terreno': ['El terreno se volvió lodoso tras la lluvia.', 'The terrain turned muddy after the rain.'],
+  'el estanque': ['Los patos nadan tranquilos en el estanque.', 'The ducks swim peacefully in the pond.'],
+  'el arbusto': ['El pájaro se escondió detrás de un arbusto.', 'The bird hid behind a bush.'],
+  'la naturaleza': ['Pasar tiempo en la naturaleza me llena de calma.', 'Spending time in nature fills me with calm.'],
+  'el animal': ['Ese animal salvaje no se acerca a las personas.', "That wild animal doesn't approach people."],
+  'el insecto': ['Un insecto extraño caminaba sobre la hoja.', 'A strange insect was walking on the leaf.'],
+  'el pino': ['Cortamos un pino pequeño para decorar la casa.', 'We cut down a small pine tree to decorate the house.'],
+  'el oasis': ['Encontramos un oasis con agua fresca en el desierto.', 'We found an oasis with fresh water in the desert.'],
+  'la duna': ['Subimos la duna de arena antes del atardecer.', 'We climbed the sand dune before sunset.'],
+  'el glaciar': ['El glaciar se derrite un poco cada verano.', 'The glacier melts a little every summer.'],
+  'la telaraña': ['Una telaraña cubría la ventana del granero.', 'A spiderweb covered the barn window.'],
+  'el hongo': ['Un hongo extraño creció sobre el tronco caído.', 'A strange fungus grew on the fallen trunk.'],
+  'el medio ambiente': ['Debemos cuidar el medio ambiente para las próximas generaciones.', 'We must take care of the environment for future generations.'],
+  'la estrella': ['Vimos una estrella fugaz cruzar el cielo oscuro.', 'We saw a shooting star cross the dark sky.'],
+  'el tallo': ['El tallo de la flor se dobló con el viento.', "The flower's stem bent in the wind."],
+
+  // --- lugar / Basics ---
+  'en': ['Guardé las llaves en el cajón de la cocina.', 'I put the keys in the kitchen drawer.'],
+  'frente a': ['El banco está frente a la plaza principal.', 'The bank is facing the main square.'],
+  'el fondo': ['La salida está al fondo del pasillo.', 'The exit is at the far end of the hallway.'],
+  'el lugar': ['Este lugar me recuerda a mi ciudad natal.', 'This place reminds me of my hometown.'],
+  'el espacio': ['No hay espacio suficiente para otro mueble.', "There isn't enough space for another piece of furniture."],
+  'el interior': ['Guardamos las maletas en el interior del auto.', 'We stored the suitcases inside the car.'],
+  'el exterior': ['Pintamos el exterior de la casa de blanco.', 'We painted the exterior of the house white.'],
+  'la cercanía': ['Elegimos el hotel por su cercanía a la playa.', 'We chose the hotel for its proximity to the beach.'],
+  'la zona': ['Cerraron la zona por las obras en la calle.', 'They closed off the area because of construction on the street.'],
+  'el punto de referencia': ['Usa la torre como punto de referencia para no perderte.', "Use the tower as a landmark so you don't get lost."]
 };
