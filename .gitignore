@@ -6,3 +6,7 @@ dist/
 .wrangler/
 .dev.vars
 .tts.env
+
+# Agent batch output, transient. Also in .assetsignore — wrangler uploads from
+# disk, not from git, so gitignoring it alone would still publish it.
+staging/

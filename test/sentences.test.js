@@ -2,29 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { SENTENCES } from '../source/sentences.js';
 import { DECKS } from '../source/vocab.js';
 import { exampleFor } from '../source/examples.js';
+// The same rules the batch validator enforces, so a batch that passes the
+// validator cannot then fail the build — see tools/rules.mjs.
+import { uses, overusedOpenings, copulaOveruse } from '../tools/rules.mjs';
 
 const words = DECKS.flatMap((deck) => deck.stages.flat());
 const headwords = new Set(words.map((word) => word.es));
 const entries = Object.entries(SENTENCES);
 
-/** Lowercase, accents stripped — for comparing a word against an inflected form. */
-const flatten = (text) =>
-  text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 
-/** The headword without its article: 'la manzana' -> 'manzana'. */
-const bare = (es) => es.replace(/^(el|la|los|las) /, '');
-
-/**
- * Does the sentence use the word? Matched on a four-letter stem at a word
- * boundary, because Spanish inflects: 'el frijol' appears as 'frijoles',
- * 'la nuez' as 'nueces'. Loose enough for grammar, tight enough to catch a
- * sentence filed under the wrong word.
- */
-function uses(sentence, es) {
-  const word = flatten(bare(es));
-  const stem = word.length <= 4 ? word.slice(0, 3) : word.slice(0, 4);
-  return new RegExp(`(^|[^\\p{L}])${stem}`, 'u').test(flatten(sentence));
-}
 
 describe('the sentence data', () => {
   it('is keyed on words that actually exist', () => {
@@ -93,6 +79,25 @@ describe('every sentence is its own', () => {
       seen.set(english, [...(seen.get(english) ?? []), es]);
     }
     expect([...seen.values()].filter((words) => words.length > 1)).toEqual([]);
+  });
+});
+
+// The formulaic shape a model falls into when it stops thinking: article + noun
+// + copula. Correct Spanish, and a deck of it teaches nothing about how a word
+// is used. Gated per deck-stage rather than corpus-wide, because a whole stage
+// is what one agent writes — which is the unit that goes wrong.
+describe('sentences that do some work', () => {
+  it('never lets one deck-stage fill up with "El X es Y"', () => {
+    const offenders = [];
+    for (const deck of DECKS) {
+      deck.stages.forEach((stage, index) => {
+        const written = stage.map((w) => SENTENCES[w.es]?.[0]).filter(Boolean);
+        if (written.length < 8) return;
+        const overuse = copulaOveruse(written);
+        if (overuse) offenders.push(`${deck.id} stage ${index}: ${overuse.count}/${overuse.of}`);
+      });
+    }
+    expect(offenders).toEqual([]);
   });
 });
 
