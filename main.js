@@ -21,6 +21,8 @@ import {
 import { deckProgress, unlockedDepth, commonDepth, nextUnlock } from './source/stages.js';
 import { fetchMe, signOut, sync, deleteAccount } from './source/api.js';
 import { clipUrl, nextVoice, canPlay, hasClip, MANIFEST_URL, VOICE_COUNT } from './source/audio.js';
+import { SENTENCES } from './source/sentences.js';
+import { exampleFor, exampleLines } from './source/examples.js';
 import { tonesFor, isMuted, setMuted } from './source/sound.js';
 import {
   DAILY_GOAL,
@@ -104,12 +106,18 @@ const ui = {
   guardNoticeTitle: el('guard-notice-title'),
   guardNoticeBody: el('guard-notice-body'),
   guardNoticeOk: el('guard-notice-ok'),
+  example: el('example'),
+  exampleToggle: el('example-toggle'),
+  exampleLines: el('example-lines'),
   speakPrompt: el('speak-prompt'),
   speakPromptDots: el('speak-prompt-dots')
 };
 
 let store = load();
 let game = null;
+
+/** Whether this question's example has been asked for. Resets with the word. */
+let exampleShown = false;
 let stages = [0];   // which stages the round draws from; never empty
 let depthAtRoundStart = 0;
 let account = null;   // { signedIn, name } once /me has answered, else null
@@ -232,6 +240,46 @@ function renderSpeakers() {
   ui.speakPrompt.hidden = !show;
   ui.speakPromptDots.hidden = !show;
   if (show) renderDots();
+}
+
+/**
+ * The example sentence, revealed on request.
+ *
+ * Hidden by default on purpose: a sentence sitting under every prompt would be
+ * read instead of the word, and recall is the thing being practised. Asking for
+ * it is the point — it turns the sentence into something you reach for when the
+ * word is genuinely ambiguous.
+ *
+ * Which sentences may be shown is decided in source/examples.js, not here: the
+ * rule that the answer side stays hidden until answered is the kind of thing
+ * that needs a test around it, not a condition buried in a render function.
+ */
+function renderExample() {
+  const question = game?.state.question;
+  const example = exampleFor(SENTENCES, question?.word.es);
+  const answered = Boolean(game?.state.lastAnswer);
+  const lines = exampleLines(example, question?.direction, answered);
+
+  // Cleared first, always. Returning early with the last question's sentences
+  // still in the container leaves the previous answer sitting in the markup of
+  // the next question — invisible only for as long as nothing unhides it.
+  ui.exampleLines.innerHTML = '';
+  ui.example.hidden = lines.length === 0;
+  if (lines.length === 0) return;
+
+  // Pressing the button swaps it for the sentence, rather than pushing the
+  // choices down with a second control still sitting there.
+  ui.exampleToggle.hidden = exampleShown;
+  ui.exampleLines.hidden = !exampleShown;
+  if (!exampleShown) return;
+
+  for (const line of lines) {
+    const p = document.createElement('p');
+    p.className = `example-line example-${line.lang}`;
+    p.lang = line.lang;
+    p.textContent = line.text;
+    ui.exampleLines.append(p);
+  }
 }
 
 function populateDecks() {
@@ -454,7 +502,9 @@ function render() {
   ui.hint.innerHTML =
     'Answer with <kbd>1</kbd>\u2013<kbd>4</kbd> \u00b7 <kbd>Enter</kbd> to continue';
   ui.hint.classList.remove('waiting');
+  exampleShown = false;
   renderSpeakers();
+  renderExample();
 }
 
 /**
@@ -518,6 +568,7 @@ function submit(choice) {
 
   showVariants(result.question.word);
   renderSpeakers();
+  renderExample();
 
   // The stage row is derived from the cards too, and every answer moves one.
   // Without this it keeps showing whatever was true when the round began, so a
@@ -704,6 +755,11 @@ ui.direction.addEventListener('change', startGame);
 ui.play.addEventListener('click', (event) => {
   if (event.target.closest('button')) return;
   advance();
+});
+
+ui.exampleToggle.addEventListener('click', () => {
+  exampleShown = true;
+  renderExample();
 });
 
 function renderSound() {

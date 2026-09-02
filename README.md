@@ -1,8 +1,9 @@
 # Vocabulario 🇪🇸
 
-A Spanish vocabulary game. 630 words across 14 categories and 3 stages of
+A Spanish vocabulary game. 1,800 words across 20 categories and 3 stages of
 depth, multiple choice, with Leitner-box spaced repetition so the words you
-miss come back sooner than the ones you know. Deeper stages are earned.
+miss come back sooner than the ones you know. Deeper stages are earned. Every
+word is spoken by four voices and shown in an example sentence.
 
 **▶ Play it: https://vocabulario.ryan-mapa.dev**
 
@@ -25,9 +26,11 @@ ahead. Rounds are 20 questions, about two minutes.
 
 - **Decks** — Food, Animals, The Home, Verbs, Travel, The Body, Days &
   Weather, Adjectives, Family & People, Numbers & Money, Work & School,
-  City & Places, Clothing, Feelings & Mind — or all 630 words at once. Nouns
-  carry their article so you learn the gender with the word.
-- **Stages** — each deck runs Basics → Everyday → Fluent, 15 words apiece.
+  City & Places, Clothing, Feelings & Mind, Questions & Connectors, Where
+  Things Are, Daily Routine, Health & the Doctor, Technology & Online,
+  Nature & Outdoors — or all 1,800 words at once. Nouns carry their article
+  so you learn the gender with the word.
+- **Stages** — each deck runs Basics → Everyday → Fluent, 30 words apiece.
   Only Basics is open at first; a stage unlocks when the one before it reaches
   60% mastery, so depth is earned rather than dumped on you. The stars beside a
   deck name (`★★☆`) show how far it is open, and the bar under each stage
@@ -38,7 +41,18 @@ ahead. Rounds are 20 questions, about two minutes.
   tapping again cycles four Latin American voices, so hearing a word four times
   means four different mouths rather than one recording repeated. Recall
   questions have none: the Spanish is the answer there, and speaking it would
-  give it away.
+  give it away. The 7,320 clips are generated ahead of time by `tools/tts.mjs`
+  and served as static files; `audio/words.json` lists the words that have all
+  four, so a word whose synthesis failed loses its button rather than every word
+  losing one.
+- **Example sentences** — every word has one, hidden behind a **Show example**
+  button under the prompt so the sentence is something you reach for when a word
+  is ambiguous, not something you read instead of recalling it. Which half you
+  get follows the same rule as the speaker: before you answer, only the sentence
+  in the *prompt's* language, since the other one contains the answer. Answer,
+  and both appear — *¿Nos trae la cuenta, por favor?* over *Could we get the
+  bill, please?* — which is where the pair earns its keep, because it is the
+  sentence that separates a restaurant *cuenta* from a bank one.
 - **Direction** — a round is **Mixed** by default: ten questions of recognition
   (Español → English) and ten of recall (English → Español), interleaved rather
   than run as two blocks. Mixed practice retains better than blocked, and a
@@ -60,9 +74,8 @@ ahead. Rounds are 20 questions, about two minutes.
   **mastery** is how far that same set has climbed on average, counting partial
   progress. So mastery moves on every correct answer, and mastered only moves
   when a word finishes.
-- **The daily goal** is five completed rounds — five and a half minutes. Not an
-  arbitrary number: at five rounds a day, a 210-word stage goes from nothing to
-  203 words mastered in a month. Only finished rounds count.
+- **The daily goal** is five completed rounds — a hundred questions, five and a
+  half minutes. Only finished rounds count.
 - **The streak** is consecutive days that met the goal, and it forgives three
   missed days, and says so on the scoreboard while the window is open rather
   than waiting until the streak is gone. Losing a streak is the most reliable
@@ -103,6 +116,8 @@ style.css       styles
 main.js         DOM wiring — the only file that touches the document
 source/
   vocab.js      the word decks, three stages each
+  sentences.js  one example sentence per word, Spanish and English
+  examples.js   which of those two may be shown, and when
   srs.js        Leitner boxes, scheduling, mastery
   stages.js     which stages are unlocked, and the pool each one draws from
   goals.js      the daily goal, the day streak, and the grace window
@@ -111,10 +126,16 @@ source/
   game.js       round state, scoring, streaks
   storage.js    localStorage persistence, and the queue of unsent answers
   api.js        talking to the server, when there is one
+  audio.js      clip URLs, voice cycling, and which words have recordings
   random.js     seedable PRNG + shuffle
 worker/         the Cloudflare Worker that serves the app and the API
 wrangler.toml   its config, at the root — the static files *are* the root
 .assetsignore   what must never be uploaded as a public asset
+audio/          7,320 pre-generated clips: 4 voices x 1,830 words
+  words.json    the words that have all four, so a gap costs one button
+  voices.json   which voice is which, to catch a silent swap upstream
+tools/
+  tts.mjs       regenerates the clips; reads credentials from .tts.env
 assets/
   logo.svg      the V monogram, bare — for the header and anywhere on dark
   icon.svg      the same mark as a filled badge — favicon and app icon
@@ -165,4 +186,28 @@ Append to the relevant deck in `source/vocab.js`:
 ```
 
 Keep the article on nouns, and keep `es` unique across all decks — it's the
-progress key, and `vocab.test.js` will fail if it isn't.
+progress key, and `vocab.test.js` will fail if it isn't. Never rewrite an `es`
+string that has shipped: it silently orphans everyone's progress on that word.
+
+Then give it a sentence in `source/sentences.js`, keyed by that same string:
+
+```js
+'la lluvia': ['La lluvia no paró en toda la noche.', 'The rain did not stop all night.'],
+```
+
+`sentences.test.js` holds these to the house style — short, unique, and actually
+containing the word they illustrate, which is stricter than it sounds because
+Spanish stem-changes (*seguir* → *sigue* does not count, so write the sentence
+with a form that keeps the root).
+
+Recordings are separate and optional: run `node tools/tts.mjs` to generate the
+four voices, or leave it, and the word simply has no speaker button.
+
+## A caveat worth stating plainly
+
+The vocabulary and all 1,800 example sentences were written without a native
+speaker's review. The sentences are the riskier half — a wrong word is one wrong
+word, but a wrong sentence teaches grammar, register and word order along with
+it, and the scheduler will drill it exactly as faithfully as a right one. The
+tests here check structure, not idiom. Treat `source/sentences.js` as the first
+file to hand a native speaker.

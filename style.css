@@ -781,3 +781,64 @@ button.stat:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; 
   button.stat:hover .guard-badge { border-color: var(--muted); }
   .stat[data-tip]:hover { border-color: var(--muted); outline: none; }
 }
+
+/* --- The example sentence -------------------------------------------------
+   A quiet, low-contrast block under the word. It has to read as supporting
+   material rather than a second prompt, or the eye goes to the sentence and
+   the word stops being the thing being recalled. */
+.example {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 2.1rem;          /* holds the row's height so revealing does not
+                                  shove the choices down under the thumb */
+  justify-content: center;
+  margin: 0 0 0.35rem;
+}
+
+.example-toggle {
+  background: none;
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.25rem 0.85rem;
+}
+
+@media (hover: hover) {
+  .example-toggle:hover {
+    border-color: var(--oro);
+    border-style: solid;
+    color: var(--ink);
+  }
+}
+
+.example-toggle:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
+
+.example-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-align: center;
+}
+
+.example-line {
+  margin: 0;
+  max-width: 34ch;
+  text-wrap: balance;
+}
+
+.example-es {
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+/* The translation is a gloss on the line above it, so it is set smaller and
+   quieter — never the same weight as the Spanish it explains. */
+.example-en {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
