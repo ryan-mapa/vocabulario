@@ -49,6 +49,12 @@ ahead. Rounds are 20 questions, about two minutes.
   is followed by a note: *la fresa — also la frutilla (Southern Cone)*. It
   appears only after you answer, because in the English → Spanish direction it
   would otherwise give the answer away.
+- **The scoreboard** explains itself: point at any tile — or tap it on a phone,
+  or tab to it — and a line underneath says what that number means. **Mastered**
+  counts the words in the current deck and stage that have reached the top box;
+  **mastery** is how far that same set has climbed on average, counting partial
+  progress. So mastery moves on every correct answer, and mastered only moves
+  when a word finishes.
 - **The daily goal** is five completed rounds — five and a half minutes. Not an
   arbitrary number: at five rounds a day, a 210-word stage goes from nothing to
   203 words mastered in a month. Only finished rounds count.

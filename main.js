@@ -75,7 +75,7 @@ const ui = {
   authName: el('auth-name'),
   authNote: el('auth-note'),
   signOut: el('sign-out'),
-  streakNote: el('streak-note'),
+  scoreboardNote: el('scoreboard-note'),
   account: el('account'),
   accountDialog: el('account-dialog'),
   accountName: el('account-name'),
@@ -204,35 +204,46 @@ function renderScoreboard() {
   ui.mastered.textContent = game ? game.masteredCount() : 0;
   ui.mastery.textContent = game ? `${Math.round(game.mastery() * 100)}%` : '0%';
 
-  renderGraceNote(streak);
+  renderNote(streak);
 }
 
 /**
- * A streak inside its grace window.
+ * The one line under the scoreboard, which two things want to use.
  *
- * Without this the only warning arrives at the end of a round, which is exactly
- * too late to be useful — someone two days into their grace opens the app, sees
- * a healthy-looking streak, and has no idea it is about to lapse. Shown only
- * once a day has actually been missed; the day after a completed one is normal,
- * not a warning.
+ * A tile being pointed at wins, because it was asked for. Otherwise it falls
+ * back to the grace warning, which nobody asked for but needs to be seen. One
+ * element rather than two, so they cannot both appear and argue.
  */
-function renderGraceNote(streak) {
+let hoveredTip = null;
+
+function renderNote(streak = streakFrom(store.days)) {
+  const note = ui.scoreboardNote;
+
+  if (hoveredTip) {
+    note.textContent = hoveredTip;
+    note.className = 'scoreboard-note';
+    return;
+  }
+
   const missed = GRACE_DAYS - streak.graceDaysLeft;
   const atRisk = streak.current > 0 && !streak.hitToday && missed > 0;
-
   ui.streakStat.classList.toggle('at-risk', atRisk);
 
   if (!atRisk) {
-    ui.streakNote.hidden = true;
+    note.textContent = '';
+    note.className = 'scoreboard-note';
     return;
   }
+
   const left = streak.graceDaysLeft;
   const rounds = DAILY_GOAL - streak.roundsToday;
-  ui.streakNote.innerHTML =
+  note.innerHTML =
     `Your <strong>${streak.current}-day streak</strong> has ${left} day${left === 1 ? '' : 's'} ` +
     `of grace left — ${rounds} more round${rounds === 1 ? '' : 's'} today keeps it.`;
-  ui.streakNote.hidden = false;
+  note.className = 'scoreboard-note warning';
 }
+
+
 
 function render() {
   const { state } = game;
@@ -675,6 +686,17 @@ ui.deleteConfirm.addEventListener('click', async () => {
   reset();
   location.assign('/');
 });
+
+// Explaining a tile on hover, and on focus so it also works by keyboard and by
+// tapping on a phone, where there is no hover at all.
+for (const tile of document.querySelectorAll('.stat[data-tip]')) {
+  const show = () => { hoveredTip = tile.dataset.tip; renderNote(); };
+  const hide = () => { hoveredTip = null; renderNote(); };
+  tile.addEventListener('mouseenter', show);
+  tile.addEventListener('focus', show);
+  tile.addEventListener('mouseleave', hide);
+  tile.addEventListener('blur', hide);
+}
 
 populateDecks();
 startGame();

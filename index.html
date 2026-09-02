@@ -69,16 +69,26 @@
     </header>
 
     <section class="scoreboard" aria-label="Progress">
-      <div class="stat" id="today-stat">
+      <div class="stat" id="today-stat" tabindex="0"
+           data-tip="Rounds you have finished today. Five meets the daily goal — about five minutes.">
         <span class="stat-value" id="today">0/5</span><span class="stat-label">today</span>
         <span class="stat-fill" id="goal-fill"></span>
       </div>
-      <div class="stat" id="streak-stat"><span class="stat-value" id="streak">0</span><span class="stat-label">streak</span></div>
-      <div class="stat"><span class="stat-value" id="mastered">0</span><span class="stat-label">mastered</span></div>
-      <div class="stat"><span class="stat-value" id="mastery">0%</span><span class="stat-label">mastery</span></div>
+      <div class="stat" id="streak-stat" tabindex="0"
+           data-tip="Days in a row you have met the goal. It survives up to three missed days.">
+        <span class="stat-value" id="streak">0</span><span class="stat-label">streak</span>
+      </div>
+      <div class="stat" tabindex="0"
+           data-tip="Words in this deck and stage you have reached the top box on — four correct answers in a row, with no miss in between.">
+        <span class="stat-value" id="mastered">0</span><span class="stat-label">mastered</span>
+      </div>
+      <div class="stat" tabindex="0"
+           data-tip="How far this deck and stage has climbed overall, counting partial progress on every word — not only the mastered ones.">
+        <span class="stat-value" id="mastery">0%</span><span class="stat-label">mastery</span>
+      </div>
     </section>
 
-    <p class="streak-note" id="streak-note" role="status" aria-live="polite" hidden></p>
+    <p class="scoreboard-note" id="scoreboard-note" role="status" aria-live="polite"></p>
 
     <div class="progress" aria-hidden="true"><div class="progress-fill" id="round-progress"></div></div>
 

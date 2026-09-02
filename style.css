@@ -397,6 +397,8 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   select { width: 100%; font-size: 13px; padding: 6px 8px; }
 
   .scoreboard { gap: 6px; margin-bottom: 10px; }
+  .scoreboard-note { min-height: 0; }
+  .scoreboard-note:empty { display: none; }
   .stat { padding: 7px 4px; }
   .stat-value { font-size: 19px; }
 
@@ -495,12 +497,25 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
 .stat.at-risk { border-color: var(--oro); }
 .stat.at-risk .stat-value { color: var(--oro); }
 
-.streak-note {
+/* Pointing at a tile explains it. A tooltip anchored to the tile would run off
+   a phone screen from the outer two, so the text goes in one line below the
+   row instead, where it has the full width and never overflows. */
+.stat[data-tip] { cursor: help; }
+.stat[data-tip]:hover,
+.stat[data-tip]:focus-visible { border-color: var(--muted); outline: none; }
+
+.scoreboard-note {
+  /* Held open so the row below does not jump as the line comes and goes. On a
+     phone it collapses instead — there is no hover there to cause a jump, and
+     the vertical budget is worth more than the stillness. */
+  min-height: 17px;
   margin: 0 2px 12px;
   font-size: 12px;
-  color: var(--oro);
+  line-height: 1.4;
+  color: var(--muted);
 }
-.streak-note strong { font-weight: 600; }
+.scoreboard-note.warning { color: var(--oro); }
+.scoreboard-note strong { font-weight: 600; }
 
 /* Deleting an account is not a peer of the buttons above it, so it does not
    look like one — it sits below the actions as plain text until hovered. */
