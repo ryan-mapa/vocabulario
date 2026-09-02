@@ -105,13 +105,30 @@ function env() {
   return vars;
 }
 
-/** Every distinct Spanish string, headwords and regional variants alike. */
-export function allWords() {
-  const words = DECKS.flatMap((deck) => deck.stages.flat());
-  const spoken = [...words.map((w) => w.es), ...words.flatMap((w) => (w.alt ?? []).map((a) => a.es))];
-  // Two entries can share a spelling — `la llave` is both a headword and a
-  // variant of `el grifo`. One spelling, one recording.
-  return [...new Set(spoken)];
+/**
+ * Every distinct Spanish string, headwords and regional variants alike —
+ * ordered by stage, Basics first.
+ *
+ * The order is the whole point when a run may be cut short. Most learners never
+ * reach Fluent, so an interrupted run should have spent its time on the words
+ * people actually see. Pass `--stage N` to do one stage and stop.
+ */
+export function allWords(onlyStage = null) {
+  const seen = new Set();
+  const out = [];
+  for (const stage of [0, 1, 2]) {
+    if (onlyStage !== null && stage !== onlyStage) continue;
+    for (const deck of DECKS) {
+      for (const word of deck.stages[stage] ?? []) {
+        // Two entries can share a spelling — `la llave` is both a headword and
+        // a variant of `el grifo`. One spelling, one recording.
+        for (const es of [word.es, ...(word.alt ?? []).map((a) => a.es)]) {
+          if (!seen.has(es)) { seen.add(es); out.push(es); }
+        }
+      }
+    }
+  }
+  return out;
 }
 
 // ---- providers ----------------------------------------------------------
@@ -262,7 +279,10 @@ async function main() {
   const limitArg = process.argv.indexOf('--limit');
   const limit = limitArg > -1 ? Number(process.argv[limitArg + 1]) : Infinity;
 
-  const words = (sampling ? SAMPLE : allWords()).slice(0, limit);
+  const stageArg = process.argv.indexOf('--stage');
+  const onlyStage = stageArg !== -1 ? Number(process.argv[stageArg + 1]) : null;
+  const words = (sampling ? SAMPLE : allWords(onlyStage)).slice(0, limit);
+  if (onlyStage !== null) console.log(`stage ${onlyStage} only — ${words.length} words in the queue`);
   const voices = sampling ? CANDIDATES : VOICES;
   console.log(`${provider.name}: ${words.length} words x ${voices.length} voices\n`);
 
