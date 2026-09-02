@@ -648,3 +648,24 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   .speak.playing .wave-1,
   .speak.playing .wave-2 { animation: none; opacity: 1; }
 }
+
+/* The streak tile opens the guard, so it is a button — but it has to keep
+   looking like the tiles beside it rather than announcing itself. */
+button.stat { font: inherit; text-align: center; cursor: pointer; }
+button.stat:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
+
+/* Paused. Drawn with borders rather than set as pause characters: at this size
+   a glyph pair closes up into a solid block and reads as a warning square. */
+.guard-badge {
+  position: absolute;
+  top: 8px;
+  right: 9px;
+  width: 7px;
+  height: 9px;
+  border-left: 2px solid var(--oro);
+  border-right: 2px solid var(--oro);
+}
+
+.stat.guarded { border-color: var(--oro); border-style: dashed; }
+
+.guard-explainer { font-size: 13px; }

@@ -4,6 +4,7 @@ import {
   save,
   withCards,
   withDays,
+  withGuards,
   reset,
   exportProgress,
   parseProgress,
@@ -42,7 +43,7 @@ afterEach(() => {
 
 describe('storage', () => {
   it('starts empty', () => {
-    expect(load()).toEqual({ cards: {}, days: {}, syncedAt: 0 });
+    expect(load()).toEqual({ cards: {}, days: {}, guards: [], syncedAt: 0 });
   });
 
   it('round-trips cards and days', () => {
@@ -72,7 +73,7 @@ describe('storage', () => {
 
   it('recovers from a corrupt payload', () => {
     localStorage.setItem(V2, '{not json');
-    expect(load()).toEqual({ cards: {}, days: {}, syncedAt: 0 });
+    expect(load()).toEqual({ cards: {}, days: {}, guards: [], syncedAt: 0 });
   });
 
   it('fills in a half-written payload', () => {
@@ -89,8 +90,8 @@ describe('storage', () => {
 
   it('still plays when storage is unavailable', () => {
     delete globalThis.localStorage;
-    expect(load()).toEqual({ cards: {}, days: {}, syncedAt: 0 });
-    expect(() => save({ cards: {}, days: {} })).not.toThrow();
+    expect(load()).toEqual({ cards: {}, days: {}, guards: [], syncedAt: 0 });
+    expect(() => save({ cards: {}, days: {}, guards: [] })).not.toThrow();
     expect(() => reset()).not.toThrow();
   });
 
@@ -100,7 +101,7 @@ describe('storage', () => {
         throw new Error('QuotaExceededError');
       }
     });
-    expect(() => save({ cards: {}, days: {} })).not.toThrow();
+    expect(() => save({ cards: {}, days: {}, guards: [] })).not.toThrow();
   });
 });
 
@@ -162,7 +163,7 @@ describe('moving progress between origins', () => {
   };
 
   it('round-trips through an export', () => {
-    expect(parseProgress(exportProgress(progress))).toEqual({ ...progress, syncedAt: 0 });
+    expect(parseProgress(exportProgress(progress))).toEqual({ ...progress, guards: [], syncedAt: 0 });
   });
 
   // The cursor is about one browser's conversation with the server. Carrying it
@@ -253,5 +254,35 @@ describe('the round queue', () => {
     queueRound(round('r1'));
     reset();
     expect(readRoundOutbox()).toEqual([]);
+  });
+});
+
+describe('streak guard events', () => {
+  const event = (id, state = 'guarded') => ({ id, day: '2026-09-01', state, source: 'manual' });
+
+  it('round-trips through a save', () => {
+    save(withGuards(load(), [event('a'), event('b', 'active')]));
+    expect(load().guards.map((e) => e.id)).toEqual(['a', 'b']);
+  });
+
+  it('keeps one copy of an event however many times it arrives', () => {
+    const merged = withGuards(load(), [event('a'), event('a'), event('b')]);
+    expect(merged.guards).toHaveLength(2);
+  });
+
+  it('drops anything that is not a usable event', () => {
+    const merged = withGuards(load(), [event('a'), { id: 'x' }, { day: '2026-09-01' }, null, 'nope']);
+    expect(merged.guards.map((e) => e.id)).toEqual(['a']);
+  });
+
+  it('travels with an export, since a paused streak should stay paused', () => {
+    const data = withGuards(load(), [event('a')]);
+    expect(parseProgress(exportProgress(data)).guards.map((e) => e.id)).toEqual(['a']);
+  });
+
+  it('is cleared by a reset', () => {
+    save(withGuards(load(), [event('a')]));
+    reset();
+    expect(load().guards).toEqual([]);
   });
 });

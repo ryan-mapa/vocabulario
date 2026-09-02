@@ -74,10 +74,12 @@
         <span class="stat-value" id="today">0/5</span><span class="stat-label">today</span>
         <span class="stat-fill" id="goal-fill"></span>
       </div>
-      <div class="stat" id="streak-stat" tabindex="0"
-           data-tip="Days in a row you have met the goal. It survives up to three missed days.">
-        <span class="stat-value" id="streak">0</span><span class="stat-label">streak</span>
-      </div>
+      <button class="stat" id="streak-stat" type="button"
+              data-tip="Days in a row you have met the goal. It survives up to three missed days — click for streak guard.">
+        <span class="stat-value" id="streak">0</span>
+        <span class="stat-label">streak</span>
+        <span class="guard-badge" id="guard-badge" hidden aria-hidden="true"></span>
+      </button>
       <div class="stat" tabindex="0"
            data-tip="Words in this deck and stage you have reached the top box on — four correct answers in a row, with no miss in between.">
         <span class="stat-value" id="mastered">0</span><span class="stat-label">mastered</span>
@@ -142,6 +144,21 @@
       <div class="confirm-actions">
         <button class="ghost" id="confirm-cancel" type="button" autofocus>Keep it</button>
         <button class="danger" id="confirm-clear" type="button">Clear progress</button>
+      </div>
+    </dialog>
+
+    <dialog class="confirm" id="guard-dialog" aria-labelledby="guard-title">
+      <h2 id="guard-title">Streak guard</h2>
+      <p class="confirm-body" id="guard-body"></p>
+      <p class="confirm-body guard-explainer">
+        Miss a day and the three-day grace covers it. Once that runs out the
+        guard engages by itself — at most once a week — and holds your streak
+        until you next play. Turn it on yourself for a holiday, and it stays on
+        until you turn it off.
+      </p>
+      <div class="confirm-actions">
+        <button class="ghost" id="guard-close" type="button" autofocus>Close</button>
+        <button class="primary" id="guard-toggle" type="button"></button>
       </div>
     </dialog>
 

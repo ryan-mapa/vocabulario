@@ -6,6 +6,7 @@ import {
   save,
   withCards,
   withDays,
+  withGuards,
   reset,
   exportProgress,
   parseProgress,
@@ -23,10 +24,12 @@ import { clipUrl, nextVoice, canPlay, hasClip, MANIFEST_URL, VOICE_COUNT } from 
 import {
   DAILY_GOAL,
   GRACE_DAYS,
+  GUARD,
   localDay,
   streakFrom,
   recordRound,
-  goalProgress
+  goalProgress,
+  guardEvent
 } from './source/goals.js';
 
 const el = (id) => document.getElementById(id);
@@ -91,6 +94,11 @@ const ui = {
   deleteStatus: el('delete-status'),
   deleteFinalCancel: el('delete-final-cancel'),
   deleteConfirm: el('delete-confirm'),
+  guardBadge: el('guard-badge'),
+  guardDialog: el('guard-dialog'),
+  guardBody: el('guard-body'),
+  guardToggle: el('guard-toggle'),
+  guardClose: el('guard-close'),
   speakPrompt: el('speak-prompt'),
   speakAnswer: el('speak-answer'),
   speakPromptDots: el('speak-prompt-dots'),
@@ -235,6 +243,20 @@ function renderStages() {
       ? `${info.mastered}/${info.total} mastered`
       : 'locked';
 
+    // The bar and the count measure different things, and a full-looking bar
+    // beside a small count reads as a contradiction without this. The bar is
+    // mastery — how far every word has climbed — which is what opens the next
+    // stage; the count is only the words that reached the top box.
+    if (info.unlocked) {
+      const percent = Math.round(info.mastery * 100);
+      button.title =
+        `${percent}% mastery — the bar. ${info.mastered} of ${info.total} ` +
+        `words have reached the top box.` +
+        (index + 1 < STAGE_NAMES.length
+          ? ` ${STAGE_NAMES[index + 1]} opens at 60%.`
+          : '');
+    }
+
     const fill = document.createElement('span');
     fill.className = 'stage-fill';
     fill.style.width = `${Math.round(info.mastery * 100)}%`;
@@ -295,13 +317,17 @@ function startGame() {
  * One function so the four tiles can never disagree with each other.
  */
 function renderScoreboard() {
-  const streak = streakFrom(store.days);
+  const streak = streakFrom(store.days, localDay(), store.guards);
 
   ui.today.textContent = `${Math.min(streak.roundsToday, DAILY_GOAL)}/${DAILY_GOAL}`;
   ui.goalFill.style.width = `${goalProgress(store.days) * 100}%`;
   ui.todayStat.classList.toggle('met', streak.hitToday);
   ui.streak.textContent = streak.current;
   ui.streak.classList.toggle('lit', streak.current > 0);
+
+  const guarded = streak.guard === GUARD.GUARDED;
+  ui.guardBadge.hidden = !guarded;
+  ui.streakStat.classList.toggle('guarded', guarded);
   ui.mastered.textContent = game ? game.masteredCount() : 0;
   ui.mastery.textContent = game ? `${Math.round(game.mastery() * 100)}%` : '0%';
 
@@ -317,12 +343,22 @@ function renderScoreboard() {
  */
 let hoveredTip = null;
 
-function renderNote(streak = streakFrom(store.days)) {
+function renderNote(streak = streakFrom(store.days, localDay(), store.guards)) {
   const note = ui.scoreboardNote;
 
   if (hoveredTip) {
     note.textContent = hoveredTip;
     note.className = 'scoreboard-note';
+    return;
+  }
+
+  if (streak.guard === GUARD.GUARDED) {
+    ui.streakStat.classList.remove('at-risk');
+    note.textContent =
+      streak.guardSource === 'manual'
+        ? `Streak guard is on — your ${streak.current}-day streak is held until you turn it off.`
+        : `Streak guard held your ${streak.current}-day streak. Finish today to pick it up again.`;
+    note.className = 'scoreboard-note warning';
     return;
   }
 
@@ -436,6 +472,10 @@ function submit(choice) {
   showVariants(result.question.word);
   renderSpeakers();
 
+  // The stage row is derived from the cards too, and every answer moves one.
+  // Without this it keeps showing whatever was true when the round began, so a
+  // bar and a count rendered moments apart disagree with each other.
+  renderStages();
   renderScoreboard();
   ui.roundProgress.style.width = `${(game.state.asked / game.state.roundLength) * 100}%`;
 
@@ -662,7 +702,9 @@ async function syncProgress() {
       localDay: localDayName,
       rounds
     }));
-    const result = await sync({ since: 0, reviews: [], imports, days, rounds: readRoundOutbox() });
+    const result = await sync({
+      since: 0, reviews: [], imports, days, rounds: readRoundOutbox(), guards: store.guards
+    });
     if (!result) return;
 
     clearQueued(readOutbox().map((entry) => entry.id));
@@ -676,12 +718,15 @@ async function syncProgress() {
   for (let pass = 0; pass < 5; pass++) {
     const queued = readOutbox();
     const rounds = readRoundOutbox();
-    if (queued.length === 0 && rounds.length === 0) return;
+    // Guards go every time: there is no outbox for them, and a pause with
+    // nothing else pending would otherwise never leave this browser.
+    if (queued.length === 0 && rounds.length === 0 && pass > 0) return;
 
     const result = await sync({
       since: store.syncedAt,
       reviews: queued.slice(0, SYNC_BATCH),
-      rounds
+      rounds,
+      guards: store.guards
     });
     if (!result) return; // offline or refused — the outbox keeps everything
 
@@ -706,6 +751,7 @@ function applySync(result) {
     syncedAt: result.serverTime
   };
   store = withDays(store, store.days);
+  if (result.guards) store = withGuards(store, result.guards);
   save(store);
 
   // The round in play holds its own copy of the cards; without this it would
@@ -732,6 +778,35 @@ function readAuthResult() {
   }
   history.replaceState(null, '', location.pathname);
 }
+
+function openGuardDialog() {
+  const streak = streakFrom(store.days, localDay(), store.guards);
+  const manual = streak.guardSource === 'manual';
+
+  ui.guardBody.textContent = manual
+    ? `Your ${streak.current}-day streak is paused. It will not run down until you resume.`
+    : streak.guard === GUARD.GUARDED
+      ? `Your ${streak.current}-day streak is being held automatically. Finish today's goal and it carries on.`
+      : `Your streak is running normally.`;
+
+  ui.guardToggle.textContent = manual ? 'Resume my streak' : 'Pause my streak';
+  ui.guardDialog.showModal();
+}
+
+ui.streakStat.addEventListener('click', openGuardDialog);
+ui.guardClose.addEventListener('click', () => ui.guardDialog.close());
+
+ui.guardToggle.addEventListener('click', () => {
+  const manual = streakFrom(store.days, localDay(), store.guards).guardSource === 'manual';
+  store = withGuards(store, [
+    ...store.guards,
+    guardEvent(manual ? GUARD.ACTIVE : GUARD.GUARDED)
+  ]);
+  save(store);
+  ui.guardDialog.close();
+  renderScoreboard();
+  syncProgress();
+});
 
 ui.account.addEventListener('click', () => ui.accountDialog.showModal());
 ui.accountClose.addEventListener('click', () => ui.accountDialog.close());
@@ -793,7 +868,7 @@ ui.deleteConfirm.addEventListener('click', async () => {
 
 // Explaining a tile on hover, and on focus so it also works by keyboard and by
 // tapping on a phone, where there is no hover at all.
-for (const tile of document.querySelectorAll('.stat[data-tip]')) {
+for (const tile of document.querySelectorAll('[data-tip]')) {
   const show = () => { hoveredTip = tile.dataset.tip; renderNote(); };
   const hide = () => { hoveredTip = null; renderNote(); };
   tile.addEventListener('mouseenter', show);

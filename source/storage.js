@@ -35,7 +35,7 @@ export const TRANSFER_FORMAT = 'vocabulario/progress';
 // `syncedAt` is the server clock of the last successful sync. Persisting it is
 // what keeps a reload from re-pulling every card and re-offering the whole
 // import; 0 means this browser has never synced.
-const EMPTY = { cards: {}, days: {}, syncedAt: 0 };
+const EMPTY = { cards: {}, days: {}, guards: [], syncedAt: 0 };
 
 function storage() {
   try {
@@ -70,6 +70,27 @@ function readCards(raw) {
   return Object.fromEntries(Object.entries(raw).map(([es, card]) => [es, readCard(card)]));
 }
 
+/**
+ * Manual streak-guard changes, oldest first.
+ *
+ * An append-only log rather than a current-state field, for the same reason
+ * cards are a fold over reviews: a field is a thing two devices can disagree
+ * about, and a log with client-made ids is not. It also means a new state can
+ * be added later without migrating anything — each event names its own.
+ */
+function readGuards(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter(
+      (event) =>
+        event &&
+        typeof event.id === 'string' &&
+        typeof event.state === 'string' &&
+        /^\d{4}-\d{2}-\d{2}$/.test(event.day)
+    )
+    .map(({ id, day, state, source }) => ({ id, day, state, source: source ?? 'manual' }));
+}
+
 /** `{ 'YYYY-MM-DD': roundsCompleted }`, trimmed to the most recent DAY_LIMIT. */
 function readDays(raw) {
   if (!raw || typeof raw !== 'object') return {};
@@ -85,6 +106,7 @@ function readPayload(parsed) {
   return {
     cards: readCards(parsed?.cards),
     days: readDays(parsed?.days),
+    guards: readGuards(parsed?.guards),
     syncedAt: number(parsed?.syncedAt, 0)
   };
 }
@@ -127,6 +149,12 @@ export function withCards(data, cards) {
 
 export function withDays(data, days) {
   return { ...data, days: readDays(days) };
+}
+
+/** Add a guard change, or take in a merged set from the server. */
+export function withGuards(data, guards) {
+  const byId = new Map(readGuards(guards).map((event) => [event.id, event]));
+  return { ...data, guards: [...byId.values()] };
 }
 
 export function reset() {
@@ -202,7 +230,8 @@ export function exportProgress(data) {
       version: VERSION,
       exportedAt: Date.now(),
       cards: data.cards,
-      days: data.days
+      days: data.days,
+      guards: data.guards
     },
     null,
     2

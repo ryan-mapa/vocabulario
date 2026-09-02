@@ -163,6 +163,7 @@ async function deleteAccount(request, env) {
   await env.DB.batch([
     wipe('reviews'),
     wipe('cards'),
+    wipe('guards'),
     wipe('imports'),
     wipe('rounds'),
     wipe('profiles'),

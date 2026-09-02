@@ -96,6 +96,16 @@ function readRound(raw, now) {
   };
 }
 
+/** A manual guard change. `state` is opaque text, so a new one costs nothing. */
+function readGuard(raw) {
+  const id = text(raw?.id, MAX_ID_LENGTH);
+  const day = text(raw?.day, 10);
+  const state = text(raw?.state, 20);
+  if (!id || !state) throw new Error('every guard change needs an id and a state');
+  if (!day || !DAY_PATTERN.test(day)) throw new Error(`guard ${id} has no day`);
+  return { id, day, state, source: text(raw.source, 10) ?? 'manual' };
+}
+
 /** A day count handed over on a first sync, from a browser played signed out. */
 function readDay(raw) {
   const day = text(raw?.localDay, 10);
@@ -209,6 +219,7 @@ export async function sync(request, env, user) {
   const rawImports = Array.isArray(body.imports) ? body.imports : [];
   const rawRounds = Array.isArray(body.rounds) ? body.rounds : [];
   const rawDays = Array.isArray(body.days) ? body.days : [];
+  const rawGuards = Array.isArray(body.guards) ? body.guards : [];
 
   if (rawReviews.length > MAX_REVIEWS) {
     return { status: 413, data: { error: `send at most ${MAX_REVIEWS} reviews at a time` } };
@@ -224,11 +235,13 @@ export async function sync(request, env, user) {
   let imports;
   let rounds;
   let days;
+  let guards;
   try {
     reviews = rawReviews.map((raw) => readReview(raw, now));
     imports = rawImports.map(readImport);
     rounds = rawRounds.map((raw) => readRound(raw, now));
     days = rawDays.map(readDay);
+    guards = rawGuards.slice(0, 200).map(readGuard);
   } catch (error) {
     return { status: 400, data: { error: error.message } };
   }
@@ -258,6 +271,12 @@ export async function sync(request, env, user) {
         entry.asked, entry.correct, entry.startedAt, entry.endedAt, entry.localDay
       )
     ),
+    ...guards.map((entry) =>
+      env.DB.prepare(
+        `INSERT OR IGNORE INTO guards (id, user_id, day, state, source, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      ).bind(entry.id, user.sub, entry.day, entry.state, entry.source, now)
+    ),
     ...imports.map((entry) =>
       env.DB.prepare(
         `INSERT OR IGNORE INTO imports
@@ -272,6 +291,8 @@ export async function sync(request, env, user) {
   for (const group of chunk(writes, 40)) await env.DB.batch(group);
 
   // Only words can need re-folding. Rounds and day counts touch no card.
+  // Only words can need re-folding. Rounds, day counts and guard changes touch
+  // no card.
   const touched = [...new Set([
     ...reviews.map((entry) => entry.wordEs),
     ...imports.map((entry) => entry.wordEs)
@@ -333,6 +354,13 @@ export async function sync(request, env, user) {
   const dayCounts = {};
   for (const row of dayRows) dayCounts[row.local_day] = row.rounds;
 
+  // The whole log comes back every time. It is a handful of rows even after
+  // years, and a set union is only conflict-free if both sides can see all of
+  // it — an incremental slice would let one device fold a different history.
+  const { results: guardRows } = await env.DB.prepare(
+    'SELECT id, day, state, source FROM guards WHERE user_id = ? ORDER BY day, id'
+  ).bind(user.sub).all();
+
   return {
     status: 200,
     data: {
@@ -340,7 +368,8 @@ export async function sync(request, env, user) {
       accepted: reviews.map((entry) => entry.id),
       acceptedRounds: rounds.map((entry) => entry.id),
       cards,
-      days: dayCounts
+      days: dayCounts,
+      guards: guardRows
     }
   };
 }
