@@ -238,6 +238,27 @@ async function main() {
 
   const failed = [];
 
+  // Which voice produced which numbered folder. Without this, swapping a voice
+  // in VOICES would leave the old recordings in place and be skipped as
+  // "already present" — the change would appear to work and change nothing.
+  const stampFile = new URL('voices.json', OUT);
+  const previous = existsSync(stampFile)
+    ? JSON.parse(readFileSync(stampFile, 'utf8'))
+    : {};
+
+  if (!sampling) {
+    const stale = voices
+      .map((voice, i) => [i + 1, voice.id, previous[i + 1]])
+      .filter(([, id, was]) => was && was !== id);
+
+    if (stale.length) {
+      console.error('These folders hold a different voice than the one configured:');
+      for (const [dir, id, was] of stale) console.error(`  audio/${dir}: has ${was}, wants ${id}`);
+      console.error('\nDelete those folders and run again — otherwise the old clips are kept.');
+      process.exit(1);
+    }
+  }
+
   for (const [index, voice] of voices.entries()) {
     const dir = new URL(`${sampling ? voice.id.replace(/[^\w-]/g, '_') : index + 1}/`, OUT);
     mkdirSync(dir, { recursive: true });
@@ -265,6 +286,13 @@ async function main() {
       }
       process.stdout.write(`\r  ${voice.label.padEnd(24)} ${made + skipped}/${words.length * voices.length}`);
     }
+  }
+
+  if (!sampling) {
+    writeFileSync(
+      stampFile,
+      JSON.stringify(Object.fromEntries(voices.map((v, i) => [i + 1, v.id])), null, 2) + '\n'
+    );
   }
 
   console.log(
