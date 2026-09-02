@@ -186,8 +186,14 @@ describe('direction', () => {
   it('leans on recall for words that are well known', () => {
     const words = stageWords('animales', 0);
     const cards = {};
+    // All but a handful already known. Deliberately not half and half: the
+    // scheduler rightly prefers the words you know least, so if there are
+    // enough unseen words to fill a 20-question round it will never show a
+    // known one and this measures nothing. That is what happened when the deck
+    // grew from 30 words to 50 — the test had quietly depended on the deck
+    // being too small to fill a round from fresh words alone.
     words.forEach((word, i) => {
-      if (i % 2 === 0) cards[word.es] = { ...newCard(), box: 4, seen: 9, correct: 9 };
+      if (i >= 5) cards[word.es] = { ...newCard(), box: 4, seen: 9, correct: 9 };
     });
 
     const tally = { known: [0, 0], fresh: [0, 0] };
