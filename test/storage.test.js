@@ -3,11 +3,14 @@ import {
   load,
   save,
   withCards,
-  withBests,
+  withDays,
   reset,
   exportProgress,
   parseProgress,
   queueReview,
+  queueRound,
+  readRoundOutbox,
+  clearQueuedRounds,
   readOutbox,
   clearQueued,
   newReviewId,
@@ -39,43 +42,55 @@ afterEach(() => {
 
 describe('storage', () => {
   it('starts empty', () => {
-    expect(load()).toEqual({ cards: {}, best: { score: 0, streak: 0 }, syncedAt: 0 });
+    expect(load()).toEqual({ cards: {}, days: {}, syncedAt: 0 });
   });
 
-  it('round-trips cards and bests', () => {
+  it('round-trips cards and days', () => {
     const cards = { 'el gato': { ...newCard(), box: 2, dueAt: 9, seen: 3, correct: 2 } };
-    save(withBests(withCards(load(), cards), { score: 120, streak: 7 }));
+    save(withDays(withCards(load(), cards), { '2026-09-01': 5 }));
     const loaded = load();
     expect(loaded.cards).toEqual(cards);
-    expect(loaded.best).toEqual({ score: 120, streak: 7 });
+    expect(loaded.days).toEqual({ '2026-09-01': 5 });
   });
 
-  it('only ever raises a best', () => {
-    const data = withBests(load(), { score: 120, streak: 7 });
-    expect(withBests(data, { score: 30, streak: 2 }).best).toEqual({ score: 120, streak: 7 });
+  it('ignores day entries that are not days, or not counts', () => {
+    save(withDays(load(), { '2026-09-01': 5, 'yesterday': 3, '2026-09-02': 'lots' }));
+    expect(load().days).toEqual({ '2026-09-01': 5 });
+  });
+
+  it('keeps only the most recent two years of days', () => {
+    const many = {};
+    for (let i = 0; i < 800; i++) {
+      const d = new Date(Date.UTC(2024, 0, 1) + i * 86400000).toISOString().slice(0, 10);
+      many[d] = 5;
+    }
+    save(withDays(load(), many));
+    const kept = Object.keys(load().days).sort();
+    expect(kept).toHaveLength(730);
+    expect(kept[kept.length - 1]).toBe(Object.keys(many).sort().pop());
   });
 
   it('recovers from a corrupt payload', () => {
     localStorage.setItem(V2, '{not json');
-    expect(load()).toEqual({ cards: {}, best: { score: 0, streak: 0 }, syncedAt: 0 });
+    expect(load()).toEqual({ cards: {}, days: {}, syncedAt: 0 });
   });
 
   it('fills in a half-written payload', () => {
     localStorage.setItem(V2, JSON.stringify({ cards: { hoy: {} } }));
-    expect(load().best).toEqual({ score: 0, streak: 0 });
+    expect(load().days).toEqual({});
     expect(load().cards).toEqual({ hoy: newCard() });
   });
 
   it('clears everything on reset', () => {
-    save(withBests(load(), { score: 500, streak: 9 }));
-    expect(reset().best.score).toBe(0);
-    expect(load().best.score).toBe(0);
+    save(withDays(load(), { '2026-09-01': 5 }));
+    expect(reset().days).toEqual({});
+    expect(load().days).toEqual({});
   });
 
   it('still plays when storage is unavailable', () => {
     delete globalThis.localStorage;
-    expect(load()).toEqual({ cards: {}, best: { score: 0, streak: 0 }, syncedAt: 0 });
-    expect(() => save({ cards: {}, best: { score: 1, streak: 1 } })).not.toThrow();
+    expect(load()).toEqual({ cards: {}, days: {}, syncedAt: 0 });
+    expect(() => save({ cards: {}, days: {} })).not.toThrow();
     expect(() => reset()).not.toThrow();
   });
 
@@ -85,7 +100,7 @@ describe('storage', () => {
         throw new Error('QuotaExceededError');
       }
     });
-    expect(() => save({ cards: {}, best: { score: 1, streak: 1 } })).not.toThrow();
+    expect(() => save({ cards: {}, days: {} })).not.toThrow();
   });
 });
 
@@ -95,11 +110,10 @@ describe('upgrading from v1', () => {
     best: { score: 130, streak: 11 }
   };
 
-  it('carries box, counts and bests across, and brings the word due now', () => {
+  it('carries box and counts across, and brings the word due now', () => {
     localStorage.setItem(V1, JSON.stringify(v1));
     const loaded = load();
 
-    expect(loaded.best).toEqual({ score: 130, streak: 11 });
     // `due: 14` counted questions against a counter that restarted each round,
     // so there is no date to recover from it — the word simply comes up again.
     expect(loaded.cards['el gato']).toEqual({
@@ -121,8 +135,17 @@ describe('upgrading from v1', () => {
 
   it('prefers v2 once it exists', () => {
     localStorage.setItem(V1, JSON.stringify(v1));
-    localStorage.setItem(V2, JSON.stringify({ version: 2, cards: {}, best: { score: 5, streak: 1 } }));
-    expect(load().best.score).toBe(5);
+    localStorage.setItem(V2, JSON.stringify({ version: 2, cards: {}, days: { '2026-09-01': 5 } }));
+    expect(load().days).toEqual({ '2026-09-01': 5 });
+    expect(load().cards).toEqual({});
+  });
+
+  // The old best score has no home in the new scoreboard. Reading a v1 payload
+  // must not fail on it, and must not resurrect it.
+  it('drops the retired best score without complaint', () => {
+    localStorage.setItem(V1, JSON.stringify(v1));
+    expect(load().best).toBeUndefined();
+    expect(load().cards['el gato'].box).toBe(3);
   });
 
   it('clears the old key too, so nothing resurrects after a reset', () => {
@@ -135,7 +158,7 @@ describe('upgrading from v1', () => {
 describe('moving progress between origins', () => {
   const progress = {
     cards: { 'la manzana': { ...newCard(), box: 4, seen: 6, correct: 6 } },
-    best: { score: 220, streak: 14 }
+    days: { '2026-08-31': 5, '2026-09-01': 6 }
   };
 
   it('round-trips through an export', () => {
@@ -153,7 +176,7 @@ describe('moving progress between origins', () => {
 
   it('reads an export made before the current version', () => {
     const old = JSON.stringify({ ...JSON.parse(exportProgress(progress)), version: 1 });
-    expect(parseProgress(old).best).toEqual(progress.best);
+    expect(parseProgress(old).days).toEqual(progress.days);
   });
 
   it('explains itself rather than throwing something opaque', () => {
@@ -206,5 +229,29 @@ describe('the outbox', () => {
   it('mints ids that do not collide', () => {
     const ids = new Set(Array.from({ length: 500 }, newReviewId));
     expect(ids.size).toBe(500);
+  });
+});
+
+describe('the round queue', () => {
+  const round = (id) => ({ id, localDay: '2026-09-01', asked: 20, correct: 17 });
+
+  it('is separate from the answer queue', () => {
+    queueReview({ id: 'a', wordEs: 'el gato', correct: 1, reviewedAt: 1 });
+    queueRound(round('r1'));
+    expect(readOutbox().map((e) => e.id)).toEqual(['a']);
+    expect(readRoundOutbox().map((e) => e.id)).toEqual(['r1']);
+  });
+
+  it('clears only confirmed rounds', () => {
+    queueRound(round('r1'));
+    queueRound(round('r2'));
+    clearQueuedRounds(['r1']);
+    expect(readRoundOutbox().map((e) => e.id)).toEqual(['r2']);
+  });
+
+  it('is emptied by a reset', () => {
+    queueRound(round('r1'));
+    reset();
+    expect(readRoundOutbox()).toEqual([]);
   });
 });

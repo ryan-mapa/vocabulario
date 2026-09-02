@@ -19,7 +19,7 @@ Use `serve` for anything that doesn't touch accounts; it's faster to start and
 needs nothing configured. Use `dev` when you're working on sync.
 
 Answer with the mouse or with <kbd>1</kbd>–<kbd>4</kbd>; <kbd>Enter</kbd> skips
-ahead. Rounds are 10 questions.
+ahead. Rounds are 20 questions, about two minutes.
 
 ## How it plays
 
@@ -34,15 +34,26 @@ ahead. Rounds are 10 questions.
   button is that stage's mastery. Under **All words**, a stage counts as open
   once any single deck has opened it, and draws only from the decks that have
   — a locked deck never leaks its harder words into a combined round.
-- **Direction** — Español → English (recognition) or English → Español (recall,
-  the harder one).
+- **Direction** — a round is **Mixed** by default: ten questions of recognition
+  (Español → English) and ten of recall (English → Español), interleaved rather
+  than run as two blocks. Mixed practice retains better than blocked, and a
+  round that changes character halfway reads as two games stuck together.
+  Either direction can still be drilled on its own.
 - **Regional variants** — words are Latin American Spanish with US English
   glosses. Where a word changes across the Spanish-speaking world, the answer
   is followed by a note: *la fresa — also la frutilla (Southern Cone)*. It
   appears only after you answer, because in the English → Spanish direction it
   would otherwise give the answer away.
-- **Scoring** — 10 points a word, plus 2 per consecutive correct answer up to a
-  +10 cap. A miss zeroes the streak.
+- **The daily goal** is five completed rounds — five and a half minutes. Not an
+  arbitrary number: at five rounds a day, a 210-word stage goes from nothing to
+  203 words mastered in a month. Only finished rounds count.
+- **The streak** is consecutive days that met the goal, and it forgives three
+  missed days. Losing a streak is the most reliable way to make someone stop
+  coming back, so a busy week costs nothing. It is *derived* from a per-day
+  count of rounds rather than tracked as a number of its own — a stored counter
+  drifts across devices and cannot be repaired, a derived one cannot. Days are
+  the learner's own local dates, never UTC, so an evening session never lands on
+  tomorrow and travel cannot break a streak by arithmetic.
 - **Spaced repetition** — every word sits in one of 5 boxes. Get it right and it
   climbs a box and drops out of rotation for a while — 1 minute, 10 minutes,
   then 1, 4 and 14 days. Get it wrong and it falls straight back to box 0. The
@@ -73,6 +84,7 @@ source/
   vocab.js      the word decks, three stages each
   srs.js        Leitner boxes, scheduling, mastery
   stages.js     which stages are unlocked, and the pool each one draws from
+  goals.js      the daily goal, the day streak, and the grace window
   quiz.js       builds a multiple-choice question
   game.js       round state, scoring, streaks
   storage.js    localStorage persistence, and the queue of unsent answers

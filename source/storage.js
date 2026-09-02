@@ -13,6 +13,14 @@ export const VERSION = 2;
 const KEY = 'vocabulario:v2';
 const LEGACY_KEY = 'vocabulario:v1';
 const OUTBOX_KEY = 'vocabulario:outbox';
+const ROUND_OUTBOX_KEY = 'vocabulario:rounds';
+
+/**
+ * Days of history to keep. Two years of `{ day: rounds }` is a few kilobytes,
+ * and keeping it means the longest streak stays derivable rather than needing a
+ * counter of its own to drift out of step.
+ */
+const DAY_LIMIT = 730;
 
 /**
  * How many unsent answers to keep. Reached only by playing offline for a very
@@ -27,7 +35,7 @@ export const TRANSFER_FORMAT = 'vocabulario/progress';
 // `syncedAt` is the server clock of the last successful sync. Persisting it is
 // what keeps a reload from re-pulling every card and re-offering the whole
 // import; 0 means this browser has never synced.
-const EMPTY = { cards: {}, best: { score: 0, streak: 0 }, syncedAt: 0 };
+const EMPTY = { cards: {}, days: {}, syncedAt: 0 };
 
 function storage() {
   try {
@@ -62,13 +70,21 @@ function readCards(raw) {
   return Object.fromEntries(Object.entries(raw).map(([es, card]) => [es, readCard(card)]));
 }
 
+/** `{ 'YYYY-MM-DD': roundsCompleted }`, trimmed to the most recent DAY_LIMIT. */
+function readDays(raw) {
+  if (!raw || typeof raw !== 'object') return {};
+  const clean = Object.entries(raw)
+    .filter(([day, rounds]) => /^\d{4}-\d{2}-\d{2}$/.test(day) && Number.isFinite(rounds))
+    .map(([day, rounds]) => [day, Math.max(0, Math.round(rounds))])
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .slice(-DAY_LIMIT);
+  return Object.fromEntries(clean);
+}
+
 function readPayload(parsed) {
   return {
     cards: readCards(parsed?.cards),
-    best: {
-      score: number(parsed?.best?.score, 0),
-      streak: number(parsed?.best?.streak, 0)
-    },
+    days: readDays(parsed?.days),
     syncedAt: number(parsed?.syncedAt, 0)
   };
 }
@@ -109,14 +125,8 @@ export function withCards(data, cards) {
   return { ...data, cards };
 }
 
-export function withBests(data, { score, streak }) {
-  return {
-    ...data,
-    best: {
-      score: Math.max(data.best.score, score),
-      streak: Math.max(data.best.streak, streak)
-    }
-  };
+export function withDays(data, days) {
+  return { ...data, days: readDays(days) };
 }
 
 export function reset() {
@@ -125,6 +135,7 @@ export function reset() {
     store?.removeItem(KEY);
     store?.removeItem(LEGACY_KEY);
     store?.removeItem(OUTBOX_KEY);
+    store?.removeItem(ROUND_OUTBOX_KEY);
   } catch {
     /* nothing to clear */
   }
@@ -145,32 +156,39 @@ export function newReviewId() {
  * not: recording history from the start means someone who signs in later
  * brings real history with them instead of only a snapshot.
  */
-export function readOutbox() {
+function readQueue(key) {
   const store = storage();
   if (!store) return [];
-  const raw = readKey(store, OUTBOX_KEY);
+  const raw = readKey(store, key);
   return Array.isArray(raw) ? raw : [];
 }
 
-function writeOutbox(entries) {
+function writeQueue(key, entries) {
   const store = storage();
   if (!store) return;
   try {
-    store.setItem(OUTBOX_KEY, JSON.stringify(entries.slice(-OUTBOX_LIMIT)));
+    store.setItem(key, JSON.stringify(entries.slice(-OUTBOX_LIMIT)));
   } catch {
-    // Quota or blocked storage. Play carries on; this answer just won't sync.
+    // Quota or blocked storage. Play carries on; this just won't sync.
   }
 }
 
-export function queueReview(entry) {
-  writeOutbox([...readOutbox(), entry]);
-}
+const push = (key, entry) => writeQueue(key, [...readQueue(key), entry]);
 
 /** Drop the entries the server confirmed, keeping anything added meanwhile. */
-export function clearQueued(ids) {
+function drop(key, ids) {
   const done = new Set(ids);
-  writeOutbox(readOutbox().filter((entry) => !done.has(entry.id)));
+  writeQueue(key, readQueue(key).filter((entry) => !done.has(entry.id)));
 }
+
+export const readOutbox = () => readQueue(OUTBOX_KEY);
+export const queueReview = (entry) => push(OUTBOX_KEY, entry);
+export const clearQueued = (ids) => drop(OUTBOX_KEY, ids);
+
+/** Finished rounds waiting to reach the server. What the streak is built from. */
+export const readRoundOutbox = () => readQueue(ROUND_OUTBOX_KEY);
+export const queueRound = (entry) => push(ROUND_OUTBOX_KEY, entry);
+export const clearQueuedRounds = (ids) => drop(ROUND_OUTBOX_KEY, ids);
 
 /**
  * Progress as text the learner can carry somewhere else. It exists because
@@ -184,7 +202,7 @@ export function exportProgress(data) {
       version: VERSION,
       exportedAt: Date.now(),
       cards: data.cards,
-      best: data.best
+      days: data.days
     },
     null,
     2

@@ -48,8 +48,8 @@ reviews are folded *before* the pull reads, so the cards coming back already
 include what was just sent and can never be a step behind it.
 
 ```
-POST /sync  { since, reviews[], imports[], best }
-         -> { serverTime, accepted[], cards{}, best }
+POST /sync  { since, reviews[], imports[], rounds[], days[] }
+         -> { serverTime, accepted[], acceptedRounds[], cards{}, days{} }
 ```
 
 `since` is the client's last `serverTime`; `0` asks for everything, which is
@@ -67,6 +67,17 @@ before answers were ever recorded; granular history starts from the account.
 `imports` is `INSERT OR IGNORE`, so the first snapshot for a word is the one
 that counts. A second browser signing in later does not overwrite it — its real
 answers are folded on top instead.
+
+`rounds` carries a `localDay` stamped by the browser, and the server stores that
+string without ever deriving a day from a timestamp — its idea of "today" is not
+the learner's. `days{}` comes back as a `GROUP BY local_day` across every
+device, and the streak is computed from it in the client. There is no streak
+counter here to fall out of step.
+
+`days[]` is the same handover as `imports`, for day counts earned before there
+was an account. Each becomes placeholder round rows whose ids are derived from
+the date, so re-sending the handover inserts nothing new — idempotence is a
+property of the id, exactly as it is for reviews.
 
 ## The data model
 

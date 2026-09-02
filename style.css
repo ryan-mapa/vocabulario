@@ -101,12 +101,31 @@ select {
 }
 
 .stat {
+  position: relative;
+  overflow: hidden;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 10px 6px;
   text-align: center;
 }
+
+/* Progress toward today's goal, drawn along the bottom of its own tile — the
+   same device the stage buttons use, so the meaning carries over. */
+.stat-fill {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 0;
+  background: linear-gradient(90deg, var(--rojo), var(--oro));
+  transition: width 0.35s ease;
+}
+
+/* Goal met: the tile itself says so, so the number is not the only signal. */
+.stat.met { border-color: var(--verde); }
+.stat.met .stat-fill { background: var(--verde); }
+.stat.met .stat-value { color: var(--verde); }
 
 .stat-value { display: block; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
@@ -157,7 +176,8 @@ select {
 .unlock-note { margin: 8px 2px 0; font-size: 12px; color: var(--muted); }
 .unlock-note strong { color: var(--ink); font-weight: 600; }
 
-.unlock-banner {
+.unlock-banner,
+.goal-banner {
   margin: 0 0 10px;
   padding: 7px 12px;
   font-size: 13px;
@@ -165,6 +185,16 @@ select {
   color: #1a1207;
   background: linear-gradient(90deg, var(--oro), #f5c95e);
   border-radius: 99px;
+}
+
+.goal-banner { background: linear-gradient(90deg, var(--verde), #5fd694); }
+
+/* Shown while a streak is inside its grace window — a warning, not a boast. */
+.goal-banner.warning {
+  color: var(--ink);
+  background: none;
+  border: 1px solid var(--line);
+  font-weight: 500;
 }
 
 .card {

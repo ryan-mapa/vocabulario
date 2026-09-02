@@ -15,6 +15,8 @@ export const SRS_VERSION = 2;
 
 const MAX_REVIEWS = 500;
 const MAX_IMPORTS = 1200;
+const MAX_ROUNDS = 200;
+const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_WORD_LENGTH = 80;
 const MAX_ID_LENGTH = 64;
 
@@ -68,6 +70,36 @@ function readImport(raw) {
     correct: Math.max(0, Math.round(finite(raw.correct))),
     lastSeenAt: Math.max(0, Math.round(finite(raw.lastSeenAt)))
   };
+}
+
+/**
+ * A finished round. `localDay` is the learner's own calendar date, stamped by
+ * their browser and stored as an opaque string — the server never computes a
+ * day from a timestamp, because its idea of "today" is not theirs.
+ */
+function readRound(raw, now) {
+  const id = text(raw?.id, MAX_ID_LENGTH);
+  const day = text(raw?.localDay, 10);
+  if (!id) throw new Error('every round needs an id');
+  if (!day || !DAY_PATTERN.test(day)) throw new Error(`round ${id} has no local day`);
+  return {
+    id,
+    localDay: day,
+    deckId: text(raw.deckId, 40) ?? 'todos',
+    stage: Number.isInteger(raw.stage) ? raw.stage : 0,
+    direction: text(raw.direction, 10) ?? 'mixed',
+    asked: Math.max(0, Math.round(finite(raw.asked))),
+    correct: Math.max(0, Math.round(finite(raw.correct))),
+    startedAt: Math.round(finite(raw.startedAt, now)),
+    endedAt: Math.round(finite(raw.endedAt, now))
+  };
+}
+
+/** A day count handed over on a first sync, from a browser played signed out. */
+function readDay(raw) {
+  const day = text(raw?.localDay, 10);
+  if (!day || !DAY_PATTERN.test(day)) throw new Error('every day needs a date');
+  return { localDay: day, rounds: Math.max(0, Math.round(finite(raw.rounds))) };
 }
 
 /** Rows keyed by word, for the words named. */
@@ -174,6 +206,8 @@ export async function sync(request, env, user) {
   const since = Math.max(0, finite(body.since));
   const rawReviews = Array.isArray(body.reviews) ? body.reviews : [];
   const rawImports = Array.isArray(body.imports) ? body.imports : [];
+  const rawRounds = Array.isArray(body.rounds) ? body.rounds : [];
+  const rawDays = Array.isArray(body.days) ? body.days : [];
 
   if (rawReviews.length > MAX_REVIEWS) {
     return { status: 413, data: { error: `send at most ${MAX_REVIEWS} reviews at a time` } };
@@ -181,12 +215,19 @@ export async function sync(request, env, user) {
   if (rawImports.length > MAX_IMPORTS) {
     return { status: 413, data: { error: `send at most ${MAX_IMPORTS} words at a time` } };
   }
+  if (rawRounds.length > MAX_ROUNDS) {
+    return { status: 413, data: { error: `send at most ${MAX_ROUNDS} rounds at a time` } };
+  }
 
   let reviews;
   let imports;
+  let rounds;
+  let days;
   try {
     reviews = rawReviews.map((raw) => readReview(raw, now));
     imports = rawImports.map(readImport);
+    rounds = rawRounds.map((raw) => readRound(raw, now));
+    days = rawDays.map(readDay);
   } catch (error) {
     return { status: 400, data: { error: error.message } };
   }
@@ -205,6 +246,17 @@ export async function sync(request, env, user) {
         entry.correct, entry.latencyMs, entry.reviewedAt, now, SRS_VERSION
       )
     ),
+    ...rounds.map((entry) =>
+      env.DB.prepare(
+        `INSERT OR IGNORE INTO rounds
+           (id, user_id, deck_id, stage, direction, asked, correct,
+            score, best_streak, started_at, ended_at, local_day)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?)`
+      ).bind(
+        entry.id, user.sub, entry.deckId, entry.stage, entry.direction,
+        entry.asked, entry.correct, entry.startedAt, entry.endedAt, entry.localDay
+      )
+    ),
     ...imports.map((entry) =>
       env.DB.prepare(
         `INSERT OR IGNORE INTO imports
@@ -218,24 +270,37 @@ export async function sync(request, env, user) {
   ];
   for (const group of chunk(writes, 40)) await env.DB.batch(group);
 
+  // Only words can need re-folding. Rounds and day counts touch no card.
   const touched = [...new Set([
     ...reviews.map((entry) => entry.wordEs),
     ...imports.map((entry) => entry.wordEs)
   ])];
   await refold(env.DB, user.sub, touched, now);
 
-  if (body.best) {
-    await env.DB.prepare(
-      `UPDATE profiles
-       SET best_score = MAX(best_score, ?), best_streak = MAX(best_streak, ?), synced_at = ?
-       WHERE user_id = ?`
-    ).bind(
-      Math.max(0, Math.round(finite(body.best.score))),
-      Math.max(0, Math.round(finite(body.best.streak))),
-      now,
-      user.sub
-    ).run();
+  // A first sync hands over day counts earned before there was an account.
+  // Those days have no rounds behind them, so each is recorded as placeholder
+  // rows — one per round — which keeps the daily count a single GROUP BY over
+  // one table rather than two sources to reconcile.
+  //
+  // The ids are derived from the day and the index, so re-sending the same
+  // handover inserts nothing new. No guard needed: idempotence is a property
+  // of the id, the same way it is for reviews.
+  if (days.length > 0) {
+    const placeholders = days.flatMap((day) =>
+      Array.from({ length: Math.min(day.rounds, 50) }, (_, i) =>
+        env.DB.prepare(
+          `INSERT OR IGNORE INTO rounds
+             (id, user_id, deck_id, stage, direction, asked, correct,
+              score, best_streak, started_at, ended_at, local_day)
+           VALUES (?, ?, 'todos', 0, 'mixed', 0, 0, 0, 0, ?, ?, ?)`
+        ).bind(`import:${day.localDay}:${i}`, user.sub, now, now, day.localDay)
+      )
+    );
+    for (const group of chunk(placeholders, 40)) await env.DB.batch(group);
   }
+
+  await env.DB.prepare('UPDATE profiles SET synced_at = ? WHERE user_id = ?')
+    .bind(now, user.sub).run();
 
   // Everything that changed since the client last looked. The refold above
   // stamped `updated_at = now` on the pushed words, so they come back too —
@@ -256,18 +321,25 @@ export async function sync(request, env, user) {
     };
   }
 
-  const profile = await env.DB
-    .prepare('SELECT best_score, best_streak FROM profiles WHERE user_id = ?')
-    .bind(user.sub)
-    .first();
+  // Every device's rounds, counted per local day. The streak itself is derived
+  // in the client from these — there is no counter here to fall out of step.
+  const { results: dayRows } = await env.DB.prepare(
+    `SELECT local_day, COUNT(*) AS rounds FROM rounds
+     WHERE user_id = ? AND local_day IS NOT NULL
+     GROUP BY local_day`
+  ).bind(user.sub).all();
+
+  const dayCounts = {};
+  for (const row of dayRows) dayCounts[row.local_day] = row.rounds;
 
   return {
     status: 200,
     data: {
       serverTime: now,
       accepted: reviews.map((entry) => entry.id),
+      acceptedRounds: rounds.map((entry) => entry.id),
       cards,
-      best: { score: profile?.best_score ?? 0, streak: profile?.best_streak ?? 0 }
+      days: dayCounts
     }
   };
 }

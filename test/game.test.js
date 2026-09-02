@@ -29,33 +29,24 @@ describe('createGame', () => {
   });
 });
 
-describe('scoring', () => {
-  it('pays a growing streak bonus, capped at five', () => {
-    const game = newGame({ roundLength: 10 });
-    game.startRound();
-    const points = [];
-    while (!game.isRoundOver()) {
-      points.push(game.answer(game.state.question.answer).points);
-      game.nextQuestion();
-    }
-    expect(points.slice(0, 6)).toEqual([10, 12, 14, 16, 18, 20]);
-    expect(points.slice(6)).toEqual([20, 20, 20, 20]);
-  });
-
-  it('scores nothing and resets the streak on a miss, keeping the best', () => {
+describe('answering', () => {
+  it('reports what happened, and when', () => {
     const game = newGame();
     game.startRound();
-    game.answer(game.state.question.answer);
-    game.nextQuestion();
-    game.answer(game.state.question.answer);
-    game.nextQuestion();
-    expect(game.state.streak).toBe(2);
+    const before = Date.now();
+    const result = game.answer(game.state.question.answer);
+    expect(result.correct).toBe(true);
+    expect(result.at).toBeGreaterThanOrEqual(before);
+    expect(game.state.correct).toBe(1);
+  });
 
+  it('counts a miss against accuracy without ending the round', () => {
+    const game = newGame();
+    game.startRound();
     const wrong = game.state.question.choices.find((c) => c !== game.state.question.answer);
-    const result = game.answer(wrong);
-    expect(result.points).toBe(0);
-    expect(game.state.streak).toBe(0);
-    expect(game.state.bestStreak).toBe(2);
+    expect(game.answer(wrong).correct).toBe(false);
+    expect(game.state.correct).toBe(0);
+    expect(game.state.asked).toBe(1);
   });
 
   it('ignores a second answer to the same question', () => {
@@ -87,10 +78,9 @@ describe('rounds', () => {
     game.startRound();
     answerAll(game, false);
     expect(game.accuracy()).toBe(0);
-    expect(game.state.score).toBe(0);
   });
 
-  it('carries card progress into the next round but resets the score', () => {
+  it('carries card progress into the next round but starts the count over', () => {
     const game = newGame();
     game.startRound();
     answerAll(game, true);
@@ -98,8 +88,8 @@ describe('rounds', () => {
     expect(Object.keys(learned).length).toBeGreaterThan(0);
 
     game.startRound();
-    expect(game.state.score).toBe(0);
     expect(game.state.asked).toBe(0);
+    expect(game.state.correct).toBe(0);
     expect(game.state.cards).toEqual(learned);
   });
 
@@ -154,5 +144,47 @@ describe('progress arriving mid-round', () => {
 
     game.adoptCards({ 'otra palabra': { box: 1, dueAt: 0, seen: 1, correct: 1, lastSeenAt: 0 } });
     expect(game.state.cards[answered]).toEqual(afterAnswer);
+  });
+});
+
+describe('direction', () => {
+  const plan = (game) => { game.startRound(); return game.state.plan; };
+
+  it('splits a mixed round evenly between the two directions', () => {
+    const p = plan(createGame({ deckId: 'animales', random: mulberry32(9) }));
+    expect(p).toHaveLength(20);
+    expect(p.filter((d) => d === 'es-en')).toHaveLength(10);
+    expect(p.filter((d) => d === 'en-es')).toHaveLength(10);
+  });
+
+  // Blocked practice would make the round feel like two games bolted together,
+  // and interleaving retains better besides.
+  it('interleaves them rather than running two blocks', () => {
+    const p = plan(createGame({ deckId: 'animales', random: mulberry32(9) }));
+    const firstHalf = p.slice(0, 10);
+    expect(new Set(firstHalf).size).toBe(2);
+  });
+
+  it('gives the odd question to recall, the harder direction', () => {
+    const p = plan(createGame({ deckId: 'animales', roundLength: 7, random: mulberry32(4) }));
+    expect(p.filter((d) => d === 'en-es')).toHaveLength(4);
+    expect(p.filter((d) => d === 'es-en')).toHaveLength(3);
+  });
+
+  it('runs one direction throughout when one is chosen', () => {
+    for (const direction of ['es-en', 'en-es']) {
+      const p = plan(createGame({ deckId: 'animales', direction, random: mulberry32(2) }));
+      expect(new Set(p)).toEqual(new Set([direction]));
+    }
+  });
+
+  it('asks each question in the direction the plan called for', () => {
+    const game = createGame({ deckId: 'animales', roundLength: 6, random: mulberry32(21) });
+    game.startRound();
+    for (let i = 0; i < 6; i++) {
+      expect(game.state.question.direction).toBe(game.state.plan[i]);
+      game.answer(game.state.question.answer);
+      game.nextQuestion();
+    }
   });
 });

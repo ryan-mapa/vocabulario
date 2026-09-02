@@ -2,20 +2,40 @@ import { ALL_DECK_ID } from './vocab.js';
 import { newCard, review, masteryOf, isMastered, selectNext } from './srs.js';
 import { buildQuestion, isCorrect } from './quiz.js';
 import { stagePool, isStageUnlocked } from './stages.js';
+import { shuffle } from './random.js';
 
-export const ROUND_LENGTH = 10;
+export const ROUND_LENGTH = 20;
 
-const BASE_POINTS = 10;
-const MAX_STREAK_BONUS = 5;
+/** Both directions in one round, evenly split. */
+export const MIXED = 'mixed';
 
 /**
- * Headless game state: rounds of multiple-choice questions over one deck,
- * with per-word progress that survives across rounds.
+ * Which way each question runs.
+ *
+ * On `mixed`, half the round is recognition and half is recall, interleaved
+ * rather than run as two blocks — mixed practice retains better than blocked,
+ * and a round that changes character halfway through reads as two games stuck
+ * together. An odd round length gives the extra question to recall, the harder
+ * of the two.
+ */
+function directionPlan(direction, length, random) {
+  if (direction !== MIXED) return Array.from({ length }, () => direction);
+  const recall = Math.ceil(length / 2);
+  return shuffle(
+    [...Array.from({ length: recall }, () => 'en-es'),
+     ...Array.from({ length: length - recall }, () => 'es-en')],
+    random
+  );
+}
+
+/**
+ * Headless game state: rounds of multiple-choice questions over one deck, with
+ * per-word progress that survives across rounds.
  */
 export function createGame({
   deckId = ALL_DECK_ID,
   stage = 0,
-  direction = 'es-en',
+  direction = MIXED,
   cards = {},
   roundLength = ROUND_LENGTH,
   random = Math.random,
@@ -34,11 +54,10 @@ export function createGame({
     words,
     cards: { ...cards },
     roundLength,
+    plan: [],
     asked: 0,
     correct: 0,
-    score: 0,
-    streak: 0,
-    bestStreak: 0,
+    startedAt: 0,
     question: null,
     lastAnswer: null
   };
@@ -56,7 +75,7 @@ export function createGame({
       avoid: state.question?.word.es ?? null,
       random
     });
-    state.question = buildQuestion(word, state.words, state.direction, random);
+    state.question = buildQuestion(word, state.words, state.plan[state.asked], random);
     state.lastAnswer = null;
     return state.question;
   }
@@ -67,25 +86,21 @@ export function createGame({
 
     const question = state.question;
     const correct = isCorrect(question, choice);
-    const points = correct ? BASE_POINTS + 2 * Math.min(state.streak, MAX_STREAK_BONUS) : 0;
-
     const at = now();
+
     state.cards[question.word.es] = review(cardFor(question.word), correct, at);
     state.asked += 1;
-    state.score += points;
     state.correct += correct ? 1 : 0;
-    state.streak = correct ? state.streak + 1 : 0;
-    state.bestStreak = Math.max(state.bestStreak, state.streak);
 
-    state.lastAnswer = { choice, correct, points, question, at };
+    state.lastAnswer = { choice, correct, question, at };
     return state.lastAnswer;
   }
 
   function startRound() {
+    state.plan = directionPlan(state.direction, state.roundLength, random);
     state.asked = 0;
     state.correct = 0;
-    state.score = 0;
-    state.streak = 0;
+    state.startedAt = now();
     state.question = null;
     state.lastAnswer = null;
     return nextQuestion();

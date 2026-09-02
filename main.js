@@ -5,26 +5,32 @@ import {
   load,
   save,
   withCards,
-  withBests,
+  withDays,
   reset,
   exportProgress,
   parseProgress,
   newReviewId,
   queueReview,
   readOutbox,
-  clearQueued
+  clearQueued,
+  queueRound,
+  readRoundOutbox,
+  clearQueuedRounds
 } from './source/storage.js';
 import { deckProgress, unlockedDepth, nextUnlock } from './source/stages.js';
 import { fetchMe, signOut, sync } from './source/api.js';
+import { DAILY_GOAL, localDay, streakFrom, recordRound, goalProgress } from './source/goals.js';
 
 const el = (id) => document.getElementById(id);
 const ui = {
   deck: el('deck'),
   direction: el('direction'),
-  score: el('score'),
+  today: el('today'),
+  todayStat: el('today-stat'),
+  goalFill: el('goal-fill'),
   streak: el('streak'),
+  mastered: el('mastered'),
   mastery: el('mastery'),
-  best: el('best'),
   roundProgress: el('round-progress'),
   stageRow: el('stage-row'),
   unlockNote: el('unlock-note'),
@@ -36,10 +42,11 @@ const ui = {
   feedback: el('feedback'),
   variantNote: el('variant-note'),
   summary: el('summary'),
-  summaryScore: el('summary-score'),
   summaryAccuracy: el('summary-accuracy'),
-  summaryStreak: el('summary-streak'),
+  summaryToday: el('summary-today'),
   summaryMastered: el('summary-mastered'),
+  summaryLongest: el('summary-longest'),
+  goalBanner: el('goal-banner'),
   again: el('again'),
   reset: el('reset'),
   confirmDialog: el('confirm-reset'),
@@ -67,6 +74,8 @@ let game = null;
 let stage = 0;
 let depthAtRoundStart = 0;
 let account = null;   // { signedIn, name } once /me has answered, else null
+/** Guards the end of a round against being counted twice. See showSummary. */
+let roundCredited = false;
 
 /** Answers per sync request; the server refuses more than 500. */
 const SYNC_BATCH = 250;
@@ -151,27 +160,45 @@ function startGame() {
   ui.summary.hidden = true;
   ui.play.hidden = false;
   ui.unlockBanner.hidden = true;
+  ui.goalBanner.hidden = true;
+  roundCredited = false;
   game.startRound();
   renderStages();
   render();
 }
 
+/**
+ * The scoreboard: today's goal, the day streak, and how the deck is going.
+ * One function so the four tiles can never disagree with each other.
+ */
+function renderScoreboard() {
+  const streak = streakFrom(store.days);
+
+  ui.today.textContent = `${Math.min(streak.roundsToday, DAILY_GOAL)}/${DAILY_GOAL}`;
+  ui.goalFill.style.width = `${goalProgress(store.days) * 100}%`;
+  ui.todayStat.classList.toggle('met', streak.hitToday);
+  ui.streak.textContent = streak.current;
+  ui.mastered.textContent = game ? game.masteredCount() : 0;
+  ui.mastery.textContent = game ? `${Math.round(game.mastery() * 100)}%` : '0%';
+}
+
 function render() {
   const { state } = game;
-  ui.score.textContent = state.score;
-  ui.streak.textContent = state.streak;
-  ui.mastery.textContent = `${Math.round(game.mastery() * 100)}%`;
-  ui.best.textContent = store.best.score;
+  renderScoreboard();
   ui.roundProgress.style.width = `${(state.asked / state.roundLength) * 100}%`;
-
-  ui.directionHint.textContent =
-    state.direction === 'es-en' ? 'What does it mean…?' : 'How do you say…?';
 
   const question = state.question;
   if (!question) return;
 
+  // Direction is per question now, not per round — on a mixed round the two
+  // alternate, so the hint and the prompt's language have to follow the
+  // question rather than the setting that produced it.
+  const side = DIRECTIONS[question.direction].promptSide;
+  ui.directionHint.textContent =
+    side === 'es' ? 'What does it mean…?' : 'How do you say…?';
+
   ui.prompt.textContent = question.prompt;
-  ui.prompt.lang = DIRECTIONS[state.direction].promptSide === 'es' ? 'es' : 'en';
+  ui.prompt.lang = side;
   ui.choices.innerHTML = '';
   question.choices.forEach((choice, index) => {
     const button = document.createElement('button');
@@ -226,10 +253,7 @@ function submit(choice) {
     correct: result.correct,
     reviewedAt: result.at
   });
-  store = withBests(withCards(store, game.state.cards), {
-    score: game.state.score,
-    streak: game.state.bestStreak
-  });
+  store = withCards(store, game.state.cards);
   save(store);
 
   for (const button of ui.choices.querySelectorAll('.choice')) {
@@ -241,15 +265,12 @@ function submit(choice) {
 
   ui.feedback.className = `feedback ${result.correct ? 'good' : 'bad'}`;
   ui.feedback.textContent = result.correct
-    ? `Correct! +${result.points}`
+    ? 'Correct!'
     : `${result.question.prompt} = ${result.question.answer}`;
 
   showVariants(result.question.word);
 
-  ui.score.textContent = game.state.score;
-  ui.streak.textContent = game.state.streak;
-  ui.mastery.textContent = `${Math.round(game.mastery() * 100)}%`;
-  ui.best.textContent = store.best.score;
+  renderScoreboard();
   ui.roundProgress.style.width = `${(game.state.asked / game.state.roundLength) * 100}%`;
 
   setTimeout(advance, result.correct ? 700 : 1600);
@@ -262,23 +283,90 @@ function advance() {
   render();
 }
 
+/**
+ * Credit a finished round against today, and queue it for the account.
+ *
+ * Only completed rounds count, so this is the one place a day advances. The
+ * streak is derived from these day counts rather than tracked as a number of
+ * its own — the same reason cards are derived from reviews: a stored counter
+ * drifts across devices and cannot be repaired, a derived one cannot.
+ */
+function creditRound() {
+  const day = localDay();
+  const before = streakFrom(store.days);
+
+  store = withDays(store, recordRound(store.days, day));
+  save(store);
+
+  queueRound({
+    id: newReviewId(),
+    localDay: day,
+    deckId: game.state.deckId,
+    stage: game.state.stage,
+    direction: game.state.direction,
+    asked: game.state.asked,
+    correct: game.state.correct,
+    startedAt: game.state.startedAt,
+    endedAt: Date.now()
+  });
+
+  return { before, after: streakFrom(store.days) };
+}
+
+/** The one line at the top of the summary worth reading. */
+function renderGoalBanner({ before, after }) {
+  ui.goalBanner.className = 'goal-banner';
+
+  if (after.hitToday && !before.hitToday) {
+    ui.goalBanner.textContent = after.current > 1
+      ? `🎯 Goal met — ${after.current} day streak!`
+      : '🎯 Daily goal met!';
+    ui.goalBanner.hidden = false;
+    return;
+  }
+
+  // Mid-streak but not there yet: say what is at stake, once it is close.
+  const left = DAILY_GOAL - after.roundsToday;
+  if (!after.hitToday && after.current > 0 && after.graceDaysLeft <= 1) {
+    ui.goalBanner.className = 'goal-banner warning';
+    ui.goalBanner.textContent =
+      `${left} more round${left === 1 ? '' : 's'} today to keep your ${after.current}-day streak.`;
+    ui.goalBanner.hidden = false;
+    return;
+  }
+  ui.goalBanner.hidden = true;
+}
+
 function showSummary() {
+  // Answering schedules advance() on a timer, and Enter calls it too, so the
+  // end of a round can be reached more than once for the same round — the
+  // guard in advance() only checks that an answer exists, and the last answer
+  // of a round is never cleared. Crediting the day is not idempotent, so it
+  // has to be gated here rather than relying on only being called once.
+  if (roundCredited) return;
+  roundCredited = true;
+
+  const streaks = creditRound();
   syncProgress();
+
   ui.play.hidden = true;
   ui.summary.hidden = false;
   populateDecks();
   renderStages();
+  renderScoreboard();
+  renderGoalBanner(streaks);
 
-  // Crossing the threshold mid-round is the reward; call it out before the score.
+  // Crossing the threshold mid-round is the reward; call it out first.
   const depth = unlockedDepth(ui.deck.value, store.cards);
   const unlocked = depth > depthAtRoundStart;
   ui.unlockBanner.hidden = !unlocked;
   if (unlocked) ui.unlockBanner.textContent = `🔓 ${STAGE_NAMES[depth]} unlocked!`;
   depthAtRoundStart = depth;
-  ui.summaryScore.textContent = game.state.score;
+
   ui.summaryAccuracy.textContent = `${Math.round(game.accuracy() * 100)}%`;
-  ui.summaryStreak.textContent = game.state.bestStreak;
+  ui.summaryToday.textContent = `${streaks.after.roundsToday}/${DAILY_GOAL}`;
   ui.summaryMastered.textContent = game.masteredCount();
+  ui.summaryLongest.textContent = streaks.after.longest;
 }
 
 document.addEventListener('keydown', (event) => {
@@ -301,9 +389,9 @@ ui.again.addEventListener('click', startGame);
 ui.reset.addEventListener('click', () => {
   const tracked = Object.keys(store.cards).length;
   ui.confirmBody.textContent = tracked
-    ? `This erases progress on ${tracked} word${tracked === 1 ? '' : 's'} and a best score of ` +
-      `${store.best.score}, and relocks every stage. It is saved only in this browser, ` +
-      `so there is no copy to restore from.`
+    ? `This erases progress on ${tracked} word${tracked === 1 ? '' : 's'}, your ` +
+      `${streakFrom(store.days).current}-day streak, and relocks every stage. It is saved ` +
+      `only in this browser, so there is no copy to restore from.`
     : 'Nothing is saved on this device yet, so there is nothing to clear.';
   ui.confirmDialog.showModal();
 });
@@ -400,10 +488,15 @@ async function syncProgress() {
   // is dropped rather than sent. Granular history starts from the account.
   if (store.syncedAt === 0) {
     const imports = Object.entries(store.cards).map(([wordEs, card]) => ({ wordEs, ...card }));
-    const result = await sync({ since: 0, reviews: [], imports, best: store.best });
+    const days = Object.entries(store.days).map(([localDayName, rounds]) => ({
+      localDay: localDayName,
+      rounds
+    }));
+    const result = await sync({ since: 0, reviews: [], imports, days, rounds: readRoundOutbox() });
     if (!result) return;
 
     clearQueued(readOutbox().map((entry) => entry.id));
+    clearQueuedRounds(result.acceptedRounds ?? []);
     applySync(result);
     return;
   }
@@ -412,16 +505,18 @@ async function syncProgress() {
   // catches up in one go, bounded so a server that keeps refusing cannot spin.
   for (let pass = 0; pass < 5; pass++) {
     const queued = readOutbox();
-    if (queued.length === 0) return;
+    const rounds = readRoundOutbox();
+    if (queued.length === 0 && rounds.length === 0) return;
 
     const result = await sync({
       since: store.syncedAt,
       reviews: queued.slice(0, SYNC_BATCH),
-      best: store.best
+      rounds
     });
     if (!result) return; // offline or refused — the outbox keeps everything
 
     clearQueued(result.accepted);
+    clearQueuedRounds(result.acceptedRounds ?? []);
     applySync(result);
   }
 }
@@ -432,10 +527,15 @@ async function syncProgress() {
  * what this browser holds.
  */
 function applySync(result) {
-  store = withBests(
-    { ...store, cards: { ...store.cards, ...result.cards }, syncedAt: result.serverTime },
-    result.best
-  );
+  store = {
+    ...store,
+    cards: { ...store.cards, ...result.cards },
+    // The server counts rounds from every device, so its day totals are the
+    // real ones — this browser only ever knew its own.
+    days: result.days ?? store.days,
+    syncedAt: result.serverTime
+  };
+  store = withDays(store, store.days);
   save(store);
 
   // The round in play holds its own copy of the cards; without this it would
@@ -444,7 +544,7 @@ function applySync(result) {
 
   populateDecks();
   renderStages();
-  ui.best.textContent = store.best.score;
+  renderScoreboard();
 }
 
 /**
