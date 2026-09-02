@@ -49,6 +49,7 @@ const ui = {
   unlockNote: el('unlock-note'),
   unlockBanner: el('unlock-banner'),
   play: el('play'),
+  scoreboard: document.querySelector('.scoreboard'),
   hint: document.querySelector('.hint'),
   directionHint: el('direction-hint'),
   prompt: el('prompt'),
@@ -508,6 +509,7 @@ function submit(choice) {
   }
 
   chime(result.correct);
+  bringBoardIntoView();
   ui.feedback.className = `feedback ${result.correct ? 'good' : 'bad'}`;
   ui.feedback.textContent = result.correct
     ? 'Correct!'
@@ -532,6 +534,34 @@ function submit(choice) {
     ui.hint.textContent = 'Tap anywhere or press Enter to continue';
     ui.hint.classList.add('waiting');
   }
+}
+
+/**
+ * Bring the whole question into view when it does not fit.
+ *
+ * The wordmark and the two selects are touched once a session; the answers are
+ * touched twenty times a round. So the chrome above scrolls away and the
+ * scoreboard parks at the top — near enough to glance at, far enough to give
+ * the card the room it needs. That is worth about a hundred pixels, which is
+ * roughly three times what the tightest screens were short by.
+ *
+ * Only when it is actually needed. Scrolling somebody who can already see the
+ * whole card, or who has deliberately scrolled up to look at their streak, is
+ * just taking the page away from them.
+ */
+function bringBoardIntoView() {
+  const last = ui.choices.lastElementChild;
+  if (!last) return;
+  if (last.getBoundingClientRect().bottom <= window.innerHeight - 8) return;
+
+  const target = ui.scoreboard.getBoundingClientRect().top + window.scrollY - 8;
+  if (target <= window.scrollY + 4) return; // already at or past it
+
+  // Instant, not smooth. A glide reads better in principle, but it is animated
+  // by the compositor and there are contexts where it silently does nothing at
+  // all — which is a worse outcome than a jump. This happens once at the start
+  // of a round and then never again, since afterwards the card already fits.
+  window.scrollTo({ top: Math.max(0, target), behavior: 'auto' });
 }
 
 function advance() {
