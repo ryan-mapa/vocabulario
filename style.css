@@ -570,14 +570,26 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   justify-content: center;
   flex-wrap: wrap;
   gap: 6px 16px;
+  /* Room for the dots, which hang below the button outside the flow. */
+  padding-bottom: 12px;
 }
 
-.speak-stack { display: inline-flex; flex-direction: column; align-items: center; }
+.speak-stack { position: relative; display: inline-flex; }
 
 /* Which of the four voices you last heard, and that there are more. Deliberately
    not tappable — at 5px they could not be, and cycling reaches any of them in
    at most four taps. */
-.dots { display: flex; gap: 5px; margin-top: 6px; }
+/* Taken out of the flow so the stack is exactly the button's height. Otherwise
+   the dots make the stack taller than the button, and centring the stack against
+   the word leaves the button sitting above the word's centre line. */
+.dots {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+}
 .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--line); transition: background 0.2s ease; }
 .dot.on { background: var(--oro); }
 
