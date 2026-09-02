@@ -17,7 +17,7 @@ import {
   readRoundOutbox,
   clearQueuedRounds
 } from './source/storage.js';
-import { deckProgress, unlockedDepth, nextUnlock } from './source/stages.js';
+import { deckProgress, unlockedDepth, commonDepth, nextUnlock } from './source/stages.js';
 import { fetchMe, signOut, sync, deleteAccount } from './source/api.js';
 import { clipUrl, nextVoice, canPlay, hasClip, MANIFEST_URL, VOICE_COUNT } from './source/audio.js';
 import {
@@ -199,7 +199,13 @@ function populateDecks() {
     // Filled stars show how deep the deck is open, at a glance in the list.
     // The filled one is the emoji star rather than U+2605 because option text
     // cannot be styled per-character — an emoji carries its own gold.
-    const depth = unlockedDepth(deck.id, store.cards);
+    //
+    // "All words" reports the depth every category shares, not the deepest one
+    // reached anywhere: a star there claims the whole thing is open, and one
+    // category racing ahead would otherwise show progress nobody has made.
+    const depth = deck.id === ALL_DECK_ID
+      ? commonDepth(store.cards)
+      : unlockedDepth(deck.id, store.cards);
     const stars = STAGE_NAMES.map((_, i) => (i <= depth ? '⭐' : '☆')).join('');
     option.textContent = `${deck.emoji} ${deck.name}  ${stars}`;
     ui.deck.append(option);
@@ -295,6 +301,7 @@ function renderScoreboard() {
   ui.goalFill.style.width = `${goalProgress(store.days) * 100}%`;
   ui.todayStat.classList.toggle('met', streak.hitToday);
   ui.streak.textContent = streak.current;
+  ui.streak.classList.toggle('lit', streak.current > 0);
   ui.mastered.textContent = game ? game.masteredCount() : 0;
   ui.mastery.textContent = game ? `${Math.round(game.mastery() * 100)}%` : '0%';
 

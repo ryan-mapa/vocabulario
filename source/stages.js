@@ -45,6 +45,24 @@ export function unlockedDepth(deckId, cards) {
 }
 
 /**
+ * How deep *every* deck is open — what the combined deck's stars report.
+ *
+ * Access and completion are different questions, and the combined deck is the
+ * only place they come apart. It can be *played* at a stage as soon as one
+ * category has opened it, which is what makes it useful for practising the
+ * deeper words you have actually earned. But a star claims the whole deck is
+ * open to that depth, and for "All words" that is only true once the weakest
+ * category has caught up. Reporting access there would show more progress than
+ * has been made.
+ */
+export function commonDepth(cards) {
+  return DECKS.reduce(
+    (least, deck) => Math.min(least, unlockedDepth(deck.id, cards)),
+    STAGE_COUNT - 1
+  );
+}
+
+/**
  * The words a round should draw from. Same as the stage's words for a real deck;
  * for "All words" it is the union across decks that have this stage open, so a
  * locked deck never leaks its deeper words into a combined round.

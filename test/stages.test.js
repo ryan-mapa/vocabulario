@@ -9,7 +9,8 @@ import {
   stageProgress,
   deckProgress,
   nextUnlock,
-  selectionPool
+  selectionPool,
+  commonDepth
 } from '../source/stages.js';
 
 const TOP_BOX = BOX_COUNT - 1;
@@ -165,5 +166,44 @@ describe('a selection of several stages', () => {
     const forwards = selectionPool('comida', [0, 1], cards).map((w) => w.es);
     const backwards = selectionPool('comida', [1, 0], cards).map((w) => w.es);
     expect(backwards).toEqual(forwards);
+  });
+});
+
+// The stars claim a deck is open to a depth. For the combined deck that is only
+// true once the weakest category has caught up — otherwise one deck racing
+// ahead shows progress across the whole vocabulary that nobody has made.
+describe('the depth every deck shares', () => {
+  it('is the first stage when nothing has been learned', () => {
+    expect(commonDepth({})).toBe(0);
+  });
+
+  it('does not move when a single deck opens a stage', () => {
+    const cards = cardsAt('comida', 0, stageWords('comida', 0).length);
+    expect(unlockedDepth('comida', cards)).toBe(1);
+    expect(isStageUnlocked(ALL_DECK_ID, 1, cards)).toBe(true); // still playable
+    expect(commonDepth(cards)).toBe(0);                        // but not yet claimed
+  });
+
+  it('moves only once every deck has opened the stage', () => {
+    const cards = {};
+    for (const deck of DECKS.slice(0, -1)) {
+      Object.assign(cards, cardsAt(deck.id, 0, stageWords(deck.id, 0).length));
+    }
+    expect(commonDepth(cards)).toBe(0); // one deck still behind
+
+    const last = DECKS[DECKS.length - 1];
+    Object.assign(cards, cardsAt(last.id, 0, stageWords(last.id, 0).length));
+    expect(commonDepth(cards)).toBe(1);
+  });
+
+  it('follows the weakest deck, not the strongest', () => {
+    const cards = {};
+    for (const deck of DECKS) {
+      Object.assign(cards, cardsAt(deck.id, 0, stageWords(deck.id, 0).length));
+    }
+    // One deck taken all the way; the rest stay where they are.
+    Object.assign(cards, cardsAt('comida', 1, stageWords('comida', 1).length));
+    expect(unlockedDepth('comida', cards)).toBe(2);
+    expect(commonDepth(cards)).toBe(1);
   });
 });
