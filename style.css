@@ -296,7 +296,9 @@ select {
   transition: transform 0.08s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
-.choice:disabled { cursor: default; opacity: 0.75; }
+/* Answered choices stop taking clicks, so a tap anywhere on the card reaches
+   the card itself and moves the round on. */
+.choice:disabled { cursor: default; opacity: 0.75; pointer-events: none; }
 
 /* Tapping an answer on a phone left the browser's own focus ring behind, over
    the top of the correct/wrong colouring — a mouse click does not, which is why
@@ -507,6 +509,10 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
 
 /* The hint names keyboard keys a touch device does not have — and on touch the
    round advances on its own, so there is nothing left to say. */
+/* The keyboard hint is hidden on touch, where those keys do not exist — but
+   once a miss is waiting, the line is the only thing saying how to carry on. */
+.hint.waiting { display: block; color: var(--oro); }
+
 @media (pointer: coarse) {
   .hint { display: none; }
 }

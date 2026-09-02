@@ -48,6 +48,7 @@ const ui = {
   unlockNote: el('unlock-note'),
   unlockBanner: el('unlock-banner'),
   play: el('play'),
+  hint: document.querySelector('.hint'),
   directionHint: el('direction-hint'),
   prompt: el('prompt'),
   choices: el('choices'),
@@ -414,6 +415,9 @@ function render() {
   ui.feedback.className = 'feedback';
   ui.variantNote.hidden = true;
   ui.variantNote.textContent = '';
+  ui.hint.innerHTML =
+    'Answer with <kbd>1</kbd>\u2013<kbd>4</kbd> \u00b7 <kbd>Enter</kbd> to continue';
+  ui.hint.classList.remove('waiting');
   renderSpeakers();
 }
 
@@ -484,7 +488,15 @@ function submit(choice) {
   renderScoreboard();
   ui.roundProgress.style.width = `${(game.state.asked / game.state.roundLength) * 100}%`;
 
-  setTimeout(advance, result.correct ? 700 : 1600);
+  // A correct answer moves on by itself; a miss waits. The moment you got
+  // something wrong is the one worth sitting with, and 1.6 seconds was only
+  // ever a guess at how long that takes to read.
+  if (result.correct) {
+    setTimeout(advance, 700);
+  } else {
+    ui.hint.textContent = 'Tap anywhere or press Enter to continue';
+    ui.hint.classList.add('waiting');
+  }
 }
 
 function advance() {
@@ -621,6 +633,13 @@ window.matchMedia('(max-width: 460px)').addEventListener('change', fitDirectionL
 
 ui.deck.addEventListener('change', startGame);
 ui.direction.addEventListener('change', startGame);
+// Tapping the card carries on after a miss — a phone has no Enter key. Buttons
+// inside keep their own jobs, so the speaker still just speaks.
+ui.play.addEventListener('click', (event) => {
+  if (event.target.closest('button')) return;
+  advance();
+});
+
 ui.again.addEventListener('click', startGame);
 
 /**
