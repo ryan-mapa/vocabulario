@@ -80,7 +80,6 @@ const ui = {
   signOut: el('sign-out'),
   scoreboardNote: el('scoreboard-note'),
   account: el('account'),
-  openAccount: el('open-account'),
   accountDanger: el('account-danger'),
   accountDialog: el('account-dialog'),
   accountBody: el('account-body'),
@@ -731,12 +730,15 @@ ui.again.addEventListener('click', startGame);
  */
 async function renderAccount() {
   account = await fetchMe();
-  if (!account) return; // no API behind this copy — leave the whole block hidden
 
+  // The Account button is always here, because Move progress lives behind it
+  // and that is most needed exactly where there is no account: signed out, or
+  // on a copy of this app with no server behind it at all. Only the sign-in
+  // half depends on there being somewhere to sign in to.
   ui.auth.hidden = false;
-  ui.signIn.hidden = account.signedIn;
-  ui.authUser.hidden = !account.signedIn;
-  if (account.signedIn) ui.authName.textContent = account.name;
+  ui.signIn.hidden = !account || account.signedIn;
+  ui.authUser.hidden = !account?.signedIn;
+  if (account?.signedIn) ui.authName.textContent = account.name;
 }
 
 /**
@@ -965,7 +967,6 @@ function openAccountDialog() {
 }
 
 ui.account.addEventListener('click', openAccountDialog);
-ui.openAccount.addEventListener('click', openAccountDialog);
 ui.accountClose.addEventListener('click', () => ui.accountDialog.close());
 
 ui.signOut.addEventListener('click', async () => {
