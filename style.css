@@ -17,6 +17,7 @@
   --oro: #f2b134;
   --verde: #38b26a;
   --radius: 14px;
+  --card-pad: 22px;   /* the card's side padding — see .footer */
 }
 
 * { box-sizing: border-box; }
@@ -278,7 +279,7 @@ select {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 20px;
-  padding: 28px 22px 22px;
+  padding: 28px var(--card-pad) var(--card-pad);
   text-align: center;
 }
 
@@ -374,7 +375,19 @@ select {
   cursor: pointer;
 }
 
-.footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }
+/* Padded to the card's inner edge. The footer sits outside the card, so with no
+   padding its two controls ran to the very edge of the column while every answer
+   button above them was inset — the eye reads that as a broken margin. The extra
+   1px is the card's border, which the padding sits inside of. */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 0 calc(var(--card-pad) + 1px);
+}
 
 /* Lives at the foot of the question card, where the keys it names are in use. */
 .hint { margin: 18px 0 0; font-size: 12px; color: var(--muted); }
@@ -530,7 +543,8 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   .stage-meta { font-size: 10px; }
   .unlock-note { margin-top: 6px; font-size: 11px; }
 
-  .card { padding: 20px 14px 16px; }
+  :root { --card-pad: 14px; }
+  .card { padding: 20px var(--card-pad) 16px; }
   .prompt { margin: 8px 0 0; }
   .example { margin: 14px 0; }
   .choices { gap: 8px; }
@@ -548,7 +562,8 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   .stat { padding: 4px 4px; }
   .stat-value { font-size: 17px; }
   .stages { margin-bottom: 8px; }
-  .card { padding: 14px 14px 8px; }
+  :root { --card-pad: 14px; }
+  .card { padding: 14px var(--card-pad) 8px; }
   .prompt-row { --prompt-size: clamp(26px, 7vw, 34px); }
   .prompt { margin: 6px 0 0; }
   .example { margin: 10px 0; }

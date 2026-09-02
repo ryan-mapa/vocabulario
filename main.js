@@ -595,7 +595,6 @@ function submit(choice) {
   }
 
   chime(result.correct);
-  bringBoardIntoView();
   ui.feedback.className = `feedback ${result.correct ? 'good' : 'bad'}`;
   ui.feedback.textContent = result.correct
     ? 'Correct!'
@@ -620,6 +619,13 @@ function submit(choice) {
   // arrives at the moment of answering — it is the half that was being withheld
   // — so a correct answer would show it and take it away again inside 700ms,
   // which is exactly the reader the sentence was put there for.
+  // Last, once every part of the answer is on the page. Answering adds the
+  // feedback line, sometimes a regional variant, and — when it was asked for —
+  // the example sentence and its translation. Measuring before those existed
+  // scrolled by the right amount for the board as it was, and then the sentence
+  // grew underneath and put the bottom back off the screen.
+  bringBoardIntoView();
+
   if (result.correct && !exampleShown) {
     setTimeout(advance, 700);
   } else {
@@ -647,9 +653,12 @@ function submit(choice) {
  * just taking the page away from them.
  */
 function bringBoardIntoView() {
-  const last = ui.choices.lastElementChild;
-  if (!last) return;
-  if (last.getBoundingClientRect().bottom <= window.innerHeight - 8) return;
+  if (!ui.choices.lastElementChild) return;
+  // The card's own bottom, not the last answer button. Everything an answer
+  // reveals sits below the buttons, and the example sentence is the whole
+  // reason the round now waits — scrolling to show the buttons and leaving the
+  // sentence under the fold would defeat it.
+  if (ui.play.getBoundingClientRect().bottom <= window.innerHeight - 8) return;
 
   const target = ui.scoreboard.getBoundingClientRect().top + window.scrollY - 8;
   if (target <= window.scrollY + 4) return; // already at or past it
