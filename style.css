@@ -565,6 +565,9 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
 
 @media (pointer: coarse) {
   .hint { display: none; }
+  /* The waiting line survives on touch — it is the only thing saying how to
+     carry on — but the key names inside it do not. */
+  .hint .keys { display: none; }
 }
 
 /* Privacy and terms. They inherit the app's tokens so the colours cannot drift
@@ -701,7 +704,19 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
   flex-wrap: nowrap;
 }
 
-.speak-stack { position: relative; display: inline-flex; }
+/* Dropped onto the word's baseline.
+   Centring the button against the line box put its icon well above the letters:
+   a line box is taller than the letters in it, and the button was centred on the
+   box while the eye reads the lowercase body. This lowers it by about a quarter
+   of the word's size, which lands the icon's middle on the middle of the
+   x-height — where a reader expects a mark sitting beside text.
+   A transform rather than a margin, so the row's height is untouched and the
+   board stays where it is. */
+.speak-stack {
+  position: relative;
+  display: inline-flex;
+  transform: translateY(calc(var(--prompt-size) * 0.21));
+}
 
 /* Which of the four voices you last heard, and that there are more. Deliberately
    not tappable — at 5px they could not be, and cycling reaches any of them in

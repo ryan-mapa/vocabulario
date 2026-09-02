@@ -615,10 +615,20 @@ function submit(choice) {
   // A correct answer moves on by itself; a miss waits. The moment you got
   // something wrong is the one worth sitting with, and 1.6 seconds was only
   // ever a guess at how long that takes to read.
-  if (result.correct) {
+  //
+  // An open example sentence waits too, right or wrong. The translation only
+  // arrives at the moment of answering — it is the half that was being withheld
+  // — so a correct answer would show it and take it away again inside 700ms,
+  // which is exactly the reader the sentence was put there for.
+  if (result.correct && !exampleShown) {
     setTimeout(advance, 700);
   } else {
-    ui.hint.textContent = 'Tap anywhere or press Enter to continue';
+    // The keys are wrapped so a touch device can drop them: this line is the
+    // one piece of guidance that stays on screen on a phone, and naming keys it
+    // does not have is worse than saying nothing.
+    ui.hint.innerHTML =
+      'Tap anywhere<span class="keys"> \u00b7 <kbd>Enter</kbd> or <kbd>1</kbd>\u2013<kbd>4</kbd></span>' +
+      ' to continue';
     ui.hint.classList.add('waiting');
   }
 }
@@ -758,8 +768,15 @@ document.addEventListener('keydown', (event) => {
   // fields, where 1-4 has to type digits rather than answer the question.
   if (document.querySelector('dialog[open]')) return;
   if (event.key >= '1' && event.key <= '4' && !ui.play.hidden) {
-    const button = ui.choices.children[Number(event.key) - 1];
-    if (button && !button.disabled) button.click();
+    // Once answered, every choice is disabled and the digits have no question
+    // left to answer — so they carry on instead. The hand is already there, and
+    // reaching for Enter is the only thing between reading the sentence and the
+    // next word.
+    if (game?.state.lastAnswer) advance();
+    else {
+      const button = ui.choices.children[Number(event.key) - 1];
+      if (button && !button.disabled) button.click();
+    }
   }
   if (event.key === 'Enter') {
     if (!ui.summary.hidden) startGame();
