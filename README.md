@@ -19,8 +19,10 @@ npm run dev        # the game plus the API and a local database, on :8787
 Use `serve` for anything that doesn't touch accounts; it's faster to start and
 needs nothing configured. Use `dev` when you're working on sync.
 
-Answer with the mouse or with <kbd>1</kbd>–<kbd>4</kbd>; <kbd>Enter</kbd> skips
-ahead. Rounds are 20 questions, about two minutes.
+Answer with the mouse or with <kbd>1</kbd>–<kbd>4</kbd>. When the round is
+waiting on you, tap anywhere or press <kbd>Enter</kbd> — or <kbd>1</kbd>–<kbd>4</kbd>
+again, since your hand is already there. Rounds are 20 questions, about two
+minutes.
 
 ## How it plays
 
@@ -34,17 +36,24 @@ ahead. Rounds are 20 questions, about two minutes.
   Only Basics is open at first; a stage unlocks when the one before it reaches
   60% mastery, so depth is earned rather than dumped on you. The stars beside a
   deck name (`★★☆`) show how far it is open, and the bar under each stage
-  button is that stage's mastery. Under **All words**, a stage counts as open
-  once any single deck has opened it, and draws only from the decks that have
-  — a locked deck never leaks its harder words into a combined round.
+  button is that stage's mastery. Choosing a deck selects every stage it has
+  opened — the deeper ones are the reason to come back to a deck, and being
+  handed Basics alone reads as progress lost. They are toggles, so any
+  combination can be studied together; the last one on cannot be turned off,
+  because a round with no words is not a state worth reaching. Under
+  **All words**, a stage counts as open once any single deck has opened it, and
+  draws only from the decks that have — a locked deck never leaks its harder
+  words into a combined round.
 - **Pronunciation** — words with a Spanish prompt carry a speaker button, and
   tapping again cycles four Latin American voices, so hearing a word four times
-  means four different mouths rather than one recording repeated. Recall
-  questions have none: the Spanish is the answer there, and speaking it would
-  give it away. The 7,320 clips are generated ahead of time by `tools/tts.mjs`
-  and served as static files; `audio/words.json` lists the words that have all
-  four, so a word whose synthesis failed loses its button rather than every word
-  losing one.
+  means four different mouths rather than one recording repeated. The dots down
+  its right side show which voice you are on, read top to bottom, and every word
+  starts again at the first — otherwise which voice you got depended on how many
+  times you had tapped earlier words. Recall questions have no button at all:
+  the Spanish is the answer there, and speaking it would give it away. The
+  7,320 clips are generated ahead of time by `tools/tts.mjs` and served as
+  static files; `audio/words.json` lists the words that have all four, so a word
+  whose synthesis failed loses its button rather than every word losing one.
 - **Example sentences** — every word has one, hidden behind a **Show example**
   button under the prompt so the sentence is something you reach for when a word
   is ambiguous, not something you read instead of recalling it. Which half you
@@ -52,7 +61,10 @@ ahead. Rounds are 20 questions, about two minutes.
   in the *prompt's* language, since the other one contains the answer. Answer,
   and both appear — *¿Nos trae la cuenta, por favor?* over *Could we get the
   bill, please?* — which is where the pair earns its keep, because it is the
-  sentence that separates a restaurant *cuenta* from a bank one.
+  sentence that separates a restaurant *cuenta* from a bank one. With one open
+  the round waits for you rather than moving on by itself, even when you were
+  right: the translation only arrives at the moment you answer, and showing it
+  for 700ms would take it away from exactly the person who asked to see it.
 - **Direction** — a round is **Mixed** by default: ten questions of recognition
   (Español → English) and ten of recall (English → Español), interleaved rather
   than run as two blocks. Mixed practice retains better than blocked, and a
@@ -79,11 +91,16 @@ ahead. Rounds are 20 questions, about two minutes.
 - **The streak** is consecutive days that met the goal, and it forgives three
   missed days, and says so on the scoreboard while the window is open rather
   than waiting until the streak is gone. Losing a streak is the most reliable
-  way to make someone stop coming back, so a busy week costs nothing. It is *derived* from a per-day
-  count of rounds rather than tracked as a number of its own — a stored counter
-  drifts across devices and cannot be repaired, a derived one cannot. Days are
-  the learner's own local dates, never UTC, so an evening session never lands on
-  tomorrow and travel cannot break a streak by arithmetic.
+  way to make someone stop coming back, so a busy week costs nothing. It is
+  *derived* from a per-day count of rounds rather than tracked as a number of
+  its own — a stored counter drifts across devices and cannot be repaired, a
+  derived one cannot. Days are the learner's own local dates, never UTC, so an
+  evening session never lands on tomorrow and travel cannot break a streak by
+  arithmetic.
+- **Pacing** — a correct answer moves on after a moment; a miss waits for you.
+  The moment you got something wrong is the one worth sitting with, and no
+  timer is a good guess at how long that takes to read. An open example sentence
+  waits too, right or wrong.
 - **Spaced repetition** — every word sits in one of 5 boxes. Get it right and it
   climbs a box and drops out of rotation for a while — 1 minute, 10 minutes,
   then 1, 4 and 14 days. Get it wrong and it falls straight back to box 0. The
@@ -147,6 +164,28 @@ Everything under `source/` is DOM-free and pure, which is what makes it
 testable — `main.js` is the only thing that knows a browser exists. `source/`
 is also the boundary the server shares: the Worker imports `srs.js` directly, so
 the browser and the server can never drift about what a review history means.
+
+### Holding the board still
+
+Three rules keep the answer buttons from moving under the thumb, all of them
+easy to undo by accident:
+
+- **The word scales, the line box does not.** A long phrase is shrunk to one
+  line by `fitPrompt()`, but `.prompt` takes its `line-height` from
+  `--prompt-size`, the *unshrunk* size, so a smaller font leaves everything
+  below it exactly where it was. Measure after `renderSpeakers()`, not before:
+  how much room the word has depends on whether the speaker button is beside it,
+  and it is absent in the recall direction.
+- **Scroll last.** `bringBoardIntoView()` has to run after the feedback line,
+  the regional variant and the example sentence are on the page. Measuring
+  first scrolls by the right amount for the board as it stood and then lets the
+  new content push the bottom back under the fold. It measures the card's own
+  bottom, not the last answer button — everything an answer reveals sits below
+  the buttons.
+- **The footer follows the card.** It is a sibling of the question card, not a
+  child, so it takes `--card-pad` plus the card's 1px border to line its two
+  controls up with the answer buttons above them. Change the card's side padding
+  through that variable or the two drift apart.
 
 The wordmark glyph is a V drawn as a chevron with the acute accent Spanish uses
 to mark stress. The accent runs parallel to the V's right arm — the same stroke
