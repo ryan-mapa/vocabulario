@@ -2891,5 +2891,39 @@ export const SENTENCES = {
   'apenarse': ['Se apena cada vez que olvida un nombre.', 'He feels embarrassed every time he forgets a name.'],
   'desalentarse': ['Prefiere no desalentarse tan rápido con los problemas.', 'He prefers not to get discouraged so quickly with problems.'],
   'ecuánime': ['Es muy ecuánime incluso en discusiones difíciles.', "He's very even-tempered even in difficult arguments."],
-  'abnegado': ['Es un padre abnegado que todo lo da.', "He's a selfless father who gives everything."]
+  'abnegado': ['Es un padre abnegado que todo lo da.', "He's a selfless father who gives everything."],
+
+  // --- rutina / Everyday ---
+  'asegurar': ['Siempre aseguro la puerta antes de dormir.', 'I always secure the door before sleeping.'],
+  'depositar': ['Deposito mi cheque los viernes por la tarde.', 'I deposit my check on Friday afternoons.'],
+  'retrasarse': ['Suelo retrasarme cuando hay mucho tráfico.', "I tend to run late when there's a lot of traffic."],
+  'adelantarse': ['Prefiero adelantarme para no hacer esperar a nadie.', "I prefer to be early so I don't keep anyone waiting."],
+  'trancar': ['Hay que trancar bien la puerta trasera.', 'You have to lock up the back door properly.'],
+  'normalmente': ['Normalmente ceno temprano entre semana.', 'I usually have dinner early on weekdays.'],
+  'pasear': ['Nos gusta pasear por el barrio los domingos.', 'We like to stroll around the neighborhood on Sundays.'],
+  'consentir': ['Es fácil consentir a un niño enfermo.', "It's easy to spoil a sick child."],
+  'el repartidor': ['El repartidor dejó el paquete en la puerta.', 'The delivery person left the package at the door.'],
+  'agotador': ['Cuidar a los niños todo el día es agotador.', 'Taking care of the kids all day is exhausting.'],
+
+  // --- rutina / Fluent ---
+  'previsible': ['Mi rutina diaria es previsible pero cómoda.', 'My daily routine is predictable but comfortable.'],
+  'monótono': ['El trabajo de oficina se volvió monótono.', 'The office job became monotonous.'],
+  'de vez en cuando': ['De vez en cuando llego temprano al trabajo.', 'Once in a while I arrive early to work.'],
+  'de antemano': ['Aviso de antemano si voy a llegar tarde.', "I give notice in advance if I'm going to be late."],
+  'la modorra': ['La modorra de la mañana no se me quita fácil.', "My morning grogginess doesn't go away easily."],
+  'encomendar': ['Prefiero encomendar esa tarea a otra persona.', 'I prefer to entrust that task to someone else.'],
+  'improvisar': ['A veces tengo que improvisar el desayuno.', 'Sometimes I have to improvise breakfast.'],
+  'el sobresalto': ['Me desperté con un sobresalto por el ruido.', 'I woke up with a sudden fright because of the noise.'],
+  'desempolvar': ['Hay que desempolvar los muebles cada semana.', 'You have to dust the furniture every week.'],
+  'acaparar': ['Mi hermano siempre acapara el baño en la mañana.', 'My brother always hogs the bathroom in the morning.'],
+  'el plantón': ['Me dieron plantón y esperé media hora.', 'I got stood up and waited half an hour.'],
+  'desfasado': ['Después del vuelo, mi cuerpo quedó desfasado.', 'After the flight, my body was out of sync.'],
+  'escurrir': ['Dejo escurrir los platos antes de guardarlos.', 'I let the dishes drain before putting them away.'],
+  'enjuagar': ['Enjuago los platos antes de meterlos al lavaplatos.', 'I rinse the dishes before putting them in the dishwasher.'],
+  'picotear': ['Me gusta picotear algo dulce por la tarde.', 'I like to snack on something sweet in the afternoon.'],
+  'de sobra': ['Hoy tengo tiempo de sobra para hacer mandados.', 'Today I have time to spare to run errands.'],
+  'de improviso': ['Mi vecino llegó de improviso a pedir un favor.', 'My neighbor showed up unexpectedly to ask for a favor.'],
+  'el rato libre': ['Aprovecho mi rato libre para leer una novela.', 'I make the most of my free time to read a novel.'],
+  'aprovechar': ['Debemos aprovechar el día libre para descansar.', 'We should make the most of the day off to rest.'],
+  'desganado': ['Hoy me siento desganado y sin energía.', 'Today I feel listless and low on energy.']
 };

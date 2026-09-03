@@ -2410,7 +2410,17 @@ export const DECKS = [
         { es: 'el trapo', en: 'rag' },
         { es: 'el balde', en: 'bucket' },
         { es: 'la aspiradora', en: 'vacuum' },
-        { es: 'el orden', en: 'tidiness' }
+        { es: 'el orden', en: 'tidiness' },
+        { es: 'asegurar', en: 'to secure' },
+        { es: 'depositar', en: 'to deposit' },
+        { es: 'retrasarse', en: 'to run late' },
+        { es: 'adelantarse', en: 'to be early' },
+        { es: 'trancar', en: 'to lock up' },
+        { es: 'normalmente', en: 'usually' },
+        { es: 'pasear', en: 'to stroll' },
+        { es: 'consentir', en: 'to spoil' },
+        { es: 'el repartidor', en: 'delivery person' },
+        { es: 'agotador', en: 'exhausting' }
       ],
       [
         { es: 'desvelarse', en: 'to lose sleep' },
@@ -2442,7 +2452,27 @@ export const DECKS = [
         { es: 'la rutina diaria', en: 'daily round' },
         { es: 'el descanso', en: 'break' },
         { es: 'la jornada', en: 'working day' },
-        { es: 'el ocio', en: 'leisure' }
+        { es: 'el ocio', en: 'leisure' },
+        { es: 'previsible', en: 'predictable' },
+        { es: 'monótono', en: 'monotonous' },
+        { es: 'de vez en cuando', en: 'once in a while' },
+        { es: 'de antemano', en: 'in advance' },
+        { es: 'la modorra', en: 'grogginess' },
+        { es: 'encomendar', en: 'to entrust' },
+        { es: 'improvisar', en: 'to improvise' },
+        { es: 'el sobresalto', en: 'sudden fright' },
+        { es: 'desempolvar', en: 'to dust' },
+        { es: 'acaparar', en: 'to hog' },
+        { es: 'el plantón', en: 'stood up' },
+        { es: 'desfasado', en: 'out of sync' },
+        { es: 'escurrir', en: 'to drain' },
+        { es: 'enjuagar', en: 'to rinse' },
+        { es: 'picotear', en: 'to snack' },
+        { es: 'de sobra', en: 'to spare' },
+        { es: 'de improviso', en: 'unexpectedly' },
+        { es: 'el rato libre', en: 'free time' },
+        { es: 'aprovechar', en: 'to make the most of' },
+        { es: 'desganado', en: 'listless' }
       ]
     ]
   },
