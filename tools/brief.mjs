@@ -34,17 +34,46 @@ const emoji = existing?.emoji ?? fresh.emoji;
 const want = existing ? targets.existing[deckId] : fresh.targets;
 const stages = stageArg === null ? [0, 1, 2] : [stageArg];
 
-/** Every headword and regional variant in the corpus — nothing may repeat one. */
-const taken = [];
-for (const deck of DECKS) {
-  for (const stage of deck.stages) {
-    for (const word of stage) {
-      taken.push(word.es);
-      for (const variant of word.alt ?? []) taken.push(variant.es);
-    }
+/**
+ * The words this deck could realistically collide with.
+ *
+ * It used to be every headword in the app: 7,800 tokens, 76% of the brief, and
+ * re-sent on every turn of the agent's loop — a run made 25 tool calls and paid
+ * for it 25 times. Most of it was never usable: a Sports deck cannot collide
+ * with Numbers & Money.
+ *
+ * Safety does not come from this list. check-batch.mjs compares every candidate
+ * against the WHOLE corpus no matter what the brief said, and 25% over-generation
+ * absorbs what slips through. The list is here to save the agent work, not to be
+ * the guarantee.
+ *
+ * Verbs and Adjectives are the exception, because a verb or an adjective can turn
+ * up in any deck. Those two get every infinitive, or every bare adjective, from
+ * the whole corpus instead of a neighbour set.
+ */
+const isInfinitive = (es) => /(?:ar|er|ir|se)$/.test(es) && !/^(el|la|los|las) /.test(es);
+const isBareWord = (es) => !/^(el|la|los|las) /.test(es) && !isInfinitive(es);
+
+function exclusionList() {
+  const neighbours = targets.neighbours?.[deckId] ?? [];
+  const wordsOf = (deck) =>
+    deck.stages.flat().flatMap((w) => [w.es, ...(w.alt ?? []).map((a) => a.es)]);
+
+  let picked;
+  if (deckId === 'verbos') {
+    picked = DECKS.flatMap(wordsOf).filter(isInfinitive);
+  } else if (deckId === 'adjetivos') {
+    picked = DECKS.flatMap(wordsOf).filter(isBareWord);
+  } else {
+    const near = DECKS.filter((d) => d.id === deckId || neighbours.includes(d.id));
+    picked = near.flatMap(wordsOf);
+    // a deck's own part-of-speech overlap still bites, so keep infinitives too
+    picked.push(...DECKS.flatMap(wordsOf).filter(isInfinitive));
   }
+  return [...new Set(picked)].sort((a, b) => a.localeCompare(b, 'es'));
 }
-taken.sort((a, b) => a.localeCompare(b, 'es'));
+
+const taken = exclusionList();
 
 const line = (w) => `  ${w.es} = ${w.en}`;
 const OVER = 1.25;   // over-generate: parallel agents cannot see each other
@@ -195,10 +224,17 @@ if (existing) {
   }
 }
 
-p('## Exclusion list — every word the app already teaches');
+p('## Words to avoid');
 p('');
-p(`${taken.length} entries, including regional variants. Nothing you return may`);
-p('match one of these.');
+p(`${taken.length} entries — this deck's own words, the decks nearest it, and`);
+p('every verb in the app. It is NOT the whole corpus, and it does not need to be.');
+p('');
+p('**Do not verify your work against this list by searching it repeatedly.** A');
+p('validation script checks every candidate against the entire app afterwards and');
+p('rejects anything that collides, which is why you are asked for 25% more than');
+p('the target: a few rejections cost nothing. An earlier run spent a quarter of');
+p('its budget grepping this list and found nothing the validator would not have');
+p('caught. Read it once, write your words, and let the script do the checking.');
 p('');
 p('```');
 p(taken.join(', '));

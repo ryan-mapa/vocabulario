@@ -9,43 +9,298 @@
     "Authoring metadata only. Never shipped: tools/ is in .assetsignore."
   ],
   "existing": {
-    "comida":     [50, 50, 50],
-    "animales":   [50, 50, 50],
-    "casa":       [50, 50, 50],
-    "verbos":     [50, 50, 50],
-    "viajes":     [50, 50, 50],
-    "cuerpo":     [50, 50, 50],
-    "tiempo":     [40, 50, 50],
-    "adjetivos":  [50, 50, 50],
-    "familia":    [50, 50, 50],
-    "numeros":    [40, 50, 50],
-    "trabajo":    [50, 50, 50],
-    "ciudad":     [50, 50, 50],
-    "ropa":       [50, 50, 50],
-    "emociones":  [50, 50, 50],
-    "preguntas":  [40, 40, 50],
-    "lugar":      [40, 50, 50],
-    "rutina":     [50, 50, 50],
-    "salud":      [50, 50, 50],
-    "tecnologia": [50, 50, 50],
-    "naturaleza": [50, 50, 50]
+    "comida": [
+      50,
+      50,
+      50
+    ],
+    "animales": [
+      50,
+      50,
+      50
+    ],
+    "casa": [
+      50,
+      50,
+      50
+    ],
+    "verbos": [
+      50,
+      50,
+      50
+    ],
+    "viajes": [
+      50,
+      50,
+      50
+    ],
+    "cuerpo": [
+      50,
+      50,
+      50
+    ],
+    "tiempo": [
+      40,
+      50,
+      50
+    ],
+    "adjetivos": [
+      50,
+      50,
+      50
+    ],
+    "familia": [
+      50,
+      50,
+      50
+    ],
+    "numeros": [
+      40,
+      50,
+      50
+    ],
+    "trabajo": [
+      50,
+      50,
+      50
+    ],
+    "ciudad": [
+      50,
+      50,
+      50
+    ],
+    "ropa": [
+      50,
+      50,
+      50
+    ],
+    "emociones": [
+      50,
+      50,
+      50
+    ],
+    "preguntas": [
+      40,
+      40,
+      50
+    ],
+    "lugar": [
+      40,
+      50,
+      50
+    ],
+    "rutina": [
+      50,
+      50,
+      50
+    ],
+    "salud": [
+      50,
+      50,
+      50
+    ],
+    "tecnologia": [
+      50,
+      50,
+      50
+    ],
+    "naturaleza": [
+      50,
+      50,
+      50
+    ]
   },
   "capped": {
-    "tiempo":    "Basics is 7 days + 12 months + a handful — a closed set. 40.",
-    "numeros":   "Basics is 0-20 plus a few ordinals. Numbers run out. 40.",
-    "lugar":     "Basics is the prepositions of place, a closed class, and the rest are already in preguntas. 40.",
+    "tiempo": "Basics is 7 days + 12 months + a handful — a closed set. 40.",
+    "numeros": "Basics is 0-20 plus a few ordinals. Numbers run out. 40.",
+    "lugar": "Basics is the prepositions of place, a closed class, and the rest are already in preguntas. 40.",
     "preguntas": "Function words are a closed class throughout. Fluent locutions are the one plentiful stage."
   },
   "new": [
-    { "id": "social",     "name": "Talking to People",       "emoji": "🗣️", "targets": [50, 50, 50],
-      "scope": "Greetings, farewells, introductions, courtesy, apology, thanks, agreement and disagreement, small talk, humour, gossip, invitations, phone and message openings. The social formulas a learner needs on day one. NOT grammar connectors — those are the preguntas deck." },
-    { "id": "deportes",   "name": "Sports & Fitness",        "emoji": "⚽", "targets": [50, 50, 50],
-      "scope": "Sports and their names, equipment, playing actions, competition and results, teams and officials, the gym, training and fitness. Injury belongs to salud; keep to the sporting side." },
-    { "id": "arte",       "name": "Music, Film & Art",       "emoji": "🎬", "targets": [50, 50, 50],
-      "scope": "Music (instruments, performance, genre), film and theatre (roles, production, watching), visual art (media, technique, galleries). Roughly a third each." },
-    { "id": "gobierno",   "name": "Government, Law & News",  "emoji": "📰", "targets": [30, 50, 50],
-      "scope": "Government and elections, law and the courts, rights and citizenship, the press and reporting. Basics is capped at 30: genuinely basic civic vocabulary runs out well before 50." },
-    { "id": "seguridad",  "name": "Safety & Trouble",        "emoji": "🚨", "targets": [40, 40, 50],
-      "scope": "Crime and policing, theft, risk and danger, accidents and fire, security and precaution, warnings and reporting trouble. Medical emergency belongs to salud — keep to the safety side." }
-  ]
+    {
+      "id": "social",
+      "name": "Talking to People",
+      "emoji": "🗣️",
+      "targets": [
+        50,
+        50,
+        50
+      ],
+      "scope": "Greetings, farewells, introductions, courtesy, apology, thanks, agreement and disagreement, small talk, humour, gossip, invitations, phone and message openings. The social formulas a learner needs on day one. NOT grammar connectors — those are the preguntas deck."
+    },
+    {
+      "id": "deportes",
+      "name": "Sports & Fitness",
+      "emoji": "⚽",
+      "targets": [
+        50,
+        50,
+        50
+      ],
+      "scope": "Sports and their names, equipment, playing actions, competition and results, teams and officials, the gym, training and fitness. Injury belongs to salud; keep to the sporting side."
+    },
+    {
+      "id": "arte",
+      "name": "Music, Film & Art",
+      "emoji": "🎬",
+      "targets": [
+        50,
+        50,
+        50
+      ],
+      "scope": "Music (instruments, performance, genre), film and theatre (roles, production, watching), visual art (media, technique, galleries). Roughly a third each."
+    },
+    {
+      "id": "gobierno",
+      "name": "Government, Law & News",
+      "emoji": "📰",
+      "targets": [
+        30,
+        50,
+        50
+      ],
+      "scope": "Government and elections, law and the courts, rights and citizenship, the press and reporting. Basics is capped at 30: genuinely basic civic vocabulary runs out well before 50."
+    },
+    {
+      "id": "seguridad",
+      "name": "Safety & Trouble",
+      "emoji": "🚨",
+      "targets": [
+        40,
+        40,
+        50
+      ],
+      "scope": "Crime and policing, theft, risk and danger, accidents and fire, security and precaution, warnings and reporting trouble. Medical emergency belongs to salud — keep to the safety side."
+    }
+  ],
+  "_neighbours_comment": [
+    "Which decks a given deck can realistically collide with.",
+    "The brief used to carry every headword in the app — 7,800 tokens, 76% of it,",
+    "re-sent on every turn of the agent's loop. A Sports deck cannot collide with",
+    "Numbers & Money, so most of that was paid for and never used.",
+    "Safety comes from the validator, not the brief: it checks against the WHOLE",
+    "corpus regardless, and 25% over-generation absorbs whatever slips through.",
+    "Verbs and Adjectives are the exception — a verb or adjective can appear in any",
+    "deck — so those two get every infinitive and every bare adjective instead."
+  ],
+  "neighbours": {
+    "comida": [
+      "casa",
+      "salud",
+      "naturaleza"
+    ],
+    "animales": [
+      "naturaleza",
+      "cuerpo"
+    ],
+    "casa": [
+      "comida",
+      "ropa",
+      "rutina",
+      "ciudad"
+    ],
+    "verbos": [],
+    "viajes": [
+      "ciudad",
+      "lugar",
+      "numeros"
+    ],
+    "cuerpo": [
+      "salud",
+      "animales",
+      "ropa",
+      "comida"
+    ],
+    "tiempo": [
+      "naturaleza",
+      "numeros",
+      "rutina"
+    ],
+    "adjetivos": [],
+    "familia": [
+      "emociones",
+      "social"
+    ],
+    "numeros": [
+      "trabajo",
+      "ciudad",
+      "tiempo"
+    ],
+    "trabajo": [
+      "numeros",
+      "tecnologia",
+      "ciudad"
+    ],
+    "ciudad": [
+      "viajes",
+      "lugar",
+      "casa",
+      "numeros"
+    ],
+    "ropa": [
+      "casa",
+      "cuerpo",
+      "rutina",
+      "animales"
+    ],
+    "emociones": [
+      "familia",
+      "salud",
+      "social"
+    ],
+    "preguntas": [
+      "lugar"
+    ],
+    "lugar": [
+      "preguntas",
+      "ciudad",
+      "viajes"
+    ],
+    "rutina": [
+      "casa",
+      "cuerpo",
+      "salud",
+      "tiempo",
+      "comida",
+      "ropa"
+    ],
+    "salud": [
+      "cuerpo",
+      "rutina",
+      "comida",
+      "emociones"
+    ],
+    "tecnologia": [
+      "trabajo",
+      "ciudad"
+    ],
+    "naturaleza": [
+      "animales",
+      "tiempo",
+      "comida"
+    ],
+    "social": [
+      "emociones",
+      "familia",
+      "preguntas"
+    ],
+    "deportes": [
+      "cuerpo",
+      "salud"
+    ],
+    "arte": [
+      "trabajo",
+      "social"
+    ],
+    "gobierno": [
+      "trabajo",
+      "ciudad",
+      "seguridad"
+    ],
+    "seguridad": [
+      "ciudad",
+      "salud",
+      "gobierno"
+    ]
+  }
 }
