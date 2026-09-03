@@ -2701,5 +2701,41 @@ export const SENTENCES = {
   'explorar': ['Nos gusta explorar ciudades nuevas a pie.', 'We like exploring new cities on foot.'],
   'recomendar': ['¿Me puedes recomendar un buen restaurante cerca?', 'Can you recommend a good restaurant nearby?'],
   'orientarse': ['Usamos el mapa para orientarnos en la ciudad.', 'We used the map to find our way around the city.'],
-  'el sello': ['El sello del pasaporte confirmaba la fecha de entrada.', 'The passport stamp confirmed the entry date.']
+  'el sello': ['El sello del pasaporte confirmaba la fecha de entrada.', 'The passport stamp confirmed the entry date.'],
+
+  // --- ciudad / Basics ---
+  'abierto': ['El mercado está abierto los domingos.', 'The market is open on Sundays.'],
+  'cerrado': ['El banco está cerrado los domingos.', 'The bank is closed on Sundays.'],
+  'perdido': ['Estoy perdido, ¿me puede ayudar?', "I'm lost, can you help me?"],
+  'el cajero': ['El cajero cobra los productos en la caja.', 'The cashier charges for the products at the register.'],
+  'costar': ['¿Cuánto va a costar el boleto de entrada?', 'How much is the ticket going to cost?'],
+  'el vuelto': ['El cajero me dio mal el vuelto.', 'The cashier gave me the wrong change back.'],
+  'el policía': ['El policía dirige el tráfico en la esquina.', 'The police officer directs traffic at the corner.'],
+  'la ayuda': ['Necesito ayuda para encontrar la estación de tren.', 'I need help finding the train station.'],
+  'el tráfico': ['El tráfico en el centro es terrible por la mañana.', 'Traffic downtown is terrible in the morning.'],
+  'disfrutar': ['Voy a disfrutar la comida de este barrio.', "I'm going to enjoy the food in this neighborhood."],
+
+  // --- ciudad / Everyday ---
+  'el ambiente': ['Este barrio tiene un ambiente muy tranquilo.', 'This neighborhood has a very peaceful atmosphere.'],
+  'concurrido': ['El mercado está muy concurrido los fines de semana.', 'The market is very crowded on weekends.'],
+  'animado': ['La plaza se pone animada por las noches.', 'The square gets lively at night.'],
+  'la hora pico': ['Evito manejar durante la hora pico.', 'I avoid driving during rush hour.'],
+  'el transporte público': ['Prefiero el transporte público al tráfico diario.', 'I prefer public transportation to daily traffic.'],
+  'el atasco': ['Llegué tarde por un atasco enorme.', 'I arrived late because of a huge traffic jam.'],
+  'extrañar': ['Voy a extrañar mucho esta ciudad.', "I'm going to miss this city a lot."],
+  'adaptarse': ['Cuesta un poco adaptarse a una ciudad nueva.', 'It takes some effort to adapt to a new city.'],
+  'el aviso': ['Vi un aviso sobre el nuevo horario del banco.', "I saw a notice about the bank's new hours."],
+  'solicitar': ['Tuve que solicitar una copia de mi identificación.', 'I had to request a copy of my ID.'],
+
+  // --- ciudad / Fluent ---
+  'el forastero': ['Todavía me siento un forastero en esta ciudad.', 'I still feel like an outsider in this city.'],
+  'el lugareño': ['Un lugareño me indicó el camino correcto.', 'A local pointed me in the right direction.'],
+  'el residente': ['Solo los residentes pueden usar esta piscina.', 'Only residents can use this pool.'],
+  'la urbe': ['Esta urbe crece más cada año.', 'This metropolis grows more every year.'],
+  'cosmopolita': ['Vivimos en una ciudad grande y cosmopolita.', 'We live in a big, cosmopolitan city.'],
+  'pintoresco': ['El casco antiguo es muy pintoresco de noche.', 'The old town is very picturesque at night.'],
+  'ajetreado': ['Tuve un día muy ajetreado en el centro.', 'I had a very hectic day downtown.'],
+  'bullicioso': ['El mercado callejero es bullicioso los sábados.', 'The street market is bustling on Saturdays.'],
+  'desolado': ['Los callejones quedan desolados después de medianoche.', 'The alleys are deserted after midnight.'],
+  'atestado': ['El autobús iba atestado de pasajeros esta mañana.', 'The bus was packed with passengers this morning.']
 };

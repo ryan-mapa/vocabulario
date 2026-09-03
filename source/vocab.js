@@ -1663,7 +1663,17 @@ export const DECKS = [
         { es: 'el buzón', en: 'mailbox' },
         { es: 'la banca', en: 'public bench' },
         { es: 'el basurero', en: 'trash can' },
-        { es: 'la reja', en: 'railing' }
+        { es: 'la reja', en: 'railing' },
+        { es: 'abierto', en: 'open' },
+        { es: 'cerrado', en: 'closed' },
+        { es: 'perdido', en: 'lost' },
+        { es: 'el cajero', en: 'cashier' },
+        { es: 'costar', en: 'to cost' },
+        { es: 'el vuelto', en: 'change back' },
+        { es: 'el policía', en: 'police officer' },
+        { es: 'la ayuda', en: 'help' },
+        { es: 'el tráfico', en: 'traffic' },
+        { es: 'disfrutar', en: 'to enjoy' }
       ],
       [
         { es: 'la alcaldía', en: 'town hall', alt: [{ es: 'el ayuntamiento', region: 'Spain' }] },
@@ -1695,7 +1705,17 @@ export const DECKS = [
         { es: 'la piscina', en: 'swimming pool' },
         { es: 'la cancha', en: 'court' },
         { es: 'el club', en: 'club' },
-        { es: 'la sede', en: 'headquarters' }
+        { es: 'la sede', en: 'headquarters' },
+        { es: 'el ambiente', en: 'atmosphere' },
+        { es: 'concurrido', en: 'crowded' },
+        { es: 'animado', en: 'lively' },
+        { es: 'la hora pico', en: 'rush hour' },
+        { es: 'el transporte público', en: 'public transportation' },
+        { es: 'el atasco', en: 'traffic jam' },
+        { es: 'extrañar', en: 'to miss' },
+        { es: 'adaptarse', en: 'to adapt' },
+        { es: 'el aviso', en: 'notice' },
+        { es: 'solicitar', en: 'to request' }
       ],
       [
         { es: 'el rascacielos', en: 'skyscraper' },
@@ -1727,7 +1747,17 @@ export const DECKS = [
         { es: 'el viaducto', en: 'viaduct' },
         { es: 'el túnel', en: 'tunnel' },
         { es: 'el alcantarillado', en: 'sewer system' },
-        { es: 'la infraestructura', en: 'infrastructure' }
+        { es: 'la infraestructura', en: 'infrastructure' },
+        { es: 'el forastero', en: 'outsider' },
+        { es: 'el lugareño', en: 'local' },
+        { es: 'el residente', en: 'resident' },
+        { es: 'la urbe', en: 'metropolis' },
+        { es: 'cosmopolita', en: 'cosmopolitan' },
+        { es: 'pintoresco', en: 'picturesque' },
+        { es: 'ajetreado', en: 'hectic' },
+        { es: 'bullicioso', en: 'bustling' },
+        { es: 'desolado', en: 'deserted' },
+        { es: 'atestado', en: 'packed' }
       ]
     ]
   },
