@@ -12,6 +12,10 @@ TARGET="${1:-19:35}"
 STATUS=/tmp/hold.status
 until_ts=$(date -j -f "%Y-%m-%d %H:%M" "$(date +%Y-%m-%d) $TARGET" +%s 2>/dev/null)
 [ -z "$until_ts" ] && { echo "bad time: $TARGET"; exit 1; }
+# A target earlier than now means tomorrow. Without this, asking at 20:47 to hold
+# until 00:51 parses as today's 00:51, which is already past, and the script
+# exits immediately having held for nothing.
+[ "$until_ts" -le "$(date +%s)" ] && until_ts=$(( until_ts + 86400 ))
 
 unvoiced() {
   node --input-type=module -e "
