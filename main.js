@@ -815,15 +815,37 @@ document.addEventListener('keydown', (event) => {
  * a mistake. The word is dropped where there is no room for it and kept where
  * there is, rather than being lost everywhere to satisfy the narrowest case.
  */
+/**
+ * Use the short direction label when the long one will not fit.
+ *
+ * This used to key off a viewport width, which was only ever a proxy: what
+ * matters is whether the text fits the control, and the control now shrinks on
+ * a wide screen too so that it cannot overlap the streak guard. A phone-width
+ * media query missed that entirely and left 'Mixed (recommended)' truncated
+ * mid-word on a desktop.
+ */
 function fitDirectionLabels() {
-  const narrow = window.matchMedia('(max-width: 460px)').matches;
-  for (const option of ui.direction.options) {
-    const wanted = narrow ? option.dataset.short : option.dataset.full;
+  const select = ui.direction;
+  const probe = document.createElement('span');
+  probe.style.cssText =
+    `position:absolute;visibility:hidden;white-space:nowrap;font:${getComputedStyle(select).font}`;
+  document.body.append(probe);
+
+  // The arrow and the horizontal padding are not available to the text.
+  const room = select.clientWidth - 34;
+  const tooWide = [...select.options].some((option) => {
+    probe.textContent = option.dataset.full ?? option.textContent;
+    return probe.offsetWidth > room;
+  });
+  probe.remove();
+
+  for (const option of select.options) {
+    const wanted = tooWide ? option.dataset.short : option.dataset.full;
     if (wanted) option.textContent = wanted;
   }
 }
 
-window.matchMedia('(max-width: 460px)').addEventListener('change', fitDirectionLabels);
+window.addEventListener('resize', fitDirectionLabels);
 
 ui.deck.addEventListener('change', () => {
   stages = unlockedStages(ui.deck.value);
@@ -1226,11 +1248,16 @@ for (const button of [ui.speakPrompt]) {
   });
 }
 
-fitDirectionLabels();
 renderSound();
 populateDecks();
 stages = unlockedStages(ui.deck.value);
 startGame();
+
+// Measured last, and on a timeout rather than a frame. populateDecks changes
+// the deck select's width, which reflows the direction field beside it, and the
+// browser has not finished that when the call stack unwinds. A rAF fires before
+// the reflow lands; a zero timeout fires after it.
+setTimeout(fitDirectionLabels, 0);
 loadAudioManifest().then(renderSpeakers);
 readAuthResult();
 renderAccount().then(syncProgress);

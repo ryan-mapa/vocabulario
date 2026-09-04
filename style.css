@@ -71,9 +71,15 @@ body {
    right edge. It is also the only control here that can give up width without
    giving up meaning: the chosen deck reads short, and the full names are all
    still there the moment it opens. */
+/* Both fields shrink, and — the part that was missing — the select inside each
+   shrinks with it. A select left at its intrinsic width is as wide as its
+   longest option, so the field would narrow while the control inside it did
+   not, and the overflow landed on top of the streak guard. */
 .field { min-width: 0; }
-.field-deck { flex: 1 1 auto; min-width: 8rem; }
-.field-deck select { width: 100%; }
+.settings .field { flex: 1 1 auto; }
+.settings select { width: 100%; }
+.field-deck { min-width: 8rem; }
+.field-direction { min-width: 7rem; }
 
 /* Streak guard, beside the two selects. The scoreboard tile opens the same
    thing, but a corner badge is not a control anyone finds — this is. Outline
