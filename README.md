@@ -1,6 +1,6 @@
 # Vocabulario 🇪🇸
 
-A Spanish vocabulary game. 1,800 words across 20 categories and 3 stages of
+A Spanish vocabulary game. 3,520 words across 25 categories and 3 stages of
 depth, multiple choice, with Leitner-box spaced repetition so the words you
 miss come back sooner than the ones you know. Deeper stages are earned. Every
 word is spoken by four voices and shown in an example sentence.
@@ -30,9 +30,17 @@ minutes.
   Weather, Adjectives, Family & People, Numbers & Money, Work & School,
   City & Places, Clothing, Feelings & Mind, Questions & Connectors, Where
   Things Are, Daily Routine, Health & the Doctor, Technology & Online,
-  Nature & Outdoors — or all 1,800 words at once. Nouns carry their article
-  so you learn the gender with the word.
-- **Stages** — each deck runs Basics → Everyday → Fluent, 30 words apiece.
+  Nature & Outdoors, Talking to People, Sports & Fitness, Music, Film & Art,
+  Government, Law & News, Safety & Trouble — or all 3,520 words at once. Nouns
+  carry their article so you learn the gender with the word.
+- **Stages** — each deck runs Basics → Everyday → Fluent, 50 words apiece where
+  the topic supports it. Seven decks are smaller, and deliberately: Days &
+  Weather Basics *is* the seven days and twelve months, Numbers Basics is 0-20,
+  and Questions & Connectors is a closed class throughout. Feelings and Daily
+  Routine came out short for a different reason — Adjectives and the concrete
+  decks were expanded first and had already claimed their obvious words. Sizes
+  are always a multiple of ten; padding a stage to reach fifty would be worse
+  than leaving it at thirty.
   Only Basics is open at first; a stage unlocks when the one before it reaches
   60% mastery, so depth is earned rather than dumped on you. The stars beside a
   deck name (`★★☆`) show how far it is open, and the bar under each stage
@@ -51,9 +59,11 @@ minutes.
   starts again at the first — otherwise which voice you got depended on how many
   times you had tapped earlier words. Recall questions have no button at all:
   the Spanish is the answer there, and speaking it would give it away. The
-  7,320 clips are generated ahead of time by `tools/tts.mjs` and served as
+  14,080 clips are generated ahead of time by `tools/tts.mjs` and served as
   static files; `audio/words.json` lists the words that have all four, so a word
   whose synthesis failed loses its button rather than every word losing one.
+  That manifest is what makes a partial run safe to ship: words still being
+  voiced simply have no speaker until the next deploy.
 - **Example sentences** — every word has one, hidden behind a **Show example**
   button under the prompt so the sentence is something you reach for when a word
   is ambiguous, not something you read instead of recalling it. Which half you
@@ -116,6 +126,11 @@ minutes.
 - **Move progress** hands you a code holding your whole card map. `localStorage`
   is per-origin, so without it progress would be stranded at whichever address
   you happened to play on. Paste the code anywhere else this app runs.
+- **Share** sits beside the sound toggle. On a phone it opens the system share
+  sheet, so the link goes wherever that person actually sends things; elsewhere
+  it copies the link. A share the browser refuses falls through to the clipboard
+  rather than dead-ending, and cancelling the sheet says nothing at all, because
+  that is a decision and not a failure.
 - **Signing in is optional**, and only ever adds. Signed out, the game is
   exactly what it was — everything lives in this browser. Signing in with Google
   makes your progress follow you between devices, and carries whatever this
@@ -148,11 +163,20 @@ source/
 worker/         the Cloudflare Worker that serves the app and the API
 wrangler.toml   its config, at the root — the static files *are* the root
 .assetsignore   what must never be uploaded as a public asset
-audio/          7,320 pre-generated clips: 4 voices x 1,830 words
+audio/          14,080 pre-generated clips: 4 voices x 3,550 spoken strings
   words.json    the words that have all four, so a gap costs one button
   voices.json   which voice is which, to catch a silent swap upstream
 tools/
   tts.mjs       regenerates the clips; reads credentials from .tts.env
+  audio-daemon.sh  keeps generating until every word has four voices, then idles
+  targets.json  per-deck-stage word targets, deck scopes, and which decks can
+                collide with which
+  rules.mjs     the corpus rules, imported by both the suite and the validator
+  brief.mjs     builds the brief for expanding one deck
+  check-batch.mjs  validates a batch offline and prints only what failed
+  merge-batch.mjs  splices an accepted batch into vocab.js and sentences.js
+  status.mjs    what is done and what is left, derived from the corpus itself
+  RECOVERY.md   how to resume when something goes wrong mid-expansion
 assets/
   logo.svg      the V monogram, bare — for the header and anywhere on dark
   icon.svg      the same mark as a filled badge — favicon and app icon
@@ -164,6 +188,28 @@ Everything under `source/` is DOM-free and pure, which is what makes it
 testable — `main.js` is the only thing that knows a browser exists. `source/`
 is also the boundary the server shares: the Worker imports `srs.js` directly, so
 the browser and the server can never drift about what a review history means.
+
+### Expanding the vocabulary
+
+The decks grew from 1,800 words to 3,520 across two days, and the machinery for
+it is in `tools/`. The loop per deck is in [`tools/RECOVERY.md`](tools/RECOVERY.md):
+generate a brief, write the batch, validate, merge, test, commit.
+
+Two things about it are worth knowing before using it again.
+
+**Write the words directly.** The tooling was built to delegate deck-writing to
+a cheaper model, which made sense while that model was cheap. It was not good
+enough — it passed every mechanical rule and still put fabric jargon in a Fluent
+stage and abstractions like `la incertidumbre` in front of beginners. Moving up a
+tier fixed the quality and destroyed the economics: each run then paid a brief
+load, a reasoning pass and a per-turn context resend to produce output that could
+be written straight into the file for a fraction of the cost. Delegated decks ran
+76-140k tokens and one produced nothing at all in an hour and three quarters; the
+same decks written directly cost about 25k.
+
+**Generate briefs just in time.** They embed the words to avoid, which grows with
+every merge. A brief made in advance sends the writer after words that are
+already taken.
 
 ### Holding the board still
 
@@ -244,7 +290,7 @@ four voices, or leave it, and the word simply has no speaker button.
 
 ## A caveat worth stating plainly
 
-The vocabulary and all 1,800 example sentences were written without a native
+The vocabulary and all 3,520 example sentences were written without a native
 speaker's review. The sentences are the riskier half — a wrong word is one wrong
 word, but a wrong sentence teaches grammar, register and word order along with
 it, and the scheduler will drill it exactly as faithfully as a right one. The
