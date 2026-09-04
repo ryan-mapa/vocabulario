@@ -67,6 +67,8 @@ const ui = {
   again: el('again'),
   transfer: el('transfer'),
   sound: el('sound'),
+  share: el('share'),
+  shareNote: el('share-note'),
   transferDialog: el('transfer-dialog'),
   transferOut: el('transfer-out'),
   transferIn: el('transfer-in'),
@@ -850,6 +852,52 @@ function renderSound() {
   ui.sound.setAttribute('aria-label', muted ? 'Sound off' : 'Sound on');
   ui.sound.title = muted ? 'Sound off' : 'Sound on';
 }
+
+/**
+ * Share the app.
+ *
+ * navigator.share is the right thing on a phone — it opens the system sheet, so
+ * the link goes wherever that person actually sends things. Desktop browsers
+ * mostly do not have it, and there the useful fallback is the clipboard.
+ *
+ * A cancelled share sheet rejects with AbortError. That is somebody changing
+ * their mind, not a failure, so it must not surface as one.
+ */
+async function share() {
+  const url = location.origin;
+  const data = { title: 'Vocabulario', text: 'A Spanish vocabulary game with spaced repetition.', url };
+
+  if (navigator.share) {
+    try {
+      await navigator.share(data);
+      return;                       // the sheet is its own confirmation
+    } catch (error) {
+      // Cancelling the sheet is a decision, not a failure.
+      if (error?.name === 'AbortError') return;
+      // Anything else — the browser has the API but would not open it — falls
+      // through to the clipboard rather than dead-ending. Desktop Chrome
+      // advertises navigator.share and then refuses it in plenty of contexts.
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(url);
+    sayShared('Link copied');
+  } catch {
+    // Both routes refused. Say what to do instead of failing silently.
+    sayShared('Copy the address bar', 'bad');
+  }
+}
+
+let shareTimer = null;
+function sayShared(text, tone) {
+  ui.shareNote.textContent = text;
+  ui.shareNote.style.color = tone === 'bad' ? 'var(--muted)' : '';
+  clearTimeout(shareTimer);
+  shareTimer = setTimeout(() => { ui.shareNote.textContent = ''; }, 2600);
+}
+
+ui.share.addEventListener('click', share);
 
 ui.sound.addEventListener('click', () => {
   muted = setMuted(!muted);

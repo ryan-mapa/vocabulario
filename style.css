@@ -462,6 +462,22 @@ kbd { background: var(--panel); border: 1px solid var(--line); border-radius: 5p
 .icon-toggle .on-wave,
 .icon-toggle .off-slash { fill: none; stroke-width: 1.8; stroke-linecap: round; }
 
+/* The share mark: three nodes and two links, the shape everyone already reads
+   as sharing. Drawn rather than an emoji so it matches the speaker beside it at
+   the same weight. */
+.icon-toggle .node { fill: currentColor; stroke: none; }
+.icon-toggle .link { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
+
+/* What happened, said in words rather than only by the icon changing. Reserved
+   space would push the footer around on a narrow screen, so it takes none until
+   there is something to say. */
+.share-note {
+  font-size: 12px;
+  color: var(--verde);
+  white-space: nowrap;
+}
+.share-note:empty { display: none; }
+
 /* Waves when it is on, a cross when it is off — never both. */
 .icon-toggle .off-slash { display: none; }
 .icon-toggle[aria-pressed='false'] .on-wave { display: none; }
