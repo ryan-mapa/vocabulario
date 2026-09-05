@@ -8,6 +8,18 @@ node_modules
 worker
 tools
 staging
+
+# The CLIPS are served from R2 by the Worker, not as static assets. Leaving them
+# here too would put 14,200 files back against a ~20,000 limit, and static assets
+# are matched BEFORE the Worker runs — so the R2 route would never fire.
+#
+# Only the numbered voice directories. audio/words.json and audio/voices.json
+# must stay: the manifest is what tells the page which words have a speaker
+# button, and excluding the whole directory took it out with the clips.
+audio/1
+audio/2
+audio/3
+audio/4
 test
 dist
 build.mjs
