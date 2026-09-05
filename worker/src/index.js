@@ -178,6 +178,23 @@ export default {
     const { pathname } = new URL(request.url);
     const method = request.method;
 
+    // Clips come from R2, not from static assets: there are 14,200 of them and
+    // the per-Worker asset limit is around 20,000. Same URLs as before, so
+    // nothing in the page changes. A clip never changes once written — the
+    // filename is derived from the word — so it can be cached hard.
+    if (pathname.startsWith('/audio/') && pathname.endsWith('.mp3')) {
+      if (method !== 'GET' && method !== 'HEAD') return fail('not found', 404);
+      const object = await env.AUDIO.get(pathname.slice(1));
+      if (!object) return fail('not found', 404);
+      return new Response(method === 'HEAD' ? null : object.body, {
+        headers: {
+          'Content-Type': 'audio/mpeg',
+          'Cache-Control': 'public, max-age=31536000, immutable',
+          etag: object.httpEtag
+        }
+      });
+    }
+
     if (method === 'GET' && pathname === '/me') return whoAmI(request, env);
     if (method === 'GET' && pathname === '/auth/google/start') return authStart(request, env);
     if (method === 'GET' && pathname === '/auth/google/callback') return authCallback(request, env);

@@ -21,6 +21,14 @@ workers_dev = false
 [assets]
 directory = "."
 
+# The clips live in R2 rather than in static assets. There are 14,200 of them
+# against a per-Worker asset limit around 20,000, and every deploy had to scan
+# them all; R2 has no such limit and the audio stops being redeployed at all.
+# Bound to the Worker, so they still serve from this origin — same URLs, no CORS.
+[[r2_buckets]]
+binding = "AUDIO"
+bucket_name = "vocabulario-audio"
+
 [[routes]]
 pattern = "vocabulario.ryan-mapa.dev"
 custom_domain = true
